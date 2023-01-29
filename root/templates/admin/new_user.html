@@ -1,0 +1,155 @@
+{% extends "layouts/admin_layout.html" %}
+{% block main_tag %}
+    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+        <div class="row mt-lg-5">
+            <form method="post">
+                {{ form.hidden_tag() }}
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.full_name.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.full_name.errors %}
+                                {{ form.full_name(class="form-control-md is-invalid") }}
+                                {% for error in form.full_name.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.full_name(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.username.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.username.errors %}
+                                {{ form.username(class="form-control-md is-invalid") }}
+                                {% for error in form.username.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.username(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.password.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.password.errors %}
+                                {{ form.password(class="form-control-md is-invalid") }}
+                                {% for error in form.password.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.password(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.confirm_password.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.confirm_password.errors %}
+                                {{ form.confirm_password(class="form-control-md is-invalid") }}
+                                {% for error in form.confirm_password.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.confirm_password(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.role.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.role.errors %}
+                                {{ form.role(class="form-control-md is-invalid") }}
+                                {% for error in form.role.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.role(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.location.label(class="form-control-label") }}
+                        <div class="input-group has-validation">
+                            {% if form.location.errors %}
+                                {{ form.location(class="form-control-md is-invalid") }}
+                                {% for error in form.location.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.location(class="form-control-md is-invalid") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.submit(class="btn btn-primary", style="border-radius: 5px;") }}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script !src="">
+        $(document).ready(function(){
+           $('select').select2();
+           $('toast').toast('show');
+        });
+    </script>
+{% endblock %}
+
+{% block actual_title %}
+    <h5 class="h5">Ajouter un employee</h5>
+{% endblock %}

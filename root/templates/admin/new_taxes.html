@@ -1,0 +1,113 @@
+{% extends "layouts/admin_layout.html" %}
+{% block actual_title %}
+    <h3 class="h3">Magasins</h3>
+{% endblock %}
+{% block main_tag %}
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="row">
+                <div class="col">
+                    <div class="card">
+{#                        <div class="card-header card-header-primary">#}
+{#                            <div class="row">#}
+{#                                <div class="col-md">#}
+{#                                    <h4 class="card-title ">La liste des taxes déjà existes</h4>#}
+{#                                </div>#}
+{##}
+{#                            </div>#}
+{#                        </div>#}
+                        <div class="card-body">
+                            <form method="post">
+                                {{ form.hidden_tag() }}
+                                <div class="form-group row">
+                                    {{ form.name.label(class="col-sm-2 form-control-label") }}
+                                    <div class="col-md-4 mb-2">
+                                        <div class="input-group has-validation">
+                                            {% if form.name.error %}
+                                                {{ form.name(class="form-control form-control-md is-invalid") }}
+                                                {% for error in form.name.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+                                            {% else %}
+                                                {{ form.name(class="form-control form-control-md") }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    {{ form.address.label(class="col-sm-2 form-control-label") }}
+
+                                    <div class="col-md-4 mb-2">
+                                        <div class="input-group has-validation">
+                                            {% if form.address.errors %}
+                                                {{ form.address(class="form-control form-control-md is-invalid") }}
+                                                {% for error in form.address.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+
+                                            {% else %}
+                                                {{ form.address(class="form-control form-control-md") }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="form-group row">
+                                    {{ form.contact.label(class="col-sm-2 form-control-label") }}
+
+                                    <div class="col-md-4 mb-2">
+                                        <div class="input-group has-validation">
+                                            {% if form.contact.errors %}
+                                                {{ form.contact(class="form-control form-control-md is-invalid") }}
+                                                {% for error in form.contact.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+
+                                            {% else %}
+                                                {{ form.contact(class="form-control form-control-md") }}
+                                            {% endif %}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row">
+                                    <div class="col-md">
+                                        {{ form.submit(class="btn btn-primary btn-sm") }}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block additional_scripts %}
+    <script !src="">
+        $(document).ready(function(){
+            $('.toast').toast("show");
+        })
+    </script>
+
+{% endblock %}

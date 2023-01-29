@@ -1,0 +1,151 @@
+{% extends "admin/admin_layout.html" %}
+{% block main_tag %}
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                          <div class="d-flex">
+                            <div class="toast-body">
+                            {{ message }}
+                           </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="row">
+            <form method="post">
+                {{form.hidden_tag()}}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        {{ form.label.label(class="form-control-label") }}
+                        {% if form.label.errors %}
+                            {{ form.label(class="form-control form-control-md") }}
+                            {% for error in form.label.errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ form.label(class="form-control form-control-md") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        {{ form.limit_number.label(class="form-control-label") }}
+                        {% if form.limit_number.errors %}
+                            {{ form.limit_number(class="form-control form-control-md") }}
+                            {% for error in form.limit_number.errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ form.limit_number(class="form-control form-control-md") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        Session: {{ _session.label }}
+{#                        {{ form.session.label(class="form-control-label") }}#}
+{#                        {% if form.session.errors %}#}
+{#                            {{ form.session(class="form-control form-control-md") }}#}
+{#                            {% for error in form.session.errors %}#}
+{#                                <div class="alert alert-danger">#}
+{#                                    {{ error }}#}
+{#                                </div>#}
+{#                            {% endfor %}#}
+{#                        {% else %}#}
+{#                            {{ form.session(class="form-control form-control-md") }}#}
+{#                        {% endif %}#}
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        {{ form.language.label(class="form-control-label") }}
+                        {% if form.language.errors %}
+                            {{ form.language(class="form-control form-control-md") }}
+                            {% for error in form.language.errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ form.language(class="form-control form-control-md") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col-md-6">
+                        {{ form.level.label(class="form-control-label") }}
+                        {% if form.level.errors %}
+                            {{ form.level(class="form-control form-control-md") }}
+                            {% for error in form.level.errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ form.level(class="form-control form-control-md") }}
+                        {% endif %}
+                    </div>
+                </div>
+            <br>
+{#                <div class="row mb-4">#}
+{#                    <div class="col-md-6">#}
+{#                        {{ form.on_test.label(class="form-control-label") }}#}
+{#                        {{ form.on_test() }}#}
+{#                    </div>#}
+{#                </div>#}
+{#            <br>#}
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        {{ form.description.label(class="form-control-label") }}
+                        {% if form.description.errors %}
+                            {{ form.description(class="form-control form-control-md") }}
+                            {% for error in form.description.errors %}
+                                <div class="alert alert-danger">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                        {% else %}
+                            {{ form.description(class="form-control form-control-md") }}
+                        {% endif %}
+                    </div>
+                </div>
+                <br>
+                <div class="row mb-4" style="text-align: right;">
+                    <div class="col-md-6">
+                        {{ form.submit(class="btn btn-md btn-primary") }}
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/summernote.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+{% endblock %}
+
+{% block actual_title %}
+    Mise à jour de formations
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/summernote.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.toast').toast('show');
+            $('select').select2({});
+            $('#description').summernote();
+        });
+    </script>
+{% endblock %}

@@ -1,0 +1,137 @@
+{% extends "user_dashboard.html" %}
+{% block additional_styles %}
+    <link href="{{ url_for('static', filename='css/select2.min.css') }}" rel="stylesheet" />
+{% endblock %}
+
+{% block main_tag %}
+    <div class="container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast bg-{{ category }}" style="width: 100%;" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="toast-body">
+                                <button type="button" style="position:absolute; right: 12%;" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+                                {{ message }}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+
+        <div class="card justify-content-center mt-4">
+            <div class="card-header">
+                <h2 class="h2">  S'inscrire </h2>
+            </div>
+            <div class="card-body">
+
+                {% if (not _session.is_disabled and _session.is_active) and _session.courses %}
+                    <div class="row">
+                        <h3 class="h3">
+                            Sélectionnez votre choix
+                        </h3>
+                    </div>
+                    <form method="post">
+                        {{form.hidden_tag()}}
+
+                        <div class="row mb-4">
+                            <div class="col-sm-1">
+                                {{ form.course.label(class='form-label') }}
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group has-validation">
+                                     {% if form.course.errors %}
+                                        {{form.course(class="select-course form-control form-control-md is-invalid")}}
+                                        {% for error in form.course.errors %}
+                                            <div class="invalid-feedback">
+                                                {{error}}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{form.course(class="select-course form-control form-control-md")}}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-6">
+                                {{ form.on_test() }}
+                                {{ form.on_test.label(class="form-control-label") }}
+
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-1">
+                                {{ form.jour.label(class="form-control-label") }}
+                            </div>
+                                <div class="col-md-2">
+                                    <div class="input-group has-validation">
+                                     {% if form.jour.errors %}
+                                        {{form.jour(class="select-course form-control form-control-md is-invalid")}}
+                                        {% for error in form.jour.errors %}
+                                        <div class="invalid-feedback">
+                                            {{error}}
+                                        </div>
+                                    {% endfor %}
+                                    {% else %}
+                                        {{form.jour(class="select-course form-control form-control-md")}}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                            <div class="col-md-1">
+                                {{ form.periode.label(class="form-control-label") }}
+                            </div>
+                            <div class="col-md-3">
+                                 {% if form.periode.errors %}
+                                     <div class="form-check form-check-inline is-invalid">
+                                        {% for subfield in form.periode %}
+                                            <div class="form-check form-check-inline">
+                                             {{ subfield(class="form-check-input") }}
+                                             {{ subfield.label(class='form-check-label') }}
+                                            </div>
+                                        {% endfor %}
+                                     </div>
+                                    {% for error in form.periode.errors %}
+                                        <div class="invalid-feedback">
+                                            {{error}}
+                                        </div>
+                                    {% endfor %}
+                                 {% else %}
+                                     <div class="form-check form-check-inline">
+                                            {% for subfield in form.periode %}
+                                                <div class="form-check form-check-inline">
+                                                 {{ subfield(class="form-check-input") }}
+                                                 {{ subfield.label(class='form-check-label') }}
+                                                </div>
+                                            {% endfor %}
+                                     </div>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="row mb-4">
+                             <div class="col-md-4" style="text-align: right;">
+                                {{form.submit(class="btn btn-md btn-primary")}}
+                            </div>
+                        </div>
+                    </form>
+                {% else %}
+                    <h5 class="text-center">Période d'inscription est terminée ou pas encore disponible. Merci</h5>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{url_for('static', filename='js/select2.min.js')}}"></script>
+    <script>
+        $(document).ready(function () {
+            $('.toast').toast('show');
+            $('select-course').select2();
+        })
+    </script>
+{% endblock additional_scripts%}

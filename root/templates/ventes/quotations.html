@@ -1,0 +1,133 @@
+{% extends "layouts/admin_layout.html" %}
+{% block additional_styles %}
+    <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+    <style>
+        .hstack {
+          display: flex;
+          flex-direction: row;
+          align-items: center;
+          align-self: stretch;
+        }
+
+    </style>
+{% endblock %}
+{% block main_tag %}
+    <div class="container">
+
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                          <div class="d-flex">
+                            <div class="toast-body">
+                            {{ message }}
+                           </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header card-header-primary">
+                      <div class="row">
+                          <div class="col-sm">
+                              <h4 class="card-title ">Les Formations</h4>
+                          </div>
+                      </div>
+                    </div>
+                    <div class="card-body">
+                        <div class="btn-group hstack gap-3">
+                            <div class="border ms-auto">
+                                <a class="btn btn-md btn-primary" href="{{ url_for('admin_bp.new_course') }}">Nouveau</a>
+                            </div>
+                        </div>
+                        <div id="table"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        });
+
+      new gridjs.Grid({
+         language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Ancun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+        columns: [
+            { id: 'id', name: 'ID' },
+            { id: 'label', name: 'Titre' },
+            { id: 'status', name: 'Status' },
+            { id: 'session', name: 'Session' },
+            {id:"actions",name:'Actions'}
+        ],
+        data: () => {
+             return new Promise(resolve => {
+                 setTimeout(()=>
+                    resolve(
+                        [
+                        {% if courses %}
+                          {% for course in courses %}
+                            {
+                                id: '{{ course["id"] }}',
+                                label: '{{ course["label"] }}',
+                                status: gridjs.html(`<span class="badge rounded-pill" style="background-color:{{ course["status"][1] }};">{{course["status"][0]}}</span>`),
+                                session: '{{ course["session"] }}',
+                                actions: gridjs.html (
+                                        `<div class="dropdown dropstart">
+                                              <a class="btn btn-secondary btn-sm" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                                              </a>
+
+                                              <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                                <li><a class="dropdown-item" href="{{ url_for('admin_bp.edit_course',course_id=course['id']) }}">Mise à jour</a></li>
+                                                <li><a class="dropdown-item" href="{{ url_for('admin_bp.students',course_id = course['id'], session_id = course['session_id']) }}">
+                                                    Voir la liste des étudiants</a></li>
+                                              </ul>
+                                        </div>`)
+                                        },
+                          {% endfor %}
+                        {% endif %}
+                    ]
+                    ),2000
+                 );
+             })
+        },
+        search: {
+          selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
+        },
+        sort: true,
+        pagination: true
+      }).render(document.getElementById('table'));
+    </script>
+
+{% endblock %}

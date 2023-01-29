@@ -1,0 +1,132 @@
+{% extends "layouts/admin_layout.html" %}
+{% block additional_styles %}
+        <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+{% endblock %}
+{% block main_tag %}
+    <div class="container">
+         {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+        <div class="row">
+            <div class="col">
+                <div class="card">
+                    <div class="card-header card-header-primary">
+                        <div class="row">
+                            <div class="col-md">
+                                <h4 class="card-title ">Les Etudiants Inscris {% if formation %}* dans la formation
+                                    {{ formation.label }}
+                                {% endif %} </h4>
+                            </div>
+
+                            <div class="col-md" style="text-align: center;">
+                                <a class="btn btn-md btn-success" href="{% if formation %}{{ url_for('admin_bp.get_students', course_id = formation.id) }}
+                                                                        {% else %} {{ url_for('admin_bp.all_students_csv') }}
+                                                                        {% endif %}">Exporter la liste</a>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="table"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+        new gridjs.Grid({
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Ancun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                { id: 'id', name: 'Num' },
+                { id: 'first_name', name: 'Nom' },
+                { id: 'last_name', name: 'Prénom' },
+                { id: 'email', name: 'Email' },
+                { id:'course', name:"La formation"},
+                {id:"course_day", name:"Jour"},
+                {id:"course_periode", name:"Période"},
+                { id: 'status', name: 'Status'},
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if students %}
+                    {% for student in students %}
+                        {
+                              id: '{{ student["id"] }}',
+                              first_name :'{{ student["first_name"] }}',
+                              last_name :'{{ student["last_name"] }}',
+                              email :'{{ student["email"] }}',
+                              course_label:'{{ student['course_label'] }}',
+                              course_day:'{{ student['course_day'] }}',
+                              course_periode:'{{ student['course_periode'] }}',
+                              status:  gridjs.html(`{% if student["status"] == -1%} <span class="badge rounded-pill" style="text-color:black; background-color:#E06000;">En attente</span> \
+                                        {%elif student["status"] == 1%} <span class="badge rounded-pill" style="text-color:white; background-color:#004D33;">admis</span> \
+                                        {%else%} <span class="badge rounded-pill" style="text-color:white; background-color:#A6001A;">non admis</span> \
+                                        {% endif %}`),
+                              actions: gridjs.html(`<div class="dropdown dropstart">
+                                  <a class="btn btn-secondary btn-sm" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                  </a>
+                                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuLink">
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_bp.get_student',student_id=student['id']) }}">Profile etudiant</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_bp.accept',course_id=student['course_id'],student_id=student['id']) }}">Avis d'inscription favorable</a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('admin_bp.denies',course_id=student['course_id'],student_id=student['id']) }}">
+                                        Avis d'inscription défavorable</a></li>
+                                  </ul>
+                            </div>`
+                              )
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),2000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 4].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
+{% endblock %}

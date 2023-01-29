@@ -1,0 +1,63 @@
+{% extends "admin/admin_layout.html" %}
+{% block main_tag %}
+    <div class="container">
+
+        <div class="row">
+            <form method="post">
+                {{form.hidden_tag()}}
+                <div class="row">
+                    <div class="mb-4">
+                        <div class="col-md-6">
+                            {{ form.label.label(class="form-control-label") }}
+                            {% if form.label.errors %}
+                                {{ form.label(class="form-control form-control-md") }}
+                                {% for error in form.label.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.label(class="form-control form-control-md") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                </div>
+                <div class="row">
+                    <div class="mb-4">
+                        <div class="col-md-6">
+                            {{ form.price.label(class="form-control-label") }}
+                            {% if form.price.errors %}
+                                {{ form.price(class="form-control form-control-md") }}
+                                {% for error in form.price.errors %}
+                                    <div class="alert alert-danger">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.price(class="form-control form-control-md") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row" style="text-align: right;">
+                    <div class="col-md-6">
+                        <div class="mb-4">
+                            {{ form.submit(class="btn btn-md btn-primary") }}
+                        </div>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/summernote.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+{% endblock %}
+
+{% block actual_title %}
+    <div class="mb-4">
+        Mise à jour de categorie
+    </div>
+{% endblock %}

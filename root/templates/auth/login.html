@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+    <title>{{ session['title'] }}</title>
+</head>
+<body class="bg-primary">
+    <div id="layoutAuthentication">
+        <div id="layoutAuthentication_content">
+            <main>
+                <div class="container">
+                    <div class="row justify-content-center" style="margin-top: 7%;">
+                        <div class="col-lg-5">
+                            <div class="card shadow-lg border-0 rounded-lg mt-5">
+                                <div class="card-header"><h3 class="text-center font-weight-light my-4">Se connecter</h3></div>
+                                <div class="card-body">
+{#                                    <div class="row">#}
+{#                                        <img src="{{ url_for('static', filename='uploads/cropped-LOGO-CEIL.png') }}"  class="img-fluid"/>#}
+{#                                    </div>#}
+                                    <form method="post">
+                                        {{ form.hidden_tag() }}
+                                        {% with messages = get_flashed_messages(with_categories=true) %}
+                                            {% if messages %}
+                                                {% for category , message in messages %}
+                                                    <div class="toast-container position-fixed top-0 start-50 translate-middle-x p-3">
+                                                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                                            <div class="d-flex">
+                                                                <div class="toast-body">
+                                                                    {{ message }}
+                                                                </div>
+                                                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                                          </div>
+                                                        </div>
+                                                    </div>
+                                                {% endfor %}
+                                            {% endif %}
+                                        {% endwith %}
+                                        <div class="mb3">
+                                            {{ form.username.label(class="form-label") }}
+                                            <div class="input-group has-validation mb-3">
+                                                {% if form.username.errors %}
+                                                    {{ form.username(class="form-control form-control-md is-invalid") }}
+                                                    <div class="invalid-feedback">
+                                                        {% for error in form.username.errors %}
+                                                            {{ error }}
+                                                        {% endfor %}
+                                                    </div>
+                                                {% else %}
+                                                    {{ form.username(class="form-control form-control-md") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                        <div class="mb-3">
+                                            {{ form.password.label(class="form-control-label") }}
+                                            {% if form.password.errors %}
+                                              {{ form.password(class="form-control") }}
+                                              <div class="alert alert-danger">
+                                                  {% for error in form.password.errors %}
+                                                    <span>{{ error }}</span>
+                                                  {% endfor %}
+                                              </div>
+                                          {% else %}
+                                              {{ form.password(class="form-control form-control-md") }}
+                                          {% endif %}
+                                        </div>
+                                        <div class="mb-3 text-center">
+                                            <div class="form-group">
+                                                Mot de passe oublié? Réintialisez-le <a class="link" href="{{ url_for('auth_bp.request_token') }}">ici</a>
+                                            </div>
+{#                                            <div class="form-group">#}
+{#                                                Vous n'avez pas un compte? Inscrivez-vous <a class="link-primary" href="{{ url_for('auth_bp.register') }}">ici!</a>#}
+{#                                            </div>#}
+                                        </div>
+                                        <div class="mb-3 text-center">
+                                            <div class="form-group">
+                                                {{ form.submit(class="btn btn-primary") }}
+                                            </div>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
+     <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+
+    <script !src="">
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+    </script>
+
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+
+</body>
+</html>

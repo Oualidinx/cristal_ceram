@@ -1,0 +1,95 @@
+{% extends "layouts/master_dashboard.html" %}
+{% block additional_styles %}
+        <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+          new gridjs.Grid({
+            columns: [
+                { id: 'date', name: 'Date d\'inscription' },
+                { id: 'label', name: 'Titre' },
+                { id: 'status', name: 'Status' },
+                {id:'session', name:'Session'}
+            ],
+            data: [
+              {% for subscription in subscriptions %}
+                {
+                    id: '{{ subscription["date"] }}',
+                    label: '{{ subscription["course"] }}',
+                    status: gridjs.html(`{% if subscription["is_waiting"] == True%} <span class="badge rounded-pill" style="background-color:#E06000;">En attente</span> \
+                             {%elif subscription["is_accepted"] == 1%} <span class="badge rounded-pill" style="background-color:#004D33;">admis</span> \
+                             {% elif subscription["is_accepted"] == -1 %} <span class="badge rounded-pill" style="background-color:#A6001A;">non admis</span> {% endif %}`),
+                    session:'{{ subscription["session"] }}'
+                },
+              {% endfor %}
+            ],
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
+
+{% endblock %}
+
+{% block main_tag %}
+    <div class="row mb-4">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category , message in messages %}
+                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    <div class="row mb-4">
+        <div class="col-lg">
+            <div class="card">
+                <div class="card-header">
+                  <h5 class="card-title ">Informations du profile</h5>
+                </div>
+                <div class="card-body">
+                    <table style="font-size: 16px;">
+                        <tr >
+                            <td style="font-weight: bold;">Nom:    </td> <td> {{ student['first_name'] }}</td>
+                        </tr>
+                        <tr>
+                            <td style="font-weight: bold;">Prénom: </td> <td> {{ student['last_name'] }}</td>
+                        </tr>
+{#                        <tr>#}
+{#                            <td style="font-weight: bold;">Date naissance: </td><td> {{ student['birthday'] }}</td>#}
+{#                        </tr>#}
+                        <tr>
+                            <td style="font-weight: bold;">Adresse électronique: </td><td> {{ student['email'] }}</td>
+                        </tr>
+                    </table>
+                </div>
+            </div>
+        </div>
+        <div class="col-lg">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title">Les inscriptions</h5>
+                </div>
+                <div class="card-body">
+                     <div id="table"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

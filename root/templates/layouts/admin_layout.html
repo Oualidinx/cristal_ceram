@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <title>Tableau de bord</title>
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+        <meta name="description" content="" />
+        <meta name="author" content="OUAREM Oualid" />
+
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
+        <script src="{{ url_for('static', filename='js/all.js') }}"></script>
+        <style>
+            .nav-link{
+                color: white;
+            }
+            .nav-link:hover{
+                color: #77BBD9;
+            }
+            .navbar-custom,
+            .sb-sidenav-menu,
+            .btn-custom{
+                background-color: #1E7EC6;
+            }
+
+            {#.nav-link:hover{#}
+            {#    color: ;#}
+            {#}#}
+        </style>
+        {% block additional_styles %}
+        {% endblock additional_styles %}
+    </head>
+        <body class="sb-nav-fixed">
+            <nav class="sb-topnav navbar navbar-custom navbar-expand">
+                <!-- Navbar Brand-->
+                <a class="navbar-brand ps-3 text-white" href="#">CristalCeram </a>
+                <!-- Sidebar Toggle-->
+                <button class="btn btn-sm order-1 order-lg-0 me-4 me-lg-0 btn-custom" id="sidebarToggle" href="#!">
+                    <i style="color: white;" class="fas fa-bars"></i>
+                </button>
+                <!-- Navbar Search-->
+                <div class="d-none d-md-inline-block form-inline ms-auto me-0 me-md-3 my-2 my-md-0">
+                </div>
+                <!-- Navbar-->
+                <ul class="navbar-nav ms-auto ms-md-0 me-3 me-lg-4 text-white">
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i  class="fas fa-user fa-fw text-white"></i></a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
+                            <li><a class="dropdown-item" href="#">Se déconnecter</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </nav>
+
+            <div id="layoutSidenav">
+                <div id="layoutSidenav_nav">
+                    <nav class="sb-sidenav accordion" style="background-color: #597A96;" id="sidenavAccordion">
+                        <div class="sb-sidenav-menu">
+                            <div class="nav text-white">
+                                <a class="nav-link" href="#">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
+                                    Tableau de bord du site
+                                </a>
+                                <div class="sb-sidenav-menu-heading">Gestion</div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Catégories
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav">
+                                        <a class="nav-link" href="#">Voir La liste des catégories</a>
+                                    </nav>
+                                </div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
+                                    Formations
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
+                                         <a class="nav-link" href="#">Voir La liste des formations</a>
+                                    </nav>
+                                </div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate" aria-expanded="false" aria-controls="collapseAggregate">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Étudiants
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapseAggregate" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav">
+                                        <a class="nav-link" href="#">Voir La liste des étudiants</a>
+                                    </nav>
+                                </div>
+
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate__" aria-expanded="false" aria-controls="collapseAggregate">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Les langues
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapseAggregate__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav ">
+                                        <a class="nav-link" href="#">Voir La liste de langues</a>
+                                    </nav>
+                                </div>
+
+                        </div>
+                        <div class="sb-sidenav-footer text-white">
+                            <div class="small">Connecté en tant que: {{ current_user.role }}</div>
+                            Gestion Commerciale
+                        </div>
+                        </div>
+                    </nav>
+                </div>
+                <div id="layoutSidenav_content">
+                <main>
+                    <div class="container-fluid px-4">
+                        <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
+
+                        {% block main_tag %}
+                        {% endblock main_tag %}
+                    </div>
+                </main>
+            </div>
+            </div>
+
+            <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
+            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
+            <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+            {% block additional_scripts %}
+            {% endblock additional_scripts %}
+    </body>
+</html>
