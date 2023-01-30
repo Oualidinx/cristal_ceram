@@ -2,10 +2,9 @@ from flask import render_template, session, flash, redirect, url_for, request, j
 from root.admin import admin_bp
 from root import database
 from flask_login import login_required
-from sqlalchemy import func
 from root.admin.forms import *
-from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse
-
+from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse, Stock, Store
+from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
 def admin_before_request():
@@ -208,3 +207,66 @@ def delete_warehouse(warehouse_id):
     database.session.delete(warehouse)
     database.session.commit()
     return redirect(url_for("admin_bp.warehouses"))
+
+
+'''
+Manage users
+'''
+
+@admin_bp.get('/items')
+@admin_bp.post('/items')
+@login_required
+def items():
+    company = Company.query.get(UserForCompany.query.filter_by(role="manager").filter_by(
+        fk_user_id=current_user.id).first().fk_company_id).first()
+    if not request.json or not company:
+        return '',404
+    if request.json['role'] in ['1','2']:
+        data = request.json['role']
+        if data == '1':
+            return jsonify(messages = [{'ID':st.id,'name':st} for st in Store.query.filter_by(fk_company_id = company.id).all()])
+        return jsonify(messages = [{'ID':wh.id,'name':wh} for wh in Warehouse.query.filter_by(fk_company_id = company.id).all()])
+    return jsonify(status=400)
+
+
+@admin_bp.get('/employees/new')
+@admin_bp.post('/employees/new')
+@login_required
+def create_user():
+    form = EmployeeForm()
+    company = Company.query.get(UserForCompany.query.filter_by(role="manager").filter_by(
+        fk_user_id=current_user.id).first().fk_company_id).first()
+    if not company:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    if form.validate_on_submit():
+        user = User()
+        user.username = form.username.data
+        user.password_hash = generate_password_hash(form.password.data, "sha265")
+        user.full_name = form.full_name.data
+        if not form.role.data or form.role.data not in ['1','2']:
+            flash('Veuillez choisir le rôle',"warnings")
+            return render_template("admin/new_user.html", form=form)
+        else:
+            user.fk_warehouse_id = int(form.location.data) if form.role.data == '2' else None
+            user.fk_store_id = int(form.location.data) if form.role.data == '1' else None
+            database.session.add(user)
+            database.session.commit()
+            user_for_company = UserForCompany()
+            user_for_company.fk_company_id = company.id
+            user_for_company.fk_user_id = user.id
+            if form.role.data == '1':
+                user_for_company.role = "vendeur"
+            else:
+                user.role = "magasiner"
+            database.session.add(user_for_company)
+            database.session.commit()
+            flash('Employé ajouté avec succès','success')
+            return redirect(url_for("admin_bp.create_user"))
+    return render_template("admin/new_user.html", form = form)
+
+
+@admin_bp.get('/users')
+@login_required
+def users():
+    pass
+

@@ -104,3 +104,6 @@ class EmployeeForm(FlaskForm):
         user = User.query.filter(func.lower(full_name)==func.lower(full_name.data)).first()
         if user:
             raise ValidationError('Employer déjà existe')
+
+class StockForm(FlaskForm):
+    pass

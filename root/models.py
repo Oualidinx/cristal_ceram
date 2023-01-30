@@ -318,15 +318,15 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     # created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    is_verified = db.Column(db.Boolean, default=0)
-    is_disabled = db.Column(db.Boolean, default=0)
+    is_verified = db.Column(db.Boolean, default=False)
+    is_disabled = db.Column(db.Boolean, default=False)
     taxes = db.relationship('Tax', backref="user_taxes", lazy="subquery")
     companies = db.relationship('Company', secondary="user_for_company",
                                 primaryjoin="foreign(UserForCompany.fk_company_id) == Company.id",
                                 secondaryjoin="and_(User.id==foreign(UserForCompany.fk_user_id), UserForCompany.role=='manager')",
                                 viewonly=True)
     fk_store_id = db.Column(db.Integer, db.ForeignKey('store.id'), nullable = True)
-    fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('store.id'), nullable = True)
+    fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'), nullable = True)
 
 
 class UserForCompany(db.Model):

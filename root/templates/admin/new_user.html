@@ -142,10 +142,29 @@
 
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
-    <script !src="">
+    <script>
         $(document).ready(function(){
            $('select').select2();
            $('toast').toast('show');
+           $("#role").change(function(){
+                var items="";
+                $.ajax({
+                    url:'{{ url_for('admin_bp.items') }}',
+                    type:"POST",
+                    data: JSON.stringify({'role':$('#role').val()}),
+                    contentType:"application/json",
+                    success: function (response){
+                        if (response.messages!==null){
+                            var data = response.messages
+                              $.each(data,function(index, item){
+                                 items= items+ '<option value="' + item.id+'">'+item.name+'</option>';
+                              });
+                                console.log(items);
+                              $("#location").html(items);
+                        }
+                    }
+                })
+              });
         });
     </script>
 {% endblock %}

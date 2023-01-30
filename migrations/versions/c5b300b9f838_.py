@@ -1,8 +1,8 @@
 """empty message
 
-Revision ID: 6fbfc1f7ad84
+Revision ID: c5b300b9f838
 Revises: 
-Create Date: 2023-01-15 22:47:42.474766
+Create Date: 2023-01-29 23:46:06.702218
 
 """
 from alembic import op
@@ -10,7 +10,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '6fbfc1f7ad84'
+revision = 'c5b300b9f838'
 down_revision = None
 branch_labels = None
 depends_on = None
@@ -37,6 +37,14 @@ def upgrade():
     sa.Column('civility', sa.String(length=10), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('company',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=256), nullable=True),
+    sa.Column('site', sa.String(length=100), nullable=True),
+    sa.Column('currency', sa.String(length=10), nullable=True),
+    sa.Column('activity_sector', sa.String(length=100), nullable=True),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('supplier',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('full_name', sa.String(length=10), nullable=True),
@@ -44,39 +52,6 @@ def upgrade():
     sa.Column('category', sa.String(length=20), nullable=True),
     sa.Column('nif', sa.String(length=10), nullable=True),
     sa.Column('civility', sa.String(length=10), nullable=True),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('user',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('full_name', sa.String(length=256), nullable=True),
-    sa.Column('role', sa.String(length=10), nullable=True),
-    sa.Column('password_hash', sa.String(length=256), nullable=True),
-    sa.Column('email', sa.String(length=10), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=True),
-    sa.Column('is_verified', sa.Boolean(), nullable=True),
-    sa.Column('is_disabled', sa.Boolean(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('company',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=256), nullable=True),
-    sa.Column('site', sa.String(length=100), nullable=True),
-    sa.Column('manager', sa.Integer(), nullable=True),
-    sa.Column('currency', sa.String(length=10), nullable=True),
-    sa.Column('activity_sector', sa.String(length=100), nullable=True),
-    sa.ForeignKeyConstraint(['manager'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('quotation',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('intern_reference', sa.String(length=10), nullable=True),
-    sa.Column('client_id', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['client_id'], ['client.id'], ),
-    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('address',
@@ -110,6 +85,64 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('fund',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('label', sa.String(length=100), nullable=True),
+    sa.Column('total', sa.Float(), nullable=True),
+    sa.Column('company_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('store',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=10), nullable=True),
+    sa.Column('address', sa.String(length=100), nullable=True),
+    sa.Column('contact', sa.String(length=10), nullable=True),
+    sa.Column('fk_company_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_company_id'], ['company.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('supplier_company',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('company_id', sa.Integer(), nullable=True),
+    sa.Column('supplier_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('tva',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('label', sa.String(length=500), nullable=True),
+    sa.Column('value', sa.Float(), nullable=True),
+    sa.Column('sign', sa.String(length=1), nullable=True),
+    sa.Column('company_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('warehouse',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=10), nullable=True),
+    sa.Column('address', sa.String(length=100), nullable=True),
+    sa.Column('contact', sa.String(length=10), nullable=True),
+    sa.Column('fk_company_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_company_id'], ['company.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('full_name', sa.String(length=256), nullable=True),
+    sa.Column('username', sa.String(length=256), nullable=True),
+    sa.Column('password_hash', sa.String(length=256), nullable=True),
+    sa.Column('email', sa.String(length=10), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('is_verified', sa.Boolean(), nullable=True),
+    sa.Column('is_disabled', sa.Boolean(), nullable=True),
+    sa.Column('fk_store_id', sa.Integer(), nullable=True),
+    sa.Column('fk_warehouse_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_store_id'], ['store.id'], ),
+    sa.ForeignKeyConstraint(['fk_warehouse_id'], ['store.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('contact',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('key', sa.String(length=50), nullable=True),
@@ -122,14 +155,6 @@ def upgrade():
     sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ),
     sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('fund',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('label', sa.String(length=100), nullable=True),
-    sa.Column('total', sa.Float(), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('item',
@@ -154,6 +179,67 @@ def upgrade():
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('quotation',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('intern_reference', sa.String(length=10), nullable=True),
+    sa.Column('fk_client_id', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['fk_client_id'], ['client.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('subscription',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('start_date', sa.DateTime(), nullable=True),
+    sa.Column('end_date', sa.DateTime(), nullable=True),
+    sa.Column('expire_in', sa.Integer(), nullable=True),
+    sa.Column('created_at', sa.DateTime(), nullable=True),
+    sa.Column('users_number', sa.Integer(), nullable=True),
+    sa.Column('sms_number', sa.Integer(), nullable=True),
+    sa.Column('per_mounth', sa.Boolean(), nullable=True),
+    sa.Column('per_year', sa.Boolean(), nullable=True),
+    sa.Column('fk_company_id', sa.Integer(), nullable=True),
+    sa.Column('fk_user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_company_id'], ['company.id'], ),
+    sa.ForeignKeyConstraint(['fk_user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('tax',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('name', sa.String(length=100), nullable=True),
+    sa.Column('label', sa.String(length=100), nullable=True),
+    sa.Column('value', sa.Float(), nullable=True),
+    sa.Column('sign', sa.String(length=1), nullable=True),
+    sa.Column('is_fixed', sa.Boolean(), nullable=True),
+    sa.Column('is_percent', sa.Boolean(), nullable=True),
+    sa.Column('applied_before_TVA', sa.Boolean(), nullable=True),
+    sa.Column('applied_after_TVA', sa.Boolean(), nullable=True),
+    sa.Column('on_applied_products', sa.Boolean(), nullable=True),
+    sa.Column('fk_user_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('user_for_company',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('fk_user_id', sa.Integer(), nullable=True),
+    sa.Column('fk_company_id', sa.Integer(), nullable=True),
+    sa.Column('role', sa.String(length=10), nullable=True),
+    sa.Column('start_from', sa.DateTime(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_company_id'], ['company.id'], ),
+    sa.ForeignKeyConstraint(['fk_user_id'], ['user.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
+    op.create_table('item_brand_category',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('category_id', sa.Integer(), nullable=True),
+    sa.Column('brand_id', sa.Integer(), nullable=True),
+    sa.Column('item_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['brand_id'], ['brand.id'], ),
+    sa.ForeignKeyConstraint(['category_id'], ['category.id'], ),
+    sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('order',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('category_id', sa.Integer(), nullable=True),
@@ -173,55 +259,20 @@ def upgrade():
     sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('subscription',
+    op.create_table('stock',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('start_date', sa.DateTime(), nullable=True),
-    sa.Column('end_date', sa.DateTime(), nullable=True),
-    sa.Column('expire_in', sa.Integer(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), nullable=True),
-    sa.Column('users_number', sa.Integer(), nullable=True),
-    sa.Column('sms_number', sa.Integer(), nullable=True),
-    sa.Column('per_mounth', sa.Boolean(), nullable=True),
-    sa.Column('per_year', sa.Boolean(), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.Column('user_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.ForeignKeyConstraint(['user_id'], ['user.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('supplier_company',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.Column('supplier_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('tax',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=100), nullable=True),
     sa.Column('label', sa.String(length=100), nullable=True),
-    sa.Column('value', sa.Float(), nullable=True),
-    sa.Column('sign', sa.String(length=1), nullable=True),
-    sa.Column('is_fixed', sa.Boolean(), nullable=True),
-    sa.Column('is_percent', sa.Boolean(), nullable=True),
-    sa.Column('for_sell', sa.Boolean(), nullable=True),
-    sa.Column('for_buy', sa.Boolean(), nullable=True),
-    sa.Column('applied_before_TVA', sa.Boolean(), nullable=True),
-    sa.Column('applied_after_TVA', sa.Boolean(), nullable=True),
-    sa.Column('on_applied_products', sa.Boolean(), nullable=True),
-    sa.Column('on_applied_TVA', sa.Boolean(), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('tva',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('label', sa.String(length=500), nullable=True),
-    sa.Column('value', sa.Float(), nullable=True),
-    sa.Column('sign', sa.String(length=1), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.Column('fk_item_id', sa.Integer(), nullable=True),
+    sa.Column('fk_warehouse_id', sa.Integer(), nullable=True),
+    sa.Column('stock_qte', sa.Float(), nullable=True),
+    sa.Column('stock_min', sa.Float(), nullable=True),
+    sa.Column('stock_max', sa.Float(), nullable=True),
+    sa.Column('created_by', sa.Integer(), nullable=True),
+    sa.Column('last_purchase', sa.DateTime(), nullable=True),
+    sa.Column('last_buy_price', sa.Float(), nullable=True),
+    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
+    sa.ForeignKeyConstraint(['fk_item_id'], ['item.id'], ),
+    sa.ForeignKeyConstraint(['fk_warehouse_id'], ['warehouse.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('delivery_note',
@@ -252,25 +303,12 @@ def upgrade():
     sa.ForeignKeyConstraint(['supplier_id'], ['supplier.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
-    op.create_table('item_brand_category',
+    op.create_table('order_tax',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('category_id', sa.Integer(), nullable=True),
-    sa.Column('brand_id', sa.Integer(), nullable=True),
-    sa.Column('item_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['brand_id'], ['brand.id'], ),
-    sa.ForeignKeyConstraint(['category_id'], ['category.id'], ),
-    sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('warehouse',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('name', sa.String(length=10), nullable=True),
-    sa.Column('address_id', sa.Integer(), nullable=True),
-    sa.Column('contact_id', sa.Integer(), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['address_id'], ['address.id'], ),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
-    sa.ForeignKeyConstraint(['contact_id'], ['contact.id'], ),
+    sa.Column('fk_order_id', sa.Integer(), nullable=True),
+    sa.Column('fk_tax_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_order_id'], ['order.id'], ),
+    sa.ForeignKeyConstraint(['fk_tax_id'], ['tax.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_table('entry',
@@ -293,6 +331,14 @@ def upgrade():
     sa.ForeignKeyConstraint(['tva'], ['tva.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
+    op.create_table('invoice_tax',
+    sa.Column('id', sa.Integer(), nullable=False),
+    sa.Column('fk_invoice_id', sa.Integer(), nullable=True),
+    sa.Column('fk_tax_id', sa.Integer(), nullable=True),
+    sa.ForeignKeyConstraint(['fk_invoice_id'], ['invoice.id'], ),
+    sa.ForeignKeyConstraint(['fk_tax_id'], ['tax.id'], ),
+    sa.PrimaryKeyConstraint('id')
+    )
     op.create_table('pay',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('amount', sa.Float(), nullable=True),
@@ -309,29 +355,13 @@ def upgrade():
     sa.Column('pay_information', sa.String(length=1500), nullable=True),
     sa.Column('receiving_account', sa.String(length=10), nullable=True),
     sa.Column('recv_crate', sa.String(length=10), nullable=True),
-    sa.Column('company_id', sa.Integer(), nullable=True),
-    sa.Column('account_id', sa.Integer(), nullable=True),
-    sa.Column('invoice_id', sa.Integer(), nullable=True),
-    sa.ForeignKeyConstraint(['account_id'], ['bank_account.id'], ),
-    sa.ForeignKeyConstraint(['company_id'], ['company.id'], ),
+    sa.Column('fk_company_id', sa.Integer(), nullable=True),
+    sa.Column('fk_account_id', sa.Integer(), nullable=True),
+    sa.Column('fk_invoice_id', sa.Integer(), nullable=True),
     sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['invoice_id'], ['invoice.id'], ),
-    sa.PrimaryKeyConstraint('id')
-    )
-    op.create_table('stock',
-    sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('label', sa.String(length=100), nullable=True),
-    sa.Column('item_id', sa.Integer(), nullable=True),
-    sa.Column('warehouse_id', sa.Integer(), nullable=True),
-    sa.Column('stock_qte', sa.Float(), nullable=True),
-    sa.Column('stock_min', sa.Float(), nullable=True),
-    sa.Column('stock_max', sa.Float(), nullable=True),
-    sa.Column('created_by', sa.Integer(), nullable=True),
-    sa.Column('last_purchase', sa.DateTime(), nullable=True),
-    sa.Column('last_buy_price', sa.Float(), nullable=True),
-    sa.ForeignKeyConstraint(['created_by'], ['user.id'], ),
-    sa.ForeignKeyConstraint(['item_id'], ['item.id'], ),
-    sa.ForeignKeyConstraint(['warehouse_id'], ['warehouse.id'], ),
+    sa.ForeignKeyConstraint(['fk_account_id'], ['bank_account.id'], ),
+    sa.ForeignKeyConstraint(['fk_company_id'], ['company.id'], ),
+    sa.ForeignKeyConstraint(['fk_invoice_id'], ['invoice.id'], ),
     sa.PrimaryKeyConstraint('id')
     )
     # ### end Alembic commands ###
@@ -339,28 +369,32 @@ def upgrade():
 
 def downgrade():
     # ### commands auto generated by Alembic - please adjust! ###
-    op.drop_table('stock')
     op.drop_table('pay')
+    op.drop_table('invoice_tax')
     op.drop_table('entry')
-    op.drop_table('warehouse')
-    op.drop_table('item_brand_category')
+    op.drop_table('order_tax')
     op.drop_table('invoice')
     op.drop_table('delivery_note')
-    op.drop_table('tva')
-    op.drop_table('tax')
-    op.drop_table('supplier_company')
-    op.drop_table('subscription')
+    op.drop_table('stock')
     op.drop_table('order')
+    op.drop_table('item_brand_category')
+    op.drop_table('user_for_company')
+    op.drop_table('tax')
+    op.drop_table('subscription')
+    op.drop_table('quotation')
     op.drop_table('item')
-    op.drop_table('fund')
     op.drop_table('contact')
+    op.drop_table('user')
+    op.drop_table('warehouse')
+    op.drop_table('tva')
+    op.drop_table('supplier_company')
+    op.drop_table('store')
+    op.drop_table('fund')
     op.drop_table('client_company')
     op.drop_table('bank_account')
     op.drop_table('address')
-    op.drop_table('quotation')
-    op.drop_table('company')
-    op.drop_table('user')
     op.drop_table('supplier')
+    op.drop_table('company')
     op.drop_table('client')
     op.drop_table('category')
     op.drop_table('brand')
