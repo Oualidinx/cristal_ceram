@@ -7,3 +7,4 @@ root/auth/__pycache__
 root/ventes/__pycache__
 root/trush.py
 root/templates/index.html
+migrations
