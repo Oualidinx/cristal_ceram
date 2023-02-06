@@ -1,6 +1,6 @@
-{% extends "layouts/master_dashboard.html" %}
+{% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
-        <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+        <link href="{{ url_for('static', filename='dist/theme/mermaid.css') }}" rel="stylesheet" />
         <style>
         .hstack {
           display: flex;
@@ -56,7 +56,7 @@
 
 {% endblock %}
 {% block additional_scripts %}
-    <script src="{{ url_for('static', filename='js/gridjs.umd.js') }}"></script>
+    <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
      $(document).ready(function (){
             $('.toast').toast('show');

@@ -1,7 +1,7 @@
 from flask_migrate import Migrate
 from root import create_app, database
 from root.models import *
-from flask import redirect, url_for
+from flask import render_template, redirect, url_for
 from dotenv import load_dotenv
 import os
 load_dotenv('.env')
@@ -18,3 +18,4 @@ def make_shell_context():
 @app.route('/')
 def index():
     return redirect(url_for('auth_bp.login'))
+    # return render_template('errors/404.html', blueprint='admin_bp')

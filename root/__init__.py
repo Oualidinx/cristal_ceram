@@ -3,10 +3,11 @@ from flask_login import LoginManager
 from flask_sqlalchemy import SQLAlchemy
 from flask_babel import Babel, _
 from config import config
+from datetime import timedelta
 from flask_mail import Mail
 import re
 email_regex = re.compile('^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
-name_regex = re.compile('^[a-zA-Z]+$')
+name_regex = re.compile('^[a-z A-Z]+$')
 price_letters_regex = re.compile('^[a-zA-Z-]')
 phone_number_regex = re.compile('^[\+]?[(]?[0-9]{2}[)]?[-\s\.]?[0-9]{3}[-\s\.]?[0-9]{4,7}$')
 
@@ -18,9 +19,11 @@ mail = Mail()
 
 def create_app(config_name):
     app.config.from_object(config[config_name])
+    app.permanent_session_lifetime = timedelta(hours = 24)
     database.init_app(app)
 
     login_manager.login_view="auth_bp.login"
+
     login_manager.login_message= _('Vous devez vous connecter afin d\'utiliser ce service')
     login_manager.login_message_category="warning"
     login_manager.init_app(app)

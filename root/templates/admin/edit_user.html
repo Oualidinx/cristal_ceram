@@ -1,0 +1,238 @@
+{% extends "layouts/admin_layout.html" %}
+{% block main_tag %}
+    <div class="container">
+        <div class="row w-100">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="row mt-5 w-100">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between">
+                    <h3 class="h3">Modifier les informations</h3>
+                    <div class="dropdown">
+                          <button class="btn btn-outline-primary" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fa-solid fa-ellipsis-vertical"></i>
+                          </button>
+                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                <li><a class="dropdown-item" href="{{ url_for('admin_bp.disable_user', user_id = user.id) }}">Désactiver sa session</a></li>
+                          </ul>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="card-title">
+                        <h5 class="h5">
+                            {{ form.full_name.data }}
+                        </h5>
+                    </div>
+                    <form method="post">
+                        {{ form.hidden_tag() }}
+                        <div class="row g-1 mb-5">
+                            <div class="col-sm">
+                                <div class="form-floating">
+                                    {% if form.full_name.errors %}
+                                        <div class="input-group has-validation">
+                                        {{ form.full_name(class="form-control is-invalid") }}
+                                        {% for error in form.full_name.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.full_name(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.full_name.label }}
+                                </div>
+                            </div>
+                            <div class="col-sm">
+                                <div class="form-floating">
+                                    {% if form.username.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.username(class="form-control is-invalid") }}
+                                            {% for error in form.username.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.username(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.username.label }}
+                                </div>
+                            </div>
+                        </div>
+                    <div class="row mb-5">
+                        <div class="col-sm-4">
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.role.label }}</div>
+                                {% if form.role.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ form.role(class="form-select is-invalid") }}
+                                        {% for error in form.role.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.role(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+
+                        {% if form.role.data==1 %}
+                            <div class="col-sm" id="div-stores">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.stores.label }}</div>
+                                    {% if form.stores.errors %}
+                                        {{ form.stores(class="form-select is-invalid") }}
+                                        {% for error in form.stores.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.stores(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm" style="display: none;" id="div-warehouses">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.warehouses.label }}</div>
+                                    {% if form.warehouses.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.warehouses(class="form-select is-invalid") }}
+                                            {% for error in form.warehouses.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+
+                                    {% else %}
+                                        {{ form.warehouses(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% else %}
+                            <div class="col-sm" id="div-warehouses">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.warehouses.label }}</div>
+                                    {% if form.warehouses.errors %}
+                                        {{ form.warehouses(class="form-select is-invalid") }}
+                                        {% for error in form.warehouses.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.warehouses(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm" style="display: none;" id="div-stores" >
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.stores.label }}</div>
+                                    {% if form.stores.errors %}
+                                        {{ form.stores(class="form-select is-invalid") }}
+                                        {% for error in form.stores.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.stores(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-5">
+                        <div class="col-md">
+                            {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
+                        </div>
+                    </div>
+                    </form>
+                </div>
+            </div>
+         </div>
+    </div>
+{% endblock %}
+
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}" />
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+
+    <script>
+        $(document).ready(function(){
+           $('.toast').toast('show');
+           $('#role' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
+            } );
+           $('#warehouses' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
+            } )
+           ;$('#stores' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
+            } );
+           $("#role").change(function(){
+                if ($(this).val() === '1'){
+                    $('#div-stores').css('display','block');
+                    $('#div-warehouses').css('display','none');
+                }else{
+                    $('#div-stores').css('display','none');
+                    $('#div-warehouses').css('display','block');
+                }
+           });
+        });
+    </script>
+{% endblock %}
+{#var items="";#}
+{#$.ajax({#}
+{#    url:'{{ url_for('admin_bp.items') }}',#}
+{#    type:"POST",#}
+{#    data: JSON.stringify({'role':$('#role').val()}),#}
+{#    contentType:"application/json",#}
+{#    success: function (response){#}
+{#        if (response.messages!==null){#}
+{#            var data = response.messages#}
+{#              $.each(data,function(index, item){#}
+{#                 items= items+ '<option value="' + item.id+'">'+item.name+'</option>';#}
+{#              });#}
+{#                console.log(items);#}
+{#              $("#location").html(items);#}
+{#        }#}
+{#    }#}
+{#});#}

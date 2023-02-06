@@ -26,14 +26,16 @@
         <div class="row">
             <div class="col-md">
                 <h3 class="h3">
-                    Nouvelle Formation
+                    Nouveau article
                 </h3>
             </div>
             <div class="col-md text-center">
-                <button type="button" class="btn btn-secondary" data-bs-toggle="modal" data-bs-target="#exampleModal">
-                    <i class="fa fa-circle-plus"></i>
-                    Nouvelle session
-                </button>
+                <div class="btn-group">
+                    <a role="button" class="ajouter_format btn-outline-secondary" href="{{ url_for('admin_bp.edit_tax',tax_id=tax['id']) }}">
+                        <i class="fa-light fa-add"></i>Ajouter Format</a>
+                    <a role="button" class="ajouter_aspect btn-outline-secondary" href="{{ url_for('admin_bp.delete_tax',tax_id=tax['id']) }}">
+                        <i class="fa-light fa-add"></i>Ajouter aspect</a>
+                </div>
             </div>
             <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
               <div class="modal-dialog">

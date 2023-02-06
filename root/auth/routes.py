@@ -3,7 +3,7 @@ from flask import render_template, redirect, url_for, session, flash, request, c
 from werkzeug.security import check_password_hash
 from root import mail, database
 from flask_mail import Message
-from root.models import User
+from root.models import User, UserForCompany
 from root.auth.forms import LoginForm, RequestToken, ResetPasswordForm
 from flask_login import login_user, logout_user, login_required
 from werkzeug.security import generate_password_hash
@@ -27,15 +27,20 @@ def login():
     form = LoginForm()
     if form.validate_on_submit():
         user = User.query.filter_by(username=form.username.data).first() #filter_by(is_deleted=0).
-        if user:
+        if user and not user.is_disabled:
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user, remember=False)
                 nex_page = request.args.get('next')
                 if nex_page:
                     return redirect(nex_page)
-
-                if user.role == "master":
+                user_for_company = UserForCompany.query.filter_by(fk_user_id = user.id).first()
+                if not user_for_company:
+                    return render_template('errors/401.html')
+                if user_for_company.role == "manager":
                     return redirect(url_for('admin_bp.index'))
+                if user_for_company.role == "vendeur":
+                    return redirect(url_for('sales_bp.index'))
+                return redirect(url_for("purchases_bp.index"))
             else:
                 flash('Veuillez vérifier les informations', 'danger')
         else:

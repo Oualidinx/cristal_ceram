@@ -1,7 +1,7 @@
 from root import login_manager, database as db
 from datetime import datetime
 from flask_login import UserMixin
-
+from sqlalchemy import and_
 @login_manager.user_loader
 def user_loader(user_id):
     return User.query.get_or_404(user_id)
@@ -24,7 +24,13 @@ class Company(db.Model):
     currency = db.Column(db.String(10))
     # taxes = db.relationship('Tax', backref="company_taxes", lazy = "subquery")
     activity_sector = db.Column(db.String(100))
-
+    users = db.relationship('User', secondary="user_for_company",viewonly=True,
+                            primaryjoin="Company.id == foreign(UserForCompany.fk_company_id)",
+                            secondaryjoin="and_(User.id == foreign(UserForCompany.fk_user_id), UserForCompany.role!='manager')")
+    warehouses = db.relationship('Warehouse', backref="company_warehouses", lazy="subquery")
+    stores = db.relationship('Store', backref="company_stores", lazy="subquery")
+    def __repr__(self):
+        return f'<Company:{self.id}, {self.name}>'
 
 class Tax(db.Model):
     __tablename__="tax"
@@ -81,16 +87,40 @@ class BankAccount(db.Model):
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
 
 
-class Brand(db.Model):
-    __tablename__="brand"
+class Aspect(db.Model):
+    __tablename__="aspect"
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(500))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return f'{self.id}  -  {self.label}'
 
 
-class Category(db.Model):
-    __tablename__="category"
+class Format(db.Model):
+    __tablename__="format"
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(500))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+
+    def __repr__(self):
+        return f'{self.id}  -  {self.label}'
+
+    def repr(self):
+        return dict(
+            id = self.id,
+            label = self.label
+        )
+
+
+# class Utilisation(db.Model):
+#     __tablename__="utilisation"
+#     id = db.Column(db.Integer, primary_key=True)
+#     label = db.Column(db.String(500))
+#     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+#
+#     def __repr__(self):
+#         return f'{self.id}  -  {self.label}'
 
 
 class Client(db.Model):
@@ -179,37 +209,39 @@ class InvoiceTax(db.Model):
     fk_tax_id = db.Column(db.Integer, db.ForeignKey('tax.id'))
 
 
+class ItemAspectFormat(db.Model):
+    __tablename__="item_aspect_format"
+    id = db.Column(db.Integer, primary_key=True)
+    fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
+    fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
+    # fk_utilisation_id = db.Column(db.Integer, db.ForeignKey('utilisation.id'))
+    utilisation = db.Column(db.String(50))
+    fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
+
+
 class Item(db.Model):
     __tablename__="item"
     id = db.Column(db.Integer, primary_key=True)
+    serie = db.Column(db.String(100), nullable=True)
     intern_reference = db.Column(db.String(100))
-    series = db.Column(db.String(100))
-    label = db.Column(db.String(100))
-    item_type = db.Column(db.String(20))
-    bar_code = db.Column(db.String(512))
-    brand_id = db.Column(db.Integer, db.ForeignKey('brand.id'))
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    dim_x = db.Column(db.Float, default=0)
-    dim_y = db.Column(db.Float, default=0)
+    label = db.Column(db.String(1500))
+    # use_for = db.Column(db.String(20))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     expired_at = db.Column(db.DateTime, default=datetime.utcnow())
     is_disabled = db.Column(db.Boolean, default=False)
     company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
 
-
-class ItemBrandCategory(db.Model):
-    __tablename__="item_brand_category"
-    id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
-    brand_id = db.Column(db.Integer, db.ForeignKey('brand.id'))
-    item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
+    def __repr__(self):
+        return f'{self.label}, ' \
+               f'{Format.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_format_id).label}, ' \
+               f'{Aspect.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_aspect_id).label}'
 
 
 class Order(db.Model):
     __tablename__="order"
     id = db.Column(db.Integer, primary_key=True)
-    category_id = db.Column(db.Integer, db.ForeignKey('category.id'))
+    category = db.Column(db.String(50))
     client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
     delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
@@ -265,15 +297,35 @@ class Quotation(db.Model):
 class Stock(db.Model):
     __tablename__="stock"
     id = db.Column(db.Integer, primary_key=True)
-    label = db.Column(db.String(100))
+    # label = db.Column(db.String(100))
     fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'))
     stock_qte = db.Column(db.Float, default=0)
-    stock_min = db.Column(db.Float, default=0)
-    stock_max = db.Column(db.Float, default=0)
+    stock_sec = db.Column(db.Float, default=0)
+    # stock_max = db.Column(db.Float, default=0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     last_purchase = db.Column(db.DateTime, default=datetime.utcnow())
-    last_buy_price = db.Column(db.Float, default=0)
+    last_purchase_price = db.Column(db.Float, default=0)
+
+    def __repr__(self):
+        return f'{self.id}, ' \
+               f'{Item.query.get(self.fk_item_id).label}, ' \
+               f'{Warehouse.query.get(self.fk_warehouse_id).name}'
+
+    def repr(self, columns=None):
+        _dict = dict(
+            id = self.id,
+            warehouse = Warehouse.query.get(self.fk_warehouse_id).name,
+            item = Item.query.get(self.fk_item_id).label,
+            quantity = self.stock_qte,
+            last_purchase = self.last_purchase.date(),
+            last_purchase_price = '{:20,.2f}'.format(self.last_purchase_price),
+            status = "#004D33" if (self.stock_sec/self.stock_qte)<0.5 else "#A6001A" if (self.stock_sec/self.stock_qte) in [0.51,1] else "#E06000",
+            stock_sec = self.stock_sec
+        )
+        if columns:
+            return {key:_dict[key] for key in columns}
+        return _dict
 
 
 class Subscription(db.Model):
@@ -317,7 +369,7 @@ class User(UserMixin, db.Model):
     password_hash = db.Column(db.String(256))
     email = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
-    # created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_verified = db.Column(db.Boolean, default=False)
     is_disabled = db.Column(db.Boolean, default=False)
     taxes = db.relationship('Tax', backref="user_taxes", lazy="subquery")
@@ -326,7 +378,25 @@ class User(UserMixin, db.Model):
                                 secondaryjoin="and_(User.id==foreign(UserForCompany.fk_user_id), UserForCompany.role=='manager')",
                                 viewonly=True)
     fk_store_id = db.Column(db.Integer, db.ForeignKey('store.id'), nullable = True)
-    fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'), nullable = True)
+    def __repr__(self):
+        return f'{self.id} - {self.full_name}'
+    def repr(self, columns=None):
+        _dict = {
+            'id':self.id,
+            'full_name' : self.full_name,
+            'username' : self.username,
+            'role': 'vendeur' if self.fk_store_id and Store.query.get(self.fk_store_id) else 'magasiner' if UserForCompany.query.filter(and_(
+                UserForCompany.fk_warehouse_id is not None, UserForCompany.role == 'magasiner')) \
+                .filter_by(fk_user_id=self.id).all() else '',
+            'status': ('A6001A', "Suspendu(e)") if not self.fk_store_id and not UserForCompany.query.filter(and_(
+                UserForCompany.fk_warehouse_id is not None, UserForCompany.role == 'magasiner')) \
+                .filter_by(fk_user_id=self.id).all() else ("#004D33", "Affecté(e)"),
+            '_session' : ("#004D33","Activé") if not self.is_disabled else ('A6001A',"Désactivé"),
+            'location' : Store.query.get(self.fk_store_id) if self.fk_store_id else "Autres...",
+            'locations': [str(wh) for wh in Warehouse.query.join(UserForCompany, Warehouse.id == UserForCompany.fk_warehouse_id)\
+                                .filter(UserForCompany.fk_user_id == self.id).all()]
+        }
+        return  {key : _dict[key] for key in columns} if columns else _dict
 
 
 class UserForCompany(db.Model):
@@ -334,8 +404,32 @@ class UserForCompany(db.Model):
     id=db.Column(db.Integer, primary_key=True)
     fk_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'), nullable=True)
     role = db.Column(db.String(10))
     start_from = db.Column(db.DateTime, default = datetime.utcnow())
+    end_at = db.Column(db.DateTime)
+
+    def __repr__(self):
+        return f'UserForCompany: {User.query.get(self.fk_user_id).full_name}, {self.role}, dans {Warehouse.query.get(self.fk_warehouse_id)}'
+
+    def repr(self, columns = None):
+        user = User.query.get(self.fk_user_id)
+        _dict={
+            'id': user.id,
+            'full_name': user.full_name,
+            'username': user.username,
+            'role':self.role,
+            'status': ('A6001A', "Suspendu(e)") if not user.fk_store_id and not UserForCompany.query.filter(and_(
+                UserForCompany.fk_warehouse_id is not None, UserForCompany.role == 'magasiner')) \
+                .filter_by(fk_user_id=user.id).all() else ("#004D33", "Affecté(e)"),
+            '_session': ("#004D33", "Activé") if not user.is_disabled else ('A6001A', "Désactivé"),
+            'location': Store.query.get(self.fk_store_id) if user.fk_store_id else "Autres...",
+            'locations': Warehouse.query.join(UserForCompany, Warehouse.id == UserForCompany.fk_warehouse_id) \
+                .filter(UserForCompany.fk_user_id == user.id).all()
+
+        }
+        return {key:_dict[key] for key in columns} if columns else _dict
+
 
 class Warehouse(db.Model):
     __tablename__="warehouse"
@@ -347,7 +441,7 @@ class Warehouse(db.Model):
     stocks = db.relationship('Stock', backref="warehouse_stocks", lazy="subquery")
 
     def __repr__(self):
-        return f'Entrepôt: {self.name}, {self.address}'
+        return f'\n{self.name}, {self.address}'
 
     def repr(self, columns = None):
         _dict = dict(
@@ -360,12 +454,23 @@ class Warehouse(db.Model):
             return {key:_dict[key] for key in columns}
         return _dict
 
+
 class Store(db.Model):
     id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(10))
+    name = db.Column(db.String(50))
     address = db.Column(db.String(100))
     contact = db.Column(db.String(10))
+    is_disabled = db.Column(db.Boolean, default = False)
     fk_company_id=db.Column(db.Integer, db.ForeignKey('company.id'))
+    sellers = db.relationship('User', backref="stores_sellers", lazy ="subquery")
 
     def __repr__(self):
-        return f'magasin: {self.name}, {self.address}'
+        return f'Magasin: {self.name}, {self.address}'
+
+    def repr(self):
+        return dict(
+            id= self.id,
+            name = self.name,
+            address = self.address,
+            contact = self.contact,
+        )

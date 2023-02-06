@@ -46,38 +46,26 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'id', name: 'Num' },
-                { id: 'name', name: 'Nom' },
-                { id: 'label', name: 'Libellé' },
-                { id: 'value', name: 'Valeur' },
-                { id:'actions', name:'Actions'}
+                { id: 'warehouse', name: 'Dépôt' },
+                { id: 'quantity', name: 'Qte en stock' },
+                { id: 'last_purchase', name: 'Dernière achat en ' },
+                { id: 'last_purchase_price', name: 'PU' },
+                { id: 'stock_sec', name: 'Stock de sécurité' },
+
             ],
             data: ()=>{
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
                 {% if liste %}
-                    {% for tax in liste %}
+                    {% for stock in liste %}
                         {
-                              id: '{{ tax["id"] }}',
-                              label :'{{ tax["label"] }}',
-                              value :'{{ tax['sign'] }}{{ tax["value"] }}',
-                              actions: gridjs.html(`<div class="dropdown dropstart">
-                                  <a class="btn btn-secondary btn-sm" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                  </a>
-                                  <div class="btn-group">
-                                    <button class="tax_info btn-outline-secondary" data-bs-placement="bottom"
-                                        data-bs-toggle="modal" data-id="{{ tax['id'] }}">
-                                        <i class="fa-light fa-eye"></i></button>
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.edit_tax',tax_id=tax['id']) }}"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                        <i class="fa-light fa-pen"></i></a>
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.delete_tax',tax_id=tax['id']) }}"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                        <i class="fa-light fa-trash"></i></a>
-                                  </div>
-                            </div>`
-                              )
+                              id: '{{ stock["id"] }}',
+                              warehouse :'{{ stock["warehouse"] }}',
+                              quantity :'{{ stock["quantity"] }}',
+                              last_purchase :'{{ stock["last_purchase"] }}',
+                              last_purchase_price :'{{ stock["last_purchase_price"] }}',
+                              stock_sec : gridjs.html(`<span class="badge rounded-pill" style="text-color:white; background-color:{{ stock['status'] }}>{{ stock["last_purchase_price"] }}</span>`)
                         },
                     {% endfor %}
                 {% endif %}
@@ -114,5 +102,5 @@
 {% endblock %}
 
 {% block actual_title %}
-    <h4 class="h4">Taxe(s)</h4>
+    <h4 class="h4">Les stocks</h4>
 {% endblock %}

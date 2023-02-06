@@ -11,7 +11,12 @@
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
         <script src="{{ url_for('static', filename='js/all.js') }}"></script>
+        {% block additional_styles %}
+        {% endblock additional_styles %}
+
         <style>
+
+
             .nav-link{
                 color: white;
             }
@@ -28,8 +33,6 @@
             {#    color: ;#}
             {#}#}
         </style>
-        {% block additional_styles %}
-        {% endblock additional_styles %}
     </head>
         <body class="sb-nav-fixed">
             <nav class="sb-topnav navbar navbar-custom navbar-expand">
@@ -65,49 +68,91 @@
                                 <div class="sb-sidenav-menu-heading">Gestion</div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Catégories
+                                    Produits
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="#">Voir La liste des catégories</a>
+                                        <a class="nav-link" href="#">Voir La liste des produits</a>
+                                        <a class="nav-link" href="#">Voir La liste des formats</a>
+                                        <a class="nav-link" href="#">Voir La liste des aspects</a>
                                     </nav>
                                 </div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
                                     <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
-                                    Formations
+                                    Employés
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
-                                         <a class="nav-link" href="#">Voir La liste des formations</a>
+                                         <a class="nav-link" href="{{ url_for('admin_bp.users') }}">Voir La liste des Employés</a>
                                     </nav>
                                 </div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate" aria-expanded="false" aria-controls="collapseAggregate">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Étudiants
+                                    Clients
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse" id="collapseAggregate" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="#">Voir La liste des étudiants</a>
+                                        <a class="nav-link" href="#">Voir La liste des clients</a>
                                     </nav>
                                 </div>
 
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate__" aria-expanded="false" aria-controls="collapseAggregate">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Les langues
+                                    Les Fournisseurs
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse" id="collapseAggregate__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav ">
-                                        <a class="nav-link" href="#">Voir La liste de langues</a>
+                                        <a class="nav-link" href="#">Voir La liste de fournisseurs</a>
+                                    </nav>
+                                </div>
+
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseDepot__" aria-expanded="false" aria-controls="collapseDepot">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Les Dépôts
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapseDepot__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav ">
+                                        <a class="nav-link" href="{{url_for('admin_bp.warehouses')}}">Voir La liste de Dépôts</a>
+                                        <a class="nav-link" href="#">Consulter le/les stock(s)</a>
+                                    </nav>
+                                </div>
+
+{#                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"#}
+{#                                                        data-bs-target="#collapseMagasins__"#}
+{#                                                        aria-expanded="false" aria-controls="collapseMagasins">#}
+{#                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>#}
+{#                                    Les Magasins#}
+{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
+{#                                </a>#}
+{#                                <div class="collapse" id="collapseMagasins__" aria-labelledby="headingOne"#}
+{#                                                        data-bs-parent="#sidenavAccordion">#}
+{#                                    <nav class="sb-sidenav-menu-nested nav ">#}
+{#                                        <a class="nav-link" href="#">Voir La liste de Magasins</a>#}
+{#                                    </nav>#}
+{#                                </div>#}
+
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
+                                                        data-bs-target="#collapseBoutiques__"
+                                                        aria-expanded="false" aria-controls="collapseBoutiques">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Les point(s) de vente
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse" id="collapseBoutiques__" aria-labelledby="headingOne"
+                                                        data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav ">
+                                        <a class="nav-link" href="{{ url_for('admin_bp.stores') }}">Voir La liste de Boutiques</a>
                                     </nav>
                                 </div>
 
                         </div>
                         <div class="sb-sidenav-footer text-white">
-                            <div class="small">Connecté en tant que: {{ current_user.role }}</div>
+                            <div class="small">Connecté en tant que: Manager</div>
                             Gestion Commerciale
                         </div>
                         </div>
@@ -115,7 +160,7 @@
                 </div>
                 <div id="layoutSidenav_content">
                 <main>
-                    <div class="container-fluid px-4">
+                    <div class="container px-4">
                         <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
 
                         {% block main_tag %}
@@ -126,8 +171,8 @@
             </div>
 
             <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
-            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
             <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
+            <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
             {% block additional_scripts %}
             {% endblock additional_scripts %}
     </body>

@@ -6,6 +6,7 @@
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
         $(document).ready(function (){
+            $('.toast').toast('show');
              $('button').click(function(){
                 var tax_id = $(this).data('id');
                 // AJAX request
@@ -46,9 +47,9 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'id', name: 'Num' },
-                { id: 'name', name: 'Nom' },
-                { id: 'label', name: 'Libellé' },
-                { id: 'value', name: 'Valeur' },
+                { id: 'name', name: 'Nom gu magasin' },
+                { id: 'address', name: "L'adresse" },
+                { id: 'contact', name: 'Contact(Téléphone)' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -56,25 +57,23 @@
                     setTimeout(()=>
                         resolve([
                 {% if liste %}
-                    {% for tax in liste %}
+                    {% for store in liste %}
                         {
-                              id: '{{ tax["id"] }}',
-                              label :'{{ tax["label"] }}',
-                              value :'{{ tax['sign'] }}{{ tax["value"] }}',
+                              id: '{{ store["id"] }}',
+                              name :'{{ store["name"] }}',
+                              address :'{{ store['address'] }}',
+                              contact :'{{ store['contact'] }}',
                               actions: gridjs.html(`<div class="dropdown dropstart">
-                                  <a class="btn btn-secondary btn-sm" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                  </a>
                                   <div class="btn-group">
-                                    <button class="tax_info btn-outline-secondary" data-bs-placement="bottom"
-                                        data-bs-toggle="modal" data-id="{{ tax['id'] }}">
-                                        <i class="fa-light fa-eye"></i></button>
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.edit_tax',tax_id=tax['id']) }}"
+                                    <a role="button" class="tax_info btn btn-sm btn-outline-info" data-bs-placement="bottom"
+                                        data-bs-toggle="modal" data-id="{{ store['id'] }}">
+                                        <i class="fa-solid fa-eye"></i></a>
+                                    <a role="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_bp.edit_store',store_id=store['id']) }}"
                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                        <i class="fa-light fa-pen"></i></a>
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.delete_tax',tax_id=tax['id']) }}"
+                                        <i class="fa-solid fa-pen"></i></a>
+                                    <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_store',store_id=store['id']) }}"
                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                        <i class="fa-light fa-trash"></i></a>
+                                        <i class="fa-solid fa-trash"></i></a>
                                   </div>
                             </div>`
                               )
@@ -97,22 +96,28 @@
 {% block main_tag %}
     <div class="container">
         <div class="row">
-            <div id="table"></div>
-            <div class="modal fade show" id="taxContent" tabindex="-1" aria-labelledby="taxContentDisplay"
-                    style="display: block;" aria-modal="true" role="dialog">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-body">
-
-                        </div>
-                    </div>
-                </div>
+            <div class="col" style="position: relative; text-align: right">
+                <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_store') }}">
+                    <i class="fa fa-circle-plus"></i>
+                       Nouveau
+                </a>
             </div>
+            <div id="table"></div>
+{#            <div class="modal fade show" id="taxContent" tabindex="-1" aria-labelledby="taxContentDisplay"#}
+{#                    style="display: block;" aria-modal="true" role="dialog">#}
+{#                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">#}
+{#                    <div class="modal-content">#}
+{#                        <div class="modal-body">#}
+{##}
+{#                        </div>#}
+{#                    </div>#}
+{#                </div>#}
+{#            </div>#}
 
         </div>
     </div>
 {% endblock %}
 
 {% block actual_title %}
-    <h4 class="h4">Taxe(s)</h4>
+    <h4 class="h4">Les point(s) de vente</h4>
 {% endblock %}

@@ -1,151 +1,173 @@
 {% extends "layouts/admin_layout.html" %}
 {% block main_tag %}
-    <div class="container">
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+
                             <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                 <div class="d-flex">
-                                    <div class="toast-body">
+                                    <div class="toast-body text-black fw-light fs-6">
                                         {{ message }}
                                     </div>
                                 <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                               </div>
                             </div>
-                        </div>
-                    {% endfor %}
+                        {% endfor %}
+                    </div>
                 {% endif %}
             {% endwith %}
         </div>
-        <div class="row mt-lg-5">
-            <form method="post">
+
+        <div class="row mt-5 w-75">
+            <div class="card ">
+                <div class="card-header">
+
+                </div>
+                <div class="card-body">
+                    <form method="post">
                 {{ form.hidden_tag() }}
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.full_name.label(class="form-control-label") }}
-                        <div class="input-group has-validation">
-                            {% if form.full_name.errors %}
-                                {{ form.full_name(class="form-control-md is-invalid") }}
-                                {% for error in form.full_name.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                {{ form.full_name(class="form-control-md is-invalid") }}
-                            {% endif %}
-                        </div>
+                <div class="row g-1 mb-4">
+                    <div class="col-sm">
+                        <div class="form-floating">
+                        {% if form.full_name.errors %}
+                            <div class="input-group has-validation">
+                            {{ form.full_name(class="form-control is-invalid") }}
+                            {% for error in form.full_name.errors %}
+                                <div class="invalid-feedback">
+                                    {{ error }}
+                                </div>
+                            {% endfor %}
+                            </div>
+                        {% else %}
+                            {{ form.full_name(class="form-control") }}
+                        {% endif %}
+                        {{ form.full_name.label }}
                     </div>
-                </div>
 
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.username.label(class="form-control-label") }}
-                        <div class="input-group has-validation">
+                    </div>
+                    <div class="col-sm">
+                        <div class="form-floating">
                             {% if form.username.errors %}
-                                {{ form.username(class="form-control-md is-invalid") }}
-                                {% for error in form.username.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
+                                <div class="input-group has-validation">
+                                    {{ form.username(class="form-control is-invalid") }}
+                                    {% for error in form.username.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
                             {% else %}
-                                {{ form.username(class="form-control-md is-invalid") }}
+                                {{ form.username(class="form-control") }}
                             {% endif %}
+                            {{ form.username.label }}
                         </div>
                     </div>
-                </div>
-
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.password.label(class="form-control-label") }}
-                        <div class="input-group has-validation">
-                            {% if form.password.errors %}
-                                {{ form.password(class="form-control-md is-invalid") }}
+                <div class="row g-1  mb-
+                </4">
+                    <div class="col-sm">
+                        <div class="form-floating">
+                        {% if form.password.errors %}
+                            <div class="input-group has-validation">
+                                {{ form.password(class="form-control is-invalid") }}
                                 {% for error in form.password.errors %}
                                     <div class="invalid-feedback">
                                         {{ error }}
                                     </div>
                                 {% endfor %}
-                            {% else %}
-                                {{ form.password(class="form-control-md is-invalid") }}
-                            {% endif %}
-                        </div>
+                             </div>
+                        {% else %}
+                            {{ form.password(class="form-control") }}
+                        {% endif %}
+                        {{ form.password.label }}
                     </div>
-                </div>
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.confirm_password.label(class="form-control-label") }}
-                        <div class="input-group has-validation">
-                            {% if form.confirm_password.errors %}
-                                {{ form.confirm_password(class="form-control-md is-invalid") }}
+
+                    </div>
+                    <div class="col-sm">
+                        <div class="form-floating">
+
+                             {% if form.confirm_password.errors %}
+                                 <div class="input-group has-validation">
+                                {{ form.confirm_password(class="form-control is-invalid") }}
                                 {% for error in form.confirm_password.errors %}
                                     <div class="invalid-feedback">
                                         {{ error }}
                                     </div>
                                 {% endfor %}
-                            {% else %}
-                                {{ form.confirm_password(class="form-control-md is-invalid") }}
-                            {% endif %}
-                        </div>
+                                </div>
+                             {% else %}
+                                {{ form.confirm_password(class="form-control") }}
+                             {% endif %}
+                        {{ form.confirm_password.label }}
                     </div>
                 </div>
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.role.label(class="form-control-label") }}
+                <div class="row g-1 mb-4">
+                    <div class="col-sm">
                         <div class="input-group has-validation">
+                        <div class="input-group-text">{{ form.role.label }}</div>
                             {% if form.role.errors %}
-                                {{ form.role(class="form-control-md is-invalid") }}
+                                {{ form.role(class="form-select is-invalid") }}
                                 {% for error in form.role.errors %}
                                     <div class="invalid-feedback">
                                         {{ error }}
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                {{ form.role(class="form-control-md is-invalid") }}
+                                {{ form.role(class="form-select") }}
                             {% endif %}
                         </div>
                     </div>
-                </div>
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.location.label(class="form-control-label") }}
-                        <div class="input-group has-validation">
-                            {% if form.location.errors %}
-                                {{ form.location(class="form-control-md is-invalid") }}
-                                {% for error in form.location.errors %}
-                                    <div class="invalid-feedback">
-                                        {{ error }}
-                                    </div>
-                                {% endfor %}
-                            {% else %}
-                                {{ form.location(class="form-control-md is-invalid") }}
-                            {% endif %}
-                        </div>
+                    <div class="col-sm">
+{#                        <div class="form-floating">#}
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.location.label }}</div>
+                                {% if form.location.errors %}
+                                    {{ form.location(class="form-select is-invalid") }}
+                                    {% for error in form.location.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {{ form.location(class="form-select") }}
+                                {% endif %}
+                            </div>
+{#                        </div>#}
                     </div>
                 </div>
-                <div class="row mb-5">
-                    <div class="col-md">
-                        {{ form.submit(class="btn btn-primary", style="border-radius: 5px;") }}
-                    </div>
+                <div class="col-sm">
+                    {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
                 </div>
             </form>
+
+                </div>
+            </div>
         </div>
     </div>
 {% endblock %}
 
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}" />
 {% endblock %}
 
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
     <script>
         $(document).ready(function(){
-           $('select').select2();
-           $('toast').toast('show');
+            $('.toast').toast('show');
+            $( '#location' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+            } );
+
+            $('#role' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+            } );
            $("#role").change(function(){
                 var items="";
                 $.ajax({
@@ -157,7 +179,7 @@
                         if (response.messages!==null){
                             var data = response.messages
                               $.each(data,function(index, item){
-                                 items= items+ '<option value="' + item.id+'">'+item.name+'</option>';
+                                 items= items+ '<option value="' + item.ID+'">'+item.name+'</option>';
                               });
                                 console.log(items);
                               $("#location").html(items);
