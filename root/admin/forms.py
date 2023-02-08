@@ -1,7 +1,9 @@
+import datetime
 from wsgiref import validate
 
-from flask_wtf import FlaskForm, Form
-from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, SelectMultipleField
+from flask_wtf import FlaskForm
+from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField
+from wtforms.fields.html5 import DateTimeField
 from wtforms.validators import DataRequired, ValidationError, EqualTo
 from root.models import UserForCompany, Company, User, Item, Warehouse, Store
 from flask_login import current_user
@@ -11,14 +13,23 @@ from sqlalchemy import func
 from root import name_regex, phone_number_regex
 
 class NewItemForm(FlaskForm):
-    label = StringField('Désignation du produit: ', validators=[DataRequired('Champs obligatoire')])
-    format = StringField('Format: ', validators=[DataRequired('Champs obligatoire')])
-    aspect = StringField('Aspect: ', validators=[DataRequired('Champs obligatoire')])
+    label = StringField('Désignation du produit: ', validators=[DataRequired('Champs obligatoire')],
+                        render_kw={'placeholder':'Désignation du produit'})
+    label = StringField('Série: ', validators=[DataRequired('Champs obligatoire')],
+                        render_kw={'placeholder':'Série du produit'})
+    format = QuerySelectField('Format: ', validators=[DataRequired('Champs obligatoire')],
+                              render_kw={'data-placeholder': 'Séléctionner le fromat du produit...'})
+    aspect = QuerySelectField('Aspect: ', validators=[DataRequired('Champs obligatoire')],
+                              render_kw={'data-placeholder': 'Séléctionner l\'aspect du produit...'})
     utilisation=SelectField('Utilisation: ', choices=[('Carreaux-de-mur','Carreaux-de-mur'),
                                                         ('Carreaux-de-sol','Carreaux-de-sol'),
                                                         ('Carreaux-de-pierre','Carreaux-de-pierre'),
-                                                        ('Carreaux-de-parquet','Carreaux-de-parquet')] )
-    intern_reference = StringField('Référence interne:')
+                                                        ('Carreaux-de-parquet','Carreaux-de-parquet')],
+                            render_kw={'data-placeholder':'Produit utilisé comme...'})
+    intern_reference = StringField('Référence interne:', validators=[DataRequired('Champs obligatoire')],
+                                   render_kw={'placeholder':"La référence interne du produit..."})
+    expired_at = DateTimeField('Date d\'expiration:',
+                               render_kw={'placeholder':'La date d\'expiration'})
     submit = SubmitField('Ajouter')
 
     def validate_label(self, label):
@@ -29,9 +40,13 @@ class NewItemForm(FlaskForm):
 
     def validate_intern_reference(self, intern_reference):
         item = Item.query.filter_by(created_by=current_user.id) \
-            .filter(func.lower(str(intern_reference)) == func.lower(Item.intern_reference)).first()
+            .filter(func.lower(str(intern_reference.data)) == func.lower(Item.intern_reference)).first()
         if item:
             raise ValidationError('Référence interne ne peut être répéter')
+
+    def validate_expired_at(self, expired_at):
+        if expired_at.data.date() >= datetime.datetime.utcnow().date():
+            raise ValidationError('Date d\'expiration non valide')
 
 
 class TaxesForm(FlaskForm):

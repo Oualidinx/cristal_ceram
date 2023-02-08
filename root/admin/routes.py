@@ -1,13 +1,13 @@
 import datetime
 
 from flask import abort, render_template, session, flash, redirect, url_for, request, jsonify
-from sqlalchemy import or_
 
 from root.admin import admin_bp
 from root import database
 from flask_login import login_required
 from root.admin.forms import *
-from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse, ItemAspectFormat, Store, Format, Aspect, Stock
+from root.auth.forms import ResetPasswordForm
+from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse, ItemAspectFormat, Store, Format, Aspect, Stock, Client
 from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
@@ -854,6 +854,18 @@ def delete_aspect(aspect_id):
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.aspects"))
 
+@admin_bp.get('/productsd')
+@login_required
+def products():
+    company = Company.query.get(UserForCompany.query.filter_by(role="manager") \
+                                .filter_by(fk_user_id = current_user.id).first().fk_company_id)
+    _products = Item.query.filter_by(fk_company_id=company.id).all()
+    liste = None
+    if _products:
+        liste = [product.repr() for product in _products]
+    return render_template('admin/items.html', liste = liste)
+
+
 
 @admin_bp.get('/products/add')
 @admin_bp.post('/products/add')
@@ -870,6 +882,7 @@ def add_product():
         # item.use_for = form.utilisation.data if form.utilisation.data else None
         item.intern_reference = form.intern_reference.data if form.intern_reference.data else None
         item.company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
+        item.expired_at = form.expired_at.data if form.expired_at.data else None
         database.session.add(item)
         database.session.commit()
         item_brand_category = ItemAspectFormat()
@@ -1018,3 +1031,67 @@ def delete_store(store_id):
     database.session.commit()
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.stores"))
+
+
+@admin_bp.get('/employees/<int:user_id>/change_password')
+@admin_bp.post('/employees/<int:user_id>/change_password')
+@login_required
+def change_password(user_id):
+    user = User.query.get(user_id)
+    if not user:
+        flash('Employés introuvable','danger')
+        return redirect(url_for('admin_bp.edit_user', user_id = user.id))
+
+    _users = Company.query.get(UserForCompany.query.filter_by(role="manager") \
+                               .filter_by(fk_user_id = current_user.id).first().fk_company_id).users
+    if not _users or user not in users:
+        flash('Employés introuvable','danger')
+        return redirect(url_for('admin_bp.edit_user', user_id=user.id))
+
+    form = ResetPasswordForm()
+    if form.validate_on_submit():
+        user.password_hash = generate_password_hash(form.new_password.data, "SHA256")
+        database.session.add(user)
+        database.session.commit()
+        flash('Opération terminée avec succès','success')
+        return redirect(url_for('admin_bp.edit_user', user_id=user.id))
+    return render_template('auth/reset_password.html', form = form)
+
+
+@admin_bp.get('/clients')
+@login_required
+def clients():
+    _clients = Client.query.filter_by(fk_company_id = UserForCompany.query.filter_by(role="manager") \
+                                      .filter_by(fk_user_id = current_user.id).first().fk_company_id).all()
+    liste = list()
+    if _clients:
+        liste = [
+            client.repr() for client in _clients
+        ]
+    return render_template('admin/clients.html', liste = liste)
+
+
+@admin_bp.get('/clients/<int:client_id>/get')
+@login_required
+def get_client(client_id):
+    pass
+    # data = request.json
+    # client = Client.query.get(int(data['user_id']))
+    # if not client:
+    #     abort(404)
+    # company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+    # company_clients = Client.query.filter_by(fk_company_id=company.id)
+    # if not company_clients.all():
+    #     abort(404)
+    # client = company_clients.get(client_id)
+    # _dict = Client.query.get(client.id).repr(['contacts'])
+    # return jsonify(message = f"<h4 class='h4 fw-bold'>Client: {client.full_name}</h4> \
+    #                     <span class='fw-bold mb-3'>Catégorie: </span>{client.category} <br> \
+    #                     <span class='fw-bold mb-3'>Contact(s) : </span><br>"+'<br>'.join(_dict['contacts'])), 200
+
+
+@admin_bp.get('/clients/<int:client_id>/edit')
+@admin_bp.post('/clients/<int:client_id>/edit')
+@login_required
+def edit_client(client_id):
+    pass

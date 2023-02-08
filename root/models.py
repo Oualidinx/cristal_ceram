@@ -131,13 +131,23 @@ class Client(db.Model):
     category = db.Column(db.String(20))
     nif = db.Column(db.String(100))
     civility = db.Column(db.String(10))
+    contacts = db.relationship('Contact', backref="client_contacts", lazy ="subquery")
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    orders = db.relationship('Order', backref="client_orders", lazy="subquery")
+    quotations = db.relationship('Quotation', backref="client_quotations", lazy="subquery")
 
+    def __repr__(self):
+        return f'{self.id}, {self.full_name}'
 
-class ClientCompany(db.Model):
-    __tablename__="client_company"
-    id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    def repr(self, columns=None):
+        _dict={
+            'id':self.id,
+            'full_name':self.full_name,
+            'category':self.category,
+            'contact':Contact.query.filter_by(fk_client_id=self.id).first(),
+            'contacts':Contact.query.filter_by(fk_client_id=self.id).all()
+        }
+        return {key:_dict[key] for key in columns} if columns else _dict
 
 
 class Contact(db.Model):
@@ -145,10 +155,13 @@ class Contact(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     key = db.Column(db.String(50))
     value = db.Column(db.String(100))
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    fk_user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+
+    def __repr__(self):
+        return f'{self.key}: {self.value}'
 
 
 class DeliveryNote(db.Model):
@@ -186,13 +199,13 @@ class Fund(db.Model):
 class Invoice(db.Model):
     __tablename__="invoice"
     id = db.Column(db.Integer, primary_key=True)
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    # client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
     supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     inv_type = db.Column(db.String(100))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     total = db.Column(db.Float, default=0)
-    order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     is_delivered = db.Column(db.Boolean, default=False)
     is_canceled = db.Column(db.Boolean, default=False)
     is_valid = db.Column(db.Boolean, default=False)
@@ -228,14 +241,24 @@ class Item(db.Model):
     # use_for = db.Column(db.String(20))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
-    expired_at = db.Column(db.DateTime, default=datetime.utcnow())
+    expired_at = db.Column(db.DateTime, nullable = True)
     is_disabled = db.Column(db.Boolean, default=False)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
 
     def __repr__(self):
         return f'{self.label}, ' \
                f'{Format.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_format_id).label}, ' \
                f'{Aspect.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_aspect_id).label}'
+
+    def repr(self, columns=None):
+        _dict={
+            'id' : self.id,
+            'serie' : self.serie,
+            'intern_reference' : self.intern_reference,
+            'label' : self,
+            'expired_at' : self.expired_at
+        }
+        return {key: _dict[key] for key in columns} if columns else _dict
 
 
 class Order(db.Model):
