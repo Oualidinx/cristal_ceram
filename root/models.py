@@ -84,7 +84,7 @@ class BankAccount(db.Model):
     bank = db.Column(db.String(100))
     label = db.Column(db.String(100))
     account_number = db.Column(db.String(100))
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
 
 
 class Aspect(db.Model):
@@ -92,6 +92,8 @@ class Aspect(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(500))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+
 
     def __repr__(self):
         return f'{self.id}  -  {self.label}'
@@ -102,16 +104,10 @@ class Format(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(500))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
 
     def __repr__(self):
         return f'{self.id}  -  {self.label}'
-
-    def repr(self):
-        return dict(
-            id = self.id,
-            label = self.label
-        )
-
 
 # class Utilisation(db.Model):
 #     __tablename__="utilisation"
@@ -222,14 +218,14 @@ class InvoiceTax(db.Model):
     fk_tax_id = db.Column(db.Integer, db.ForeignKey('tax.id'))
 
 
-class ItemAspectFormat(db.Model):
-    __tablename__="item_aspect_format"
-    id = db.Column(db.Integer, primary_key=True)
-    fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
-    fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
-    # fk_utilisation_id = db.Column(db.Integer, db.ForeignKey('utilisation.id'))
-    utilisation = db.Column(db.String(50))
-    fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
+# class ItemAspectFormat(db.Model):
+#     __tablename__="item_aspect_format"
+#     id = db.Column(db.Integer, primary_key=True)
+#     fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
+#     fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
+#     # fk_utilisation_id = db.Column(db.Integer, db.ForeignKey('utilisation.id'))
+#     utilisation = db.Column(db.String(50))
+#     fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
 
 
 class Item(db.Model):
@@ -238,17 +234,19 @@ class Item(db.Model):
     serie = db.Column(db.String(100), nullable=True)
     intern_reference = db.Column(db.String(100))
     label = db.Column(db.String(1500))
-    # use_for = db.Column(db.String(20))
+    use_for = db.Column(db.String(50))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     expired_at = db.Column(db.DateTime, nullable = True)
     is_disabled = db.Column(db.Boolean, default=False)
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-
+    fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
+    fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
     def __repr__(self):
-        return f'{self.label}, ' \
-               f'{Format.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_format_id).label}, ' \
-               f'{Aspect.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_aspect_id).label}'
+        return f'{self.label}, {Format.query.get(self.fk_format_id).label}, {Aspect.query.get(self.fk_aspect_id).label}'
+        # return f'{self.label}, ' \
+        #        f'{Format.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_format_id).label}, ' \
+        #        f'{Aspect.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_aspect_id).label}'
 
     def repr(self, columns=None):
         _dict={
@@ -256,7 +254,9 @@ class Item(db.Model):
             'serie' : self.serie,
             'intern_reference' : self.intern_reference,
             'label' : self,
-            'expired_at' : self.expired_at
+            'expired_at' : self.expired_at,
+            'format': Format.query.get(self.fk_format_id) if self.fk_format_id else None,
+            'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else None
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 

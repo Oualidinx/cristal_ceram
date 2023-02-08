@@ -3,9 +3,9 @@ from wsgiref import validate
 
 from flask_wtf import FlaskForm
 from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField
-from wtforms.fields.html5 import DateTimeField
+from wtforms.fields.html5 import DateField
 from wtforms.validators import DataRequired, ValidationError, EqualTo
-from root.models import UserForCompany, Company, User, Item, Warehouse, Store
+from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect
 from flask_login import current_user
 from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
 from sqlalchemy.sql import and_
@@ -15,20 +15,27 @@ from root import name_regex, phone_number_regex
 class NewItemForm(FlaskForm):
     label = StringField('Désignation du produit: ', validators=[DataRequired('Champs obligatoire')],
                         render_kw={'placeholder':'Désignation du produit'})
-    label = StringField('Série: ', validators=[DataRequired('Champs obligatoire')],
+    serie = StringField('Série: ', validators=[DataRequired('Champs obligatoire')],
                         render_kw={'placeholder':'Série du produit'})
-    format = QuerySelectField('Format: ', validators=[DataRequired('Champs obligatoire')],
+    format = QuerySelectField('Format: ', query_factory=lambda : Format.query.filter_by(
+                                fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
+                                                                                            .first().fk_company_id).all(),
+                              validators=[DataRequired('Champs obligatoire')],
                               render_kw={'data-placeholder': 'Séléctionner le fromat du produit...'})
     aspect = QuerySelectField('Aspect: ', validators=[DataRequired('Champs obligatoire')],
+                              query_factory=lambda: Aspect.query.filter_by(
+                                  fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(
+                                      fk_user_id=current_user.id) \
+                                      .first().fk_company_id).all(),
                               render_kw={'data-placeholder': 'Séléctionner l\'aspect du produit...'})
     utilisation=SelectField('Utilisation: ', choices=[('Carreaux-de-mur','Carreaux-de-mur'),
                                                         ('Carreaux-de-sol','Carreaux-de-sol'),
                                                         ('Carreaux-de-pierre','Carreaux-de-pierre'),
-                                                        ('Carreaux-de-parquet','Carreaux-de-parquet')],
-                            render_kw={'data-placeholder':'Produit utilisé comme...'})
-    intern_reference = StringField('Référence interne:', validators=[DataRequired('Champs obligatoire')],
+                                                        ('Carreaux-de-parquet','Carreaux-de-parquet'), ('Autres','Autres')],
+                            render_kw={'data-placeholder':'Produit utilisé Pour...'})
+    intern_reference = StringField('Référence interne:',
                                    render_kw={'placeholder':"La référence interne du produit..."})
-    expired_at = DateTimeField('Date d\'expiration:',
+    expired_at = DateField('Date d\'expiration:',
                                render_kw={'placeholder':'La date d\'expiration'})
     submit = SubmitField('Ajouter')
 
@@ -48,6 +55,14 @@ class NewItemForm(FlaskForm):
         if expired_at.data.date() >= datetime.datetime.utcnow().date():
             raise ValidationError('Date d\'expiration non valide')
 
+class EditItemForm(NewItemForm):
+    submit = SubmitField('Executer')
+
+    def validate_intern_reference(self, intern_reference):
+        pass
+
+    def validate_label(self, label):
+        pass
 
 class TaxesForm(FlaskForm):
     name = StringField('Nom: ',

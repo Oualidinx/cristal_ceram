@@ -60,24 +60,6 @@
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
-        function foo(component){
-            var item_id = component.dataset['id'];
-            // AJAX request
-            $.ajax({
-               url: '{{ url_for('admin_bp.get_item') }}',
-               type: 'POST',
-               data: JSON.stringify({item_id: item_id}),
-                dataType:"json",
-                contentType: "application/json; charset=utf-8",
-               success: function(response){
-                   // Add response in Modal body
-                   {#console.log(response.message)#}
-                   $('.modal-body').html(response.message);
-                   // Display Modal
-                   $('#itemContent').modal('show');
-               }
-            });
-        }
         $(document).ready(function (){
             $('.toast').toast('show');
         })
@@ -105,12 +87,10 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'id', name: 'Num' },
-                { id: 'full_name', name: 'Nom complet' },
-                { id: 'username', name: 'Pseudonyme' },
-                { id: '_session', name: 'Compte utilisateur' },
-                { id: 'role', name: 'Poste occupé' },
-                { id: 'status', name: 'Etat' },
-                { id: 'location', name: 'Lieu de travail' },
+                { id: 'intern_reference', name: 'Référence interne' },
+                { id: 'label', name: 'Désignation' },
+                { id: 'serie', name: 'Série' },
+                { id: 'expired_at', name: "Date d'expiration" },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -121,41 +101,26 @@
                     {% for item in liste %}
                         {
                               id: '{{ item["id"] }}',
-                              full_name :'{{ item["full_name"] }}',
-                              username :'{{ item['username'] }}',
-                              _session : gridjs.html(`<span class="badge rounded-pill text-white"
-                                                            style="background-color:{{ item['_session'][0]}};" }}>
-                                                                {{ item['_session'][1] }}
-                                                      </span>`),
-                              role :'{{ item['role'] }}',
-                              status :gridjs.html(`<span class="badge rounded-pill text-white"
-                                                        style="background-color:{{ item['status'][0]}};" }}>
-                                                        {{ item['status'][1] }}</span>
-                              `),
-                              location :'{{ item['location'] }}',
+                              intern_reference :'{{ item["intern_reference"] }}',
+                              label :'{{ item['label'] }}, {{ item['format'] }}, {{ item['aspect'] }}',
+                              serie :'{{ item['serie'] }}',
+                              {#_session : gridjs.html(`<span class="badge rounded-pill text-white"#}
+                              {#                              style="background-color:{{ item['_session'][0]}};" }}>#}
+                              {#                                  {{ item['_session'][1] }}#}
+                              {#                        </span>`),#}
+                              expired_at :'{{ item['expired_at'] }}',
                               actions: gridjs.html(`<div class="dropdown dropstart">
 
                                   <div class="btn-group">
-                                        <button id="item-info" class="btn btn-sm btn-outline-info"
-                                            data-id="{{ item['id'] }}" onclick="foo();">
-                                            <i class="fa fa-eye"></i></button>
+                                        {#<button id="item-info" class="btn btn-sm btn-outline-info"#}
+                                        {#    data-id="{{ item['id'] }}" onclick="foo();">#}
+                                        {#    <i class="fa fa-eye"></i></button>#}
+                                        <a role="button" class="btn btn-sm btn-outline-info" href="{{ url_for('admin_bp.get_item', item_id=item['id']) }}
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails>
+                                            <i class="fa fa-eye"></i></a>
                                         <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_product',item_id=item['id']) }}"
                                             data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
                                             <i class="fa fa-user-pen"></i></a>
-
-                                        {#<a role="button" class="btn btn-sm btn-outline-danger"#}
-                                        {#    data-bs-toggle="tooltip" data-bs-placement="bottom"#}
-                                        {#        {% if user['_session'][1]=="Activé" %}#}
-                                        {#            title="Bloquer l'accès"#}
-                                        {#            href="{{ url_for('admin_bp.disable_user',user_id=user['id']) }}">#}
-                                        {#            <i class="fa fa-user-lock"></i>#}
-                                        {#        {% else %}#}
-                                        {#            title="Débloquer l'accès"#}
-                                        {#            href="{{ url_for('admin_bp.enable_user',user_id=user['id']) }}">#}
-                                        {#            <i class="fa fa-user-unlock"></i>#}
-                                        {#     {% endif %}#}
-                                        {##}
-                                        {#    </a>#}
                                   </div>
                             </div>`
                               )
@@ -167,7 +132,7 @@
                 })
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

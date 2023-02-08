@@ -55,7 +55,7 @@
 {% endblock %}
 
 {% block actual_title %}
-    <h4 class="h4">Les employés</h4>
+    Les employés
 {% endblock %}
 
 {% block additional_scripts %}
@@ -136,7 +136,6 @@
                               `),
                               location :'{{ user['location'] }}',
                               actions: gridjs.html(`<div class="dropdown dropstart">
-
                                   <div class="btn-group">
                                         <button id="user-info" class="btn btn-sm btn-outline-info"
                                             data-id="{{ user['id'] }}" onclick="foo(this);">

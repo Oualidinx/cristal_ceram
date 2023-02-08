@@ -7,7 +7,7 @@ from root import database
 from flask_login import login_required
 from root.admin.forms import *
 from root.auth.forms import ResetPasswordForm
-from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse, ItemAspectFormat, Store, Format, Aspect, Stock, Client
+from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse,  Store, Format, Aspect, Stock, Client
 from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
@@ -751,7 +751,10 @@ def formats():
     liste = None
     if _formats:
         liste = [
-            obj.repr() for obj in _formats
+            {
+                'id':obj.id,
+                'label': obj.label
+            } for obj in _formats
         ]
     return render_template('admin/formats.html', liste = liste)
 
@@ -795,7 +798,7 @@ def delete_format(format_id):
     if not _format:
         return render_template("errors/404.html", blueprint="admin_bp")
 
-    item_brand_category = ItemAspectFormat.query.filter_by(fk_format_id = _format.id).first()
+    item_brand_category = Item.query.filter_by(fk_format_id = _format.id).first()
     if item_brand_category:
         flash('impossible de supprimé cet objet', "danger")
         return redirect(url_for('admin_bp.format'))
@@ -845,7 +848,7 @@ def delete_aspect(aspect_id):
     if not _aspect:
         return render_template("errors/404.html", blueprint="admin_bp")
 
-    item_brand_category = ItemAspectFormat.query.filter_by(fk_aspect_id = _aspect.id).first()
+    item_brand_category = Item.query.filter_by(fk_aspect_id = _aspect.id).first()
     if item_brand_category:
         flash('impossible de supprimé cet objet', "danger")
         return redirect(url_for('admin_bp.aspects'))
@@ -854,7 +857,20 @@ def delete_aspect(aspect_id):
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.aspects"))
 
-@admin_bp.get('/productsd')
+
+@admin_bp.get('/aspects')
+@login_required
+def aspects():
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
+    _aspects = Aspect.query.filter_by(fk_company_id=company).all()
+    liste = None
+    if _aspects:
+        liste = [
+            {'id':aspect.id, 'label':aspect.label} for aspect in _aspects
+        ]
+    return render_template('admin/aspects.html', liste = liste)
+
+@admin_bp.get('/products')
 @login_required
 def products():
     company = Company.query.get(UserForCompany.query.filter_by(role="manager") \
@@ -866,34 +882,91 @@ def products():
     return render_template('admin/items.html', liste = liste)
 
 
-
 @admin_bp.get('/products/add')
 @admin_bp.post('/products/add')
 @login_required
 def add_product():
+    __formats = Format.query.filter_by(
+                                fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
+                                                                                            .first().fk_company_id).all()
+    __aspect = Aspect.query.filter_by(
+                                fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
+                                                                                            .first().fk_company_id).all()
+    if not __formats:
+        flash('Il faut ajouter les formats', 'warning')
+    if not __aspect:
+        flash('Il faut ajouter les aspects', 'warning')
     form = NewItemForm()
-    if request.method=="GET":
-        form.format.data = [(x.id, x) for x in Format.query.filter_by(created_by = current_user.id).all()]
-        form.aspect.data = [(x.id, x) for x in Item.query.filter_by(created_by = current_user.id).all()]
-
     if form.validate_on_submit():
         item = Item()
         item.label = form.label.data
-        # item.use_for = form.utilisation.data if form.utilisation.data else None
+        item.use_for = form.utilisation.data if form.utilisation.data else None
         item.intern_reference = form.intern_reference.data if form.intern_reference.data else None
+        item.fk_aspect_id = int(form.aspect.data) if form.aspect.data else None
+        item.fk_format_id = int(form.format.data) if form.format.data else None
+        item.used_for = form.utilisation.data
         item.company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
         item.expired_at = form.expired_at.data if form.expired_at.data else None
         database.session.add(item)
         database.session.commit()
-        item_brand_category = ItemAspectFormat()
-        item_brand_category.fk_brand_id = form.aspect.data
-        item_brand_category.fk_category_id = form.format.data
-        item_brand_category.utilisation = form.utilisation.data
-        item_brand_category.fk_item_id = item.id
-        database.session.add(item_brand_category)
+        flash('Objet ajouté avec succès',"success")
+    return render_template("admin/new_item.html", form=form)
+
+
+@admin_bp.get('/products/<int:item_id>/edit')
+@admin_bp.post('/products/<int:item_id>/edit')
+@login_required
+def edit_product(item_id):
+    item = Item.query.get(item_id)
+    if not item:
+        return render_template('errors/404.html', blueprint="admin_bp")
+
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
+    form = EditItemForm()
+    if request.method=="GET":
+        form = EditItemForm(
+            format=Format.query.get(item.fk_format_id) if item.fk_aspect_id else None,
+            aspect=Aspect.query.get(item.fk_aspect_id) if item.fk_aspect_id else None,
+            used_for = item.use_for if item.use_for else None,
+            label = item.label,
+            serie = item.serie if item.serie else None,
+            intern_reference = item.intern_reference if item.intern_reference else None,
+            expired_at = item.expired_at if item.expired_at else None,
+        )
+    if form.validate_on_submit():
+
+        _item = Item.query.filter_by(fk_company_id=company) \
+            .filter(func.lower(Item.label) == str.lower(form.label.data)).first()
+        if _item and item.id != _item.id:
+            flash('Nom déjà utilisé','warning')
+            return redirect(url_for('admin_bp.edit_product', item_id = item.id))
+        item.label = form.label.data
+
+        if form.intern_reference.data:
+            _item = Item.query.filter_by(fk_company_id=company) \
+                .filter(func.lower(Item.intern_reference) == str.lower(form.intern_reference.data)).first()
+            if _item and item.id != _item.id:
+                flash('Référence déjà utilisé', 'warning')
+                return redirect(url_for('admin_bp.edit_product', item_id=item.id))
+            item.intern_reference = form.intern_reference.data
+        else:
+            item.intern_reference = None
+        item.company_id = company
+        item.expired_at = form.expired_at.data if form.expired_at.data else None
+        item.fk_aspect_id = form.aspect.data
+        item.fk_format_id = form.format.data
+        item.utilisation = form.utilisation.data
+        item.fk_item_id = item.id
+        database.session.add(item)
         database.session.commit()
         flash('Objet ajouté avec succès',"success")
     return render_template("admin/new_item.html", form=form)
+
+
+@admin_bp.get('/products/<int:item_id>/get')
+@login_required
+def get_item(item_id):
+    return '<h1 class="h1>item info</h1>'
 
 
 @admin_bp.get('/stores')

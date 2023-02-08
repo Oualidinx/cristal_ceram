@@ -1,6 +1,6 @@
 {% extends "layouts/admin_layout.html" %}
 {% block actual_title %}
-    <h4>Les Dépôts</h4>
+    Les Dépôts
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
@@ -33,14 +33,6 @@
                 </a>
             </div>
             <div id="table"></div>
-{#            <div class="modal fade show" id="warehouseContent" tabindex="-1" aria-labelledby="taxContentDisplay"#}
-{#                    style="display: block;" aria-modal="true" role="dialog">#}
-{#                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">#}
-{#                    <div class="modal-content">#}
-{#                        <div class="modal-body"></div>#}
-{#                    </div>#}
-{#                </div>#}
-{#            </div>#}
         </div>
     </div>
 {% endblock %}
@@ -51,21 +43,6 @@
         $(document).ready(function (){
             $('.toast').toast('show');
         })
-       {#  $('button').click(function(){#}
-       {#    var warehouse_id = $(this).data('id');#}
-       {#    // AJAX request#}
-       {#    $.ajax({#}
-       {#        url: '{{ url_for('admin_bp.get_warehouse') }}',#}
-       {#        type: 'post',#}
-       {#        data: {warehouse_id: warehouse_id},#}
-       {#        success: function(response){#}
-       {#            // Add response in Modal body#}
-       {#            $('.modal-body').html(response.message);#}
-       {#            // Display Modal#}
-       {#            $('#warehouseContent').modal('show');#}
-       {#        }#}
-       {#    });#}
-       {#});#}
         new gridjs.Grid({
             language:{
                 search: {

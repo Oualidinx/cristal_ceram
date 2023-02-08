@@ -2,9 +2,46 @@
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
 {% endblock %}
+
+{% block actual_title %}
+    Les aspects
+{% endblock actual_title %}
+{% block main_tag %}
+        <div class="container">
+            <div class="row mt-5">
+                {% with messages = get_flashed_messages(with_categories=true) %}
+                    {% if messages %}
+                        <div class="toast-container position-absolute top-0 end-0 p-3">
+                            {% for category, message in messages %}
+                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                    <div class="d-flex">
+                                        <div class="toast-body text-black fw-light fs-6">
+                                            {{ message }}
+                                        </div>
+                                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                                  </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% endif %}
+                {% endwith %}
+                <div class="col" style="position: relative; text-align: right">
+                    <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.create_user') }}">
+                        <i class="fa fa-circle-plus"></i>
+                           Nouveau
+                    </a>
+                <div id="table"></div>
+                </div>
+            </div>
+        </div>
+
+{% endblock %}
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
         new gridjs.Grid({
             language:{
                 search: {
@@ -29,7 +66,7 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'id', name: 'Num' },
-                { id: 'label', name: 'Libellé' },
+                { id: 'label', name: 'Nom de l\'aspect' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -39,57 +76,32 @@
                 {% if liste %}
                     {% for format in liste %}
                         {
-                              id: '{{ tax["id"] }}',
-                              label :'{{ tax["label"] }}',
+                              id: '{{ user["id"] }}',
+                              label :'{{ user["label"] }}',
                               actions: gridjs.html(`<div class="dropdown dropstart">
-                                  <a class="btn btn-secondary btn-sm" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
-                                    <i class="fa-solid fa-ellipsis-vertical"></i>
-                                  </a>
                                   <div class="btn-group">
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.edit_format',format_id=format['id']) }}"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                        <i class="fa-light fa-pen"></i></a>
-                                    <a role="button" class="btn-outline-secondary" href="{{ url_for('admin_bp.delete_format',format_id=format['id']) }}"
-                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                        <i class="fa-light fa-trash"></i></a>
+
+                                        <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_format',format_id=format['id']) }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
+                                            <i class="fa fa-user-pen"></i></a>
+                                        <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_format',format_id=format['id']) }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                            <i class="fa fa-trush"></i></a>
                                   </div>
                             </div>`
                               )
                         },
                     {% endfor %}
                 {% endif %}
-            ]),2000
+            ]),1000
                     )
                 })
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true
           }).render(document.getElementById('table'));
     </script>
-{% endblock %}
-
-{% block main_tag %}
-    <div class="container">
-        <div class="row">
-            <div id="table"></div>
-            <div class="modal fade show" id="taxContent" tabindex="-1" aria-labelledby="taxContentDisplay"
-                    style="display: block;" aria-modal="true" role="dialog">
-                <div class="modal-dialog modal-dialog-centered modal-dialog-scrollable">
-                    <div class="modal-content">
-                        <div class="modal-body">
-                            
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </div>
-{% endblock %}
-
-{% block actual_title %}
-    <h4 class="h4">Format(s)</h4>
 {% endblock %}
