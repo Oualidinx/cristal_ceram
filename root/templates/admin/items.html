@@ -102,25 +102,23 @@
                         {
                               id: '{{ item["id"] }}',
                               intern_reference :'{{ item["intern_reference"] }}',
-                              label :'{{ item['label'] }}, {{ item['format'] }}, {{ item['aspect'] }}',
+                              label :'{{ item['label'] }}',
                               serie :'{{ item['serie'] }}',
                               {#_session : gridjs.html(`<span class="badge rounded-pill text-white"#}
                               {#                              style="background-color:{{ item['_session'][0]}};" }}>#}
                               {#                                  {{ item['_session'][1] }}#}
                               {#                        </span>`),#}
-                              expired_at :'{{ item['expired_at'] }}',
+                              expired_at :gridjs.html(`<span class="badge rounded-pill text-white"
+                                                        style="background-color:{{ item['expired_at'][0] }};">{{ item['expired_at'][1] }}`),
                               actions: gridjs.html(`<div class="dropdown dropstart">
 
                                   <div class="btn-group">
-                                        {#<button id="item-info" class="btn btn-sm btn-outline-info"#}
-                                        {#    data-id="{{ item['id'] }}" onclick="foo();">#}
-                                        {#    <i class="fa fa-eye"></i></button>#}
-                                        <a role="button" class="btn btn-sm btn-outline-info" href="{{ url_for('admin_bp.get_item', item_id=item['id']) }}
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails>
-                                            <i class="fa fa-eye"></i></a>
+                                        <a role="button" class="btn btn-sm btn-outline-info" href="{{ url_for('admin_bp.get_item', item_id=item['id']) }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                            <i class="fa-solid fa-eye"></i></a>
                                         <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_product',item_id=item['id']) }}"
                                             data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                            <i class="fa fa-user-pen"></i></a>
+                                            <i class="fa fa-pen"></i></a>
                                   </div>
                             </div>`
                               )

@@ -18,37 +18,35 @@
             {% endif %}
         {% endwith %}
         <div class="row">
-            <form method="post">
-                {{form.hidden_tag()}}
-                <div class="row">
-                    <div class="mb-4">
-                        <div class="col-md-6">
-                            <div class="form-floating">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.label.label }}</div>
-                                    {% if form.label.errors %}
-                                        {{ form.label(class="form-control is-invalid") }}
-                                        {% for error in form.label.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.label(class="form-control") }}
-                                    {% endif %}
+            <div class="card w-75">
+                <div class="card-body">
+                    <form method="post">
+                        {{form.hidden_tag()}}
+                        <div class="row">
+                            <div class="col-md mb-4">
+                                <div class="form-floating">
+                                    <div class="input-group has-validation">
+                                        <div class="input-group-text">{{ form.label.label }}</div>
+                                        {% if form.label.errors %}
+                                            {{ form.label(class="form-control is-invalid") }}
+                                            {% for error in form.label.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ form.label(class="form-control") }}
+                                        {% endif %}
+                                    </div>
                                 </div>
                             </div>
+                            <div class="col-md">
+                                {{ form.submit(class="btn btn-md btn-primary") }}
+                            </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
-                <div class="row" style="text-align: right;">
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            {{ form.submit(class="btn btn-md btn-primary") }}
-                        </div>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 

@@ -32,6 +32,23 @@
                         <div class="row g-1 mb-4">
                             <div class="col-sm">
                                 <div class="form-floating">
+                                    {% if form.intern_reference.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.intern_reference(class="form-control is-invalid") }}
+                                            {% for error in form.intern_reference.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.intern_reference(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.intern_reference.label }}
+                                </div>
+                            </div>
+                            <div class="col-sm">
+                                <div class="form-floating">
                                     {% if form.label.errors %}
                                         <div class="input-group has-validation">
                                             {{ form.label(class="form-control is-invalid") }}
@@ -68,54 +85,50 @@
                         </div>
                         <div class="row g-1 mb-4">
                             <div class="col-sm">
-                                <div class="form-floating">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.format.label }}</div>
                                     {% if form.format.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ form.format(class="form-control is-invalid") }}
-                                            {% for error in form.format.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
+                                        {{ form.format(class="form-select is-invalid") }}
+                                        {% for error in form.format.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
                                     {% else %}
-                                        {{ form.format(class="form-control") }}
+                                        {{ form.format(class="form-select") }}
                                     {% endif %}
-                                    {{ form.format.label }}
                                 </div>
                             </div>
                             <div class="col-sm">
-                                <div class="form-floating">
+
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text"> {{ form.aspect.label }}</div>
                                     {% if form.aspect.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ form.aspect(class="form-control is-invalid") }}
-                                            {% for error in form.aspect.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
+                                        {{ form.aspect(class="form-select is-invalid") }}
+                                        {% for error in form.aspect.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
                                     {% else %}
-                                        {{ form.aspect(class="form-control") }}
+                                        {{ form.aspect(class="form-select") }}
                                     {% endif %}
-                                    {{ form.aspect.label }}
                                 </div>
                             </div>
                             <div class="col-sm">
-                                <div class="form-floating">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.utilisation.label }}</div>
                                     {% if form.utilisation.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ form.utilisation(class="form-control is-invalid") }}
-                                            {% for error in form.utilisation.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
+                                        {{ form.utilisation(class="form-select is-invalid") }}
+                                        {% for error in form.utilisation.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
                                     {% else %}
-                                        {{ form.utilisation(class="form-control") }}
+                                        {{ form.utilisation(class="form-select") }}
                                     {% endif %}
-                                    {{ form.utilisation.label }}
                                 </div>
                             </div>
                         </div>
@@ -138,6 +151,23 @@
                                     {{ form.expired_at.label }}
                                 </div>
                             </div>
+                            <div class="col-sm">
+                                <div class="form-floating">
+                                    {% if form.stock_sec.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.stock_sec(class="form-control is-invalid") }}
+                                            {% for error in form.stock_sec.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.stock_sec(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.stock_sec.label }}
+                                </div>
+                            </div>
                         </div>
                         <div class="row mb-4">
                             <div class="col-sm">
@@ -157,21 +187,15 @@
              $('.toast').toast('show');
              $('#format').select2({
                  theme: "bootstrap-5",
-                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
-                 placeholder: $( this ).data( 'placeholder' ),
-                 dropdownParent: $( '#format' ).parent(),
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'
              });
              $('#aspect').select2({
                  theme: "bootstrap-5",
-                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
-                 placeholder: $( this ).data( 'placeholder' ),
-                 dropdownParent: $( '#aspect' ).parent(),
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'
              });
              $('#utilisation').select2({
                  theme: "bootstrap-5",
-                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
-                 placeholder: $( this ).data( 'placeholder' ),
-                 dropdownParent: $( '#utilisation' ).parent(),
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'
              })
         });
     </script>

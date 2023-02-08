@@ -268,14 +268,11 @@ def create_user():
             flash('Veuillez choisir le rôle',"warnings")
             return render_template("admin/new_user.html", form=form)
         else:
-            print(request.form)
             user.fk_store_id = int(request.form.get('location')) if form.role.data == '1' else None
-            # user.fk_store_id = int(form.location.data) if form.role.data == '1' else None
             database.session.add(user)
             database.session.commit()
             user_for_company = UserForCompany()
             user_for_company.fk_company_id = company.id
-            # user_for_company.fk_warehouse_id = int(form.location.data) if form.role.data == '2' else None
             user_for_company.fk_warehouse_id = int(request.form.get('location')) if form.role.data == '2' else None
             user_for_company.fk_user_id = user.id
             if form.role.data == '1':
@@ -747,7 +744,8 @@ def attach_stock(stock_id):
 @admin_bp.get('/products/formats')
 @login_required
 def formats():
-    _formats = Format.query.filter_by(created_by=current_user.id).all()
+    c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+    _formats = Format.query.filter_by(fk_company_id=c_id).all()
     liste = None
     if _formats:
         liste = [
@@ -763,21 +761,30 @@ def formats():
 @login_required
 def add_format():
     form = FormatForm()
+    c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if form.validate_on_submit():
         _format = Format()
+        f = Format.query.filter_by(fk_company_id=c_id).filter(
+            func.lower(Format.label) == str.lower(form.label.data)).first()
+        if f:
+            _format = f
         _format.label = form.label.data
+        _format.created_by = current_user.id
+        _format.fk_company_id = c_id
         database.session.add(_format)
         database.session.commit()
         flash('Objet ajouté avec succès','success')
+        return redirect(url_for('admin_bp.add_format'))
     return render_template('admin/add_format.html', form = form)
 
 
 @admin_bp.get('/products/formats/<int:format_id>/edit')
-@admin_bp.get('/products/formats/<int:format_id>/edit')
+@admin_bp.post('/products/formats/<int:format_id>/edit')
 @login_required
 def edit_format(format_id):
     form = EditFormatForm()
-    format_ = Format.query.filter_by(created_by=current_user.id).filter_by(id = format_id).first()
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
+    format_ = Format.query.filter_by(fk_company_id=company).filter_by(id = format_id).first()
     if not format_:
         return render_template("errors/404.html", blueprint="admin_bp")
     if request.method=="GET":
@@ -801,7 +808,7 @@ def delete_format(format_id):
     item_brand_category = Item.query.filter_by(fk_format_id = _format.id).first()
     if item_brand_category:
         flash('impossible de supprimé cet objet', "danger")
-        return redirect(url_for('admin_bp.format'))
+        return redirect(url_for('admin_bp.formats'))
     database.session.delete(_format)
     database.session.commit()
     flash('Objet supprimé','success')
@@ -813,21 +820,30 @@ def delete_format(format_id):
 @login_required
 def add_aspect():
     form = AspectForm()
+    c_id= UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if form.validate_on_submit():
         aspect = Aspect()
+        _aspect = Aspect.query.filter_by(fk_company_id = c_id).filter(func.lower(Aspect.label) == str.lower(form.label.data)).first()
+        if _aspect:
+            aspect = _aspect
         aspect.label = form.label.data
         aspect.created_by = current_user.id
+        aspect.fk_company_id = c_id
         database.session.add(aspect)
         database.session.commit()
         flash('Objet ajouté avec succès','success')
+        return redirect(url_for('admin_bp.add_aspect'))
     return render_template('admin/add_aspect.html', form = form)
 
-@admin_bp.get('/products/formats/<int:aspect_id>/edit')
-@admin_bp.get('/products/formats/<int:aspect_id>/edit')
+@admin_bp.get('/products/aspects/<int:aspect_id>/edit')
+@admin_bp.post('/products/aspects/<int:aspect_id>/edit')
 @login_required
 def edit_aspect(aspect_id):
+    print(aspect_id)
     form = EditAspectForm()
-    aspect_ = Format.query.filter_by(created_by=current_user.id).filter_by(id = aspect_id).first()
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+    aspect_ = Aspect.query.filter_by(fk_company_id=company).filter_by(id=aspect_id).first()
+
     if not aspect_:
         return render_template("errors/404.html", blueprint="admin_bp")
     if request.method=="GET":
@@ -837,7 +853,7 @@ def edit_aspect(aspect_id):
         database.session.add(aspect_)
         database.session.commit()
         flash('Objet modifié avec succès',"success")
-        return redirect(url_for("admin_bp.formats"))
+        return redirect(url_for("admin_bp.aspects"))
     return render_template("admin/add_aspect.html", form = form)
 
 
@@ -858,7 +874,7 @@ def delete_aspect(aspect_id):
     return redirect(url_for("admin_bp.aspects"))
 
 
-@admin_bp.get('/aspects')
+@admin_bp.get('/products/aspects')
 @login_required
 def aspects():
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
@@ -878,7 +894,7 @@ def products():
     _products = Item.query.filter_by(fk_company_id=company.id).all()
     liste = None
     if _products:
-        liste = [product.repr() for product in _products]
+        liste = [product.repr(['id','label','serie','intern_reference','expired_at']) for product in _products]
     return render_template('admin/items.html', liste = liste)
 
 
@@ -900,16 +916,19 @@ def add_product():
     if form.validate_on_submit():
         item = Item()
         item.label = form.label.data
+        item.serie = form.serie.data
+        item.stock_sec = form.stock_sec.data
         item.use_for = form.utilisation.data if form.utilisation.data else None
         item.intern_reference = form.intern_reference.data if form.intern_reference.data else None
-        item.fk_aspect_id = int(form.aspect.data) if form.aspect.data else None
-        item.fk_format_id = int(form.format.data) if form.format.data else None
+        item.fk_aspect_id = form.aspect.data.id if form.aspect.data else None
+        item.fk_format_id = form.format.data.id if form.format.data else None
         item.used_for = form.utilisation.data
-        item.company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
+        item.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
         item.expired_at = form.expired_at.data if form.expired_at.data else None
         database.session.add(item)
         database.session.commit()
         flash('Objet ajouté avec succès',"success")
+        return redirect(url_for('admin_bp.add_product'))
     return render_template("admin/new_item.html", form=form)
 
 
@@ -929,6 +948,7 @@ def edit_product(item_id):
             aspect=Aspect.query.get(item.fk_aspect_id) if item.fk_aspect_id else None,
             used_for = item.use_for if item.use_for else None,
             label = item.label,
+            stock_sec = item.stock_sec,
             serie = item.serie if item.serie else None,
             intern_reference = item.intern_reference if item.intern_reference else None,
             expired_at = item.expired_at if item.expired_at else None,
@@ -955,6 +975,8 @@ def edit_product(item_id):
         item.expired_at = form.expired_at.data if form.expired_at.data else None
         item.fk_aspect_id = form.aspect.data
         item.fk_format_id = form.format.data
+
+        item.stock_sec = form.stock_sec.data
         item.utilisation = form.utilisation.data
         item.fk_item_id = item.id
         database.session.add(item)
@@ -966,7 +988,7 @@ def edit_product(item_id):
 @admin_bp.get('/products/<int:item_id>/get')
 @login_required
 def get_item(item_id):
-    return '<h1 class="h1>item info</h1>'
+    return '<h1 class="h1">item info</h1>'
 
 
 @admin_bp.get('/stores')

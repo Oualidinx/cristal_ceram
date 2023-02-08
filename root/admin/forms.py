@@ -2,9 +2,9 @@ import datetime
 from wsgiref import validate
 
 from flask_wtf import FlaskForm
-from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField
+from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, FloatField
 from wtforms.fields.html5 import DateField
-from wtforms.validators import DataRequired, ValidationError, EqualTo
+from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
 from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect
 from flask_login import current_user
 from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
@@ -17,43 +17,50 @@ class NewItemForm(FlaskForm):
                         render_kw={'placeholder':'Désignation du produit'})
     serie = StringField('Série: ', validators=[DataRequired('Champs obligatoire')],
                         render_kw={'placeholder':'Série du produit'})
-    format = QuerySelectField('Format: ', query_factory=lambda : Format.query.filter_by(
+    format = QuerySelectField('Format ', query_factory=lambda : Format.query.filter_by(
                                 fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
                                                                                             .first().fk_company_id).all(),
                               validators=[DataRequired('Champs obligatoire')],
-                              render_kw={'data-placeholder': 'Séléctionner le fromat du produit...'})
-    aspect = QuerySelectField('Aspect: ', validators=[DataRequired('Champs obligatoire')],
+                              render_kw={'data-placeholder': 'Séléctionner le format...'})
+    aspect = QuerySelectField('Aspect ', validators=[DataRequired('Champs obligatoire')],
+                              render_kw={'data-placeholder':'Séléctionner l\'aspect du produit...'},
                               query_factory=lambda: Aspect.query.filter_by(
                                   fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(
                                       fk_user_id=current_user.id) \
-                                      .first().fk_company_id).all(),
-                              render_kw={'data-placeholder': 'Séléctionner l\'aspect du produit...'})
-    utilisation=SelectField('Utilisation: ', choices=[('Carreaux-de-mur','Carreaux-de-mur'),
+                                      .first().fk_company_id).all())
+    utilisation=SelectField('Utilisation ', choices=[('Carreaux-de-mur','Carreaux-de-mur'),
                                                         ('Carreaux-de-sol','Carreaux-de-sol'),
                                                         ('Carreaux-de-pierre','Carreaux-de-pierre'),
                                                         ('Carreaux-de-parquet','Carreaux-de-parquet'), ('Autres','Autres')],
                             render_kw={'data-placeholder':'Produit utilisé Pour...'})
     intern_reference = StringField('Référence interne:',
                                    render_kw={'placeholder':"La référence interne du produit..."})
-    expired_at = DateField('Date d\'expiration:',
+    expired_at = DateField('Date d\'expiration:', validators=[Optional()],
                                render_kw={'placeholder':'La date d\'expiration'})
+    stock_sec = FloatField('Stock de sécurité',validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':'Le stock de sécurité...'})
     submit = SubmitField('Ajouter')
-
+    def validate_stock_sec(self, stock_sec):
+        if stock_sec.data <= 0:
+            raise ValidationError('Valeur invalide !')
     def validate_label(self, label):
-        item = Item.query.filter_by(created_by=current_user.id) \
+        c_id=UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
+        item = Item.query.filter_by(fk_company_id = c_id) \
             .filter(func.lower(label.data) == func.lower(Item.label)).first()
         if item:
             raise ValidationError('Désignation déjà existe')
 
     def validate_intern_reference(self, intern_reference):
-        item = Item.query.filter_by(created_by=current_user.id) \
+        c_id = UserForCompany.query.filter_by(role="manager").filter_by(
+            fk_user_id=current_user.id).first().fk_company_id
+        item = Item.query.filter_by(fk_company_id=c_id) \
             .filter(func.lower(str(intern_reference.data)) == func.lower(Item.intern_reference)).first()
         if item:
             raise ValidationError('Référence interne ne peut être répéter')
 
     def validate_expired_at(self, expired_at):
-        if expired_at.data.date() >= datetime.datetime.utcnow().date():
-            raise ValidationError('Date d\'expiration non valide')
+        if expired_at.data :
+            if expired_at.data.date() >= datetime.datetime.utcnow().date():
+                raise ValidationError('Date d\'expiration non valide')
 
 class EditItemForm(NewItemForm):
     submit = SubmitField('Executer')
@@ -216,12 +223,12 @@ class UpdatePasswordForm(FlaskForm):
 
 
 class FormatForm(FlaskForm):
-    label = StringField('Nom du Format:', validators=[DataRequired('Champs obligatoire')])
+    label = StringField('Nom du Format:', validators=[DataRequired('Champs obligatoire')], render_kw={'data-placeholder':'Nom de format'})
     submit = SubmitField('Ajouter')
 
 
 class AspectForm(FlaskForm):
-    label = StringField("Nom de l'aspect: ", validators=[DataRequired('Champs obligatoire')])
+    label = StringField("Nom de l'aspect: ", validators=[DataRequired('Champs obligatoire')], render_kw={'data-placeholder':'Nom de l\'aspect'})
     submit = SubmitField('Ajouter')
 
 

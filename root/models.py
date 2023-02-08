@@ -234,6 +234,7 @@ class Item(db.Model):
     serie = db.Column(db.String(100), nullable=True)
     intern_reference = db.Column(db.String(100))
     label = db.Column(db.String(1500))
+    stock_sec = db.Column(db.Float, default=0)
     use_for = db.Column(db.String(50))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
@@ -254,8 +255,8 @@ class Item(db.Model):
             'serie' : self.serie,
             'intern_reference' : self.intern_reference,
             'label' : self,
-            'expired_at' : self.expired_at,
-            'format': Format.query.get(self.fk_format_id) if self.fk_format_id else None,
+            'expired_at' : (self.expired_at,''),
+            'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else None,
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else None
         }
         return {key: _dict[key] for key in columns} if columns else _dict
@@ -324,7 +325,6 @@ class Stock(db.Model):
     fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
     fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'))
     stock_qte = db.Column(db.Float, default=0)
-    stock_sec = db.Column(db.Float, default=0)
     # stock_max = db.Column(db.Float, default=0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     last_purchase = db.Column(db.DateTime, default=datetime.utcnow())
