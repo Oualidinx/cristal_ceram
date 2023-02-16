@@ -1,0 +1,111 @@
+{% extends "layouts/admin_layout.html" %}
+{% block main_tag %}
+        <div class="row">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-black fw-light fs-6">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
+
+        <div class="row mt-5">
+            <div class="card">
+                <div class="card-body justify-content-center">
+                    <form method="post">
+                    {{ form.hidden_tag() }}
+                        <div class="row g-1 mb-4">
+                            <div class="col-sm-4">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.full_name.label }}</div>
+                                        {% if form.full_name.errors %}
+
+                                            {{ form.full_name(class="form-control is-invalid") }}
+                                            {% for error in form.full_name.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+
+                                        {% else %}
+                                            {{ form.full_name(class="form-control") }}
+                                        {% endif %}
+                                </div>
+                            </div>
+
+                            <div class="col-md-4">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.category.label }}</div>
+                                    {% if form.category.errors %}
+                                        {{ form.category(class="form-select is-invalid") }}
+                                        {% for error in form.category.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.category(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-3">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text">{{ form.contacts.label }}</div>
+                                    {% if form.contacts.errors %}
+                                        {{ form.contacts(class="form-control is-invalid") }}
+                                        {% for error in form.contacts.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.contacts(class="form-control") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm">
+                                {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
+                            </div>
+                        </div>
+
+                    </form>
+
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}" />
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function(){
+            $('.toast').toast('show');
+            $( '#category' ).select2( {
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                placeholder: $( this ).data( 'placeholder' ),
+            } );
+        });
+    </script>
+{% endblock %}
+
+{% block actual_title %}
+    <h5 class="h5">Ajouter un fournisseur</h5>
+{% endblock %}

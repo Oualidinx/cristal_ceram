@@ -18,8 +18,8 @@ class LoginForm(FlaskForm):
 
 
 class ResetPasswordForm(FlaskForm):
-    new_password = PasswordField('Nouveau mot de passe:', validators=[DataRequired()])
-    confirm_password = PasswordField('Confirmer le mot de passe:', validators=[DataRequired(), EqualTo('new_password', "Vérifier le mot de passe")])
+    new_password = PasswordField('Nouveau mot de passe:', validators=[DataRequired()], render_kw={'placeholder':'Nouveau mot de passe'})
+    confirm_password = PasswordField('Confirmer le mot de passe:', render_kw={'placeholder':'Confirmer le mot de passe'},validators=[DataRequired(), EqualTo('new_password', "Vérifier le mot de passe")])
     submit = SubmitField('MAJ')
 
 

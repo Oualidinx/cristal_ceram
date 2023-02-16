@@ -5,7 +5,7 @@
 
 
 {% block main_tag %}
-        <div class="container">
+
             <div class="row mt-5">
                 {% with messages = get_flashed_messages(with_categories=true) %}
                     {% if messages %}
@@ -24,7 +24,7 @@
                     {% endif %}
                 {% endwith %}
                 <div class="col" style="position: relative; text-align: right">
-                    <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.create_user') }}">
+                    <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_supplier') }}">
                         <i class="fa fa-circle-plus"></i>
                            Nouveau
                     </a>
@@ -50,40 +50,28 @@
                     </div>
                 </div>
             </div>
-        </div>
+
 
 {% endblock %}
 
 {% block actual_title %}
-    Les employés
+    Les fournisseurs
 {% endblock %}
 
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
-        function foo(component){
-            console.log(component.dataset['id']);
-            var user_id = component.dataset['id'];
-            // AJAX request
-            $.ajax({
-               url: '{{ url_for('admin_bp.get_user') }}',
-               type: 'POST',
-               data: JSON.stringify({user_id: user_id}),
-                dataType:"json",
-                contentType: "application/json; charset=utf-8",
-               success: function(response){
-                   // Add response in Modal body
-                   {#console.log(response.message)#}
-                   $('.modal-body').html(response.message);
-                   // Display Modal
-                   $('#userContent').modal('show');
-               }
-            });
-        }
         $(document).ready(function (){
             $('.toast').toast('show');
         })
         new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
             language:{
                 search: {
                   placeholder: 'Recherche...',
@@ -108,11 +96,8 @@
             columns: [
                 { id: 'id', name: 'Num' },
                 { id: 'full_name', name: 'Nom complet' },
-                { id: 'username', name: 'Pseudonyme' },
-                { id: '_session', name: 'Compte utilisateur' },
-                { id: 'role', name: 'Poste occupé' },
-                { id: 'status', name: 'Etat' },
-                { id: 'location', name: 'Lieu de travail' },
+                { id: 'category', name: 'Catégorie' },
+                { id: 'contact', name: 'Numéro de téléphone' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -120,45 +105,26 @@
                     setTimeout(()=>
                         resolve([
                 {% if liste %}
-                    {% for user in liste %}
+                    {% for supplier in liste %}
                         {
-                              id: '{{ user["id"] }}',
-                              full_name :'{{ user["full_name"] }}',
-                              username :'{{ user['username'] }}',
-                              _session : gridjs.html(`<span class="badge rounded-pill text-white"
-                                                            style="background-color:{{ user['_session'][0]}};" }}>
-                                                                {{ user['_session'][1] }}
-                                                      </span>`),
-                              role :'{{ user['role'] }}',
-                              status :gridjs.html(`<span class="badge rounded-pill text-white"
-                                                        style="background-color:{{ user['status'][0]}};" }}>
-                                                        {{ user['status'][1] }}</span>
-                              `),
-                              location :'{{ user['location'] }}',
-                              actions: gridjs.html(`<div class="dropdown dropstart">
-                                  <div class="btn-group">
-                                        <button id="user-info" class="btn btn-sm btn-outline-info"
-                                            data-id="{{ user['id'] }}" onclick="foo(this);">
-                                            <i class="fa fa-eye"></i></button>
-                                        <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_user',user_id=user['id']) }}"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                            <i class="fa fa-user-pen"></i></a>
-
-                                        <a role="button" class="btn btn-sm btn-outline-danger"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                {% if user['_session'][1]=="Activé" %}
-                                                    title="Bloquer l'accès"
-                                                    href="{{ url_for('admin_bp.disable_user',user_id=user['id']) }}">
-                                                    <i class="fa fa-user-lock"></i>
-                                                {% else %}
-                                                    title="Débloquer l'accès"
-                                                    href="{{ url_for('admin_bp.enable_user',user_id=user['id']) }}">
-                                                    <i class="fa fa-user-unlock"></i>
-                                             {% endif %}
-
-                                            </a>
-                                  </div>
-                            </div>`
+                              id: '{{ supplier["id"] }}',
+                              full_name :'{{ supplier["full_name"] }}',
+                              category :'{{ supplier['category'] }}',
+                              contact :'{{ supplier['contact'] }}',
+                              actions: gridjs.html(`
+                                    <div class="dropdown dropstart">
+                                        <div class="btn-group">
+                                            {#<a role="button" class="btn btn-sm btn-outline-info" href="{{ url_for('admin_bp.get_supplier',supplier_id=supplier['id']) }}"#}
+                                            {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">#}
+                                            {#    <i class="fa-solid fa-eye"></i></a>#}
+                                            <a role="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_bp.edit_supplier',supplier_id=supplier['id']) }}"
+                                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
+                                                <i class="fa-solid fa-user-pen"></i></a>
+                                            <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_supplier',supplier_id=supplier['id']) }}"
+                                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                                <i class="fa-solid fa-user-minus"></i></a>
+                                        </div>
+                                </div>`
                               )
                         },
                     {% endfor %}
@@ -168,7 +134,7 @@
                 })
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

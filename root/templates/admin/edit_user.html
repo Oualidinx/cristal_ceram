@@ -1,177 +1,175 @@
 {% extends "layouts/admin_layout.html" %}
 {% block main_tag %}
-    <div class="container">
-        <div class="row w-100">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    {% for category, message in messages %}
-                        <div class="toast-container position-fixed bottom-0 end-0 p-3">
-                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                <div class="d-flex">
-                                    <div class="toast-body">
-                                        {{ message }}
-                                    </div>
-                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                              </div>
-                            </div>
+    <div class="row mt-lg-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
                         </div>
-                    {% endfor %}
-                {% endif %}
-            {% endwith %}
-        </div>
-
-        <div class="row mt-5 w-100">
-            <div class="card">
-                <div class="card-header d-flex justify-content-between">
-                    <h3 class="h3">Modifier les informations</h3>
-                    <div class="dropdown">
-                          <button class="btn btn-outline-primary" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
-                                <i class="fa-solid fa-ellipsis-vertical"></i>
-                          </button>
-                          <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
-                                <li><a class="dropdown-item" href="{{ url_for('admin_bp.disable_user', user_id = user.id) }}">Désactiver sa session</a></li>
-                          </ul>
                     </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+    <div class="row mt-5">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between">
+                <h3 class="h3">Modifier les informations</h3>
+                <div class="dropdown">
+                      <button class="btn btn-outline-primary" type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fa-solid fa-ellipsis-vertical"></i>
+                      </button>
+                      <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                            <li><a class="dropdown-item" href="{{ url_for('admin_bp.disable_user', user_id = user.id) }}">Désactiver sa session</a></li>
+                            <li><a class="dropdown-item" href="{{ url_for('admin_bp.change_password', user_id = user.id) }}">Changer le mot de passe</a></li>
+                      </ul>
                 </div>
-                <div class="card-body">
-                    <div class="card-title">
-                        <h5 class="h5">
-                            {{ form.full_name.data }}
-                        </h5>
-                    </div>
-                    <form method="post">
-                        {{ form.hidden_tag() }}
-                        <div class="row g-1 mb-5">
-                            <div class="col-sm">
-                                <div class="form-floating">
-                                    {% if form.full_name.errors %}
-                                        <div class="input-group has-validation">
-                                        {{ form.full_name(class="form-control is-invalid") }}
-                                        {% for error in form.full_name.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
+            </div>
+            <div class="card-body">
+                <div class="card-title">
+                    <h5 class="h5">
+                        {{ form.full_name.data }}
+                    </h5>
+                </div>
+                <form method="post">
+                    {{ form.hidden_tag() }}
+                    <div class="row g-1 mb-5">
+                        <div class="col-sm">
+                            <div class="form-floating">
+                                {% if form.full_name.errors %}
+                                    <div class="input-group has-validation">
+                                    {{ form.full_name(class="form-control is-invalid") }}
+                                    {% for error in form.full_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
                                         </div>
-                                    {% else %}
-                                        {{ form.full_name(class="form-control") }}
-                                    {% endif %}
-                                    {{ form.full_name.label }}
-                                </div>
-                            </div>
-                            <div class="col-sm">
-                                <div class="form-floating">
-                                    {% if form.username.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ form.username(class="form-control is-invalid") }}
-                                            {% for error in form.username.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        {{ form.username(class="form-control") }}
-                                    {% endif %}
-                                    {{ form.username.label }}
-                                </div>
+                                    {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.full_name(class="form-control") }}
+                                {% endif %}
+                                {{ form.full_name.label }}
                             </div>
                         </div>
-                    <div class="row mb-5">
-                        <div class="col-sm-4">
-                            <div class="input-group has-validation">
-                                <div class="input-group-text">{{ form.role.label }}</div>
-                                {% if form.role.errors %}
+                        <div class="col-sm">
+                            <div class="form-floating">
+                                {% if form.username.errors %}
                                     <div class="input-group has-validation">
-                                        {{ form.role(class="form-select is-invalid") }}
-                                        {% for error in form.role.errors %}
+                                        {{ form.username(class="form-control is-invalid") }}
+                                        {% for error in form.username.errors %}
                                             <div class="invalid-feedback">
                                                 {{ error }}
                                             </div>
                                         {% endfor %}
                                     </div>
                                 {% else %}
-                                    {{ form.role(class="form-select") }}
+                                    {{ form.username(class="form-control") }}
+                                {% endif %}
+                                {{ form.username.label }}
+                            </div>
+                        </div>
+                    </div>
+                <div class="row mb-5">
+                    <div class="col-sm-4">
+                        <div class="input-group has-validation">
+                            <div class="input-group-text">{{ form.role.label }}</div>
+                            {% if form.role.errors %}
+                                <div class="input-group has-validation">
+                                    {{ form.role(class="form-select is-invalid") }}
+                                    {% for error in form.role.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                </div>
+                            {% else %}
+                                {{ form.role(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    {% if form.role.data==1 %}
+                        <div class="col-sm" id="div-stores">
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.stores.label }}</div>
+                                {% if form.stores.errors %}
+                                    {{ form.stores(class="form-select is-invalid") }}
+                                    {% for error in form.stores.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {{ form.stores(class="form-select") }}
                                 {% endif %}
                             </div>
                         </div>
-
-                        {% if form.role.data==1 %}
-                            <div class="col-sm" id="div-stores">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.stores.label }}</div>
-                                    {% if form.stores.errors %}
-                                        {{ form.stores(class="form-select is-invalid") }}
-                                        {% for error in form.stores.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.stores(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-sm" style="display: none;" id="div-warehouses">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.warehouses.label }}</div>
-                                    {% if form.warehouses.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ form.warehouses(class="form-select is-invalid") }}
-                                            {% for error in form.warehouses.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-
-                                    {% else %}
-                                        {{ form.warehouses(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% else %}
-                            <div class="col-sm" id="div-warehouses">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.warehouses.label }}</div>
-                                    {% if form.warehouses.errors %}
+                        <div class="col-sm" style="display: none;" id="div-warehouses">
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.warehouses.label }}</div>
+                                {% if form.warehouses.errors %}
+                                    <div class="input-group has-validation">
                                         {{ form.warehouses(class="form-select is-invalid") }}
                                         {% for error in form.warehouses.errors %}
                                             <div class="invalid-feedback">
                                                 {{ error }}
                                             </div>
                                         {% endfor %}
-                                    {% else %}
-                                        {{ form.warehouses(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-sm" style="display: none;" id="div-stores" >
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.stores.label }}</div>
-                                    {% if form.stores.errors %}
-                                        {{ form.stores(class="form-select is-invalid") }}
-                                        {% for error in form.stores.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.stores(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        {% endif %}
-                    </div>
 
-                    <div class="row mb-5">
-                        <div class="col-md">
-                            {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
+                                {% else %}
+                                    {{ form.warehouses(class="form-select") }}
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
-                    </form>
+                    {% else %}
+                        <div class="col-sm" id="div-warehouses">
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.warehouses.label }}</div>
+                                {% if form.warehouses.errors %}
+                                    {{ form.warehouses(class="form-select is-invalid") }}
+                                    {% for error in form.warehouses.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {{ form.warehouses(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm" style="display: none;" id="div-stores" >
+                            <div class="input-group has-validation">
+                                <div class="input-group-text">{{ form.stores.label }}</div>
+                                {% if form.stores.errors %}
+                                    {{ form.stores(class="form-select is-invalid") }}
+                                    {% for error in form.stores.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {{ form.stores(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    {% endif %}
                 </div>
+
+                <div class="row mb-5">
+                    <div class="col-md">
+                        {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
+                    </div>
+                </div>
+                </form>
             </div>
-         </div>
+        </div>
     </div>
 {% endblock %}
 

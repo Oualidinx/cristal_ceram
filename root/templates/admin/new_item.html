@@ -169,6 +169,59 @@
                                 </div>
                             </div>
                         </div>
+                        <div class="row g-1 mb-4">
+                            <div class="col-md">
+                                <div class="form-floating">
+                                    {% if form.manufacturer.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.manufacturer(class="form-control is-invalid") }}
+                                            {% for error in form.manufacturer.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.manufacturer(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.manufacturer.label }}
+                                </div>
+                            </div>
+                        <div class="col-md">
+                            <div class="form-floating">
+                                {% if form.unit.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ form.unit(class="form-control is-invalid") }}
+                                        {% for error in form.unit.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.unit(class="form-control") }}
+                                {% endif %}
+                                {{ form.unit.label }}
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="form-floating">
+                                {% if form.piece_per_unit.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ form.piece_per_unit(class="form-control is-invalid") }}
+                                        {% for error in form.piece_per_unit.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ form.piece_per_unit(class="form-control") }}
+                                {% endif %}
+                                {{ form.piece_per_unit.label }}
+                            </div>
+                        </div>
+                        </div>
                         <div class="row mb-4">
                             <div class="col-sm">
                                 {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}

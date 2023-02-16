@@ -64,6 +64,13 @@
             $('.toast').toast('show');
         })
         new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
             language:{
                 search: {
                   placeholder: 'Recherche...',
@@ -90,6 +97,7 @@
                 { id: 'intern_reference', name: 'Référence interne' },
                 { id: 'label', name: 'Désignation' },
                 { id: 'serie', name: 'Série' },
+                { id: 'stock_sec', name: 'Stock de sécurité' },
                 { id: 'expired_at', name: "Date d'expiration" },
                 { id:'actions', name:'Actions'}
             ],
@@ -102,14 +110,15 @@
                         {
                               id: '{{ item["id"] }}',
                               intern_reference :'{{ item["intern_reference"] }}',
-                              label :'{{ item['label'] }}',
+                              label :'{{ item['label'] }}, {{ item['format'] }}, {{ item['aspect'] }}',
                               serie :'{{ item['serie'] }}',
+                              stock_sec :'{{ item['stock_sec'] }}',
                               {#_session : gridjs.html(`<span class="badge rounded-pill text-white"#}
                               {#                              style="background-color:{{ item['_session'][0]}};" }}>#}
                               {#                                  {{ item['_session'][1] }}#}
                               {#                        </span>`),#}
-                              expired_at :gridjs.html(`<span class="badge rounded-pill text-white"
-                                                        style="background-color:{{ item['expired_at'][0] }};">{{ item['expired_at'][1] }}`),
+                              expired_at :gridjs.html(`<span class="badge rounded-pill text-black"
+                                                        style="background-color:{{ item['expired_at'][1] }};">{{ item['expired_at'][0] }}`),
                               actions: gridjs.html(`<div class="dropdown dropstart">
 
                                   <div class="btn-group">

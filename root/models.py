@@ -1,5 +1,5 @@
 from root import login_manager, database as db
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 from sqlalchemy import and_
 @login_manager.user_loader
@@ -141,7 +141,9 @@ class Client(db.Model):
             'full_name':self.full_name,
             'category':self.category,
             'contact':Contact.query.filter_by(fk_client_id=self.id).first(),
-            'contacts':Contact.query.filter_by(fk_client_id=self.id).all()
+            'orders':[order.repr(['id','created_at','intern_reference','total','is_delivered']) for order in self.orders],
+            'contacts':Contact.query.filter_by(fk_client_id=self.id).all(),
+            'nb_cmd':len(self.orders)
         }
         return {key:_dict[key] for key in columns} if columns else _dict
 
@@ -236,6 +238,9 @@ class Item(db.Model):
     label = db.Column(db.String(1500))
     stock_sec = db.Column(db.Float, default=0)
     use_for = db.Column(db.String(50))
+    manufacturer = db.Column(db.String(100))
+    unit = db.Column(db.String(20))
+    piece_per_unit = db.Column(db.Float, default = 0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     expired_at = db.Column(db.DateTime, nullable = True)
@@ -243,6 +248,7 @@ class Item(db.Model):
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
     fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
+    stocks = db.relationship('Stock', backref="item_stocks", lazy="subquery")
     def __repr__(self):
         return f'{self.label}, {Format.query.get(self.fk_format_id).label}, {Aspect.query.get(self.fk_aspect_id).label}'
         # return f'{self.label}, ' \
@@ -253,32 +259,28 @@ class Item(db.Model):
         _dict={
             'id' : self.id,
             'serie' : self.serie,
+            'manufacturer':self.manufacturer if self.manufacturer else '/',
+            'unit':self.unit if self.unit else '',
+            'piece_per_unit': self.piece_per_unit if self.piece_per_unit else '/',
             'intern_reference' : self.intern_reference,
-            'label' : self,
-            'expired_at' : (self.expired_at,''),
+            'label' : self.label,
+            'used_for': self.use_for,
+            'expired_at' : (self.expired_at.date(),'#007256',f'Restent {(self.expired_at -datetime.utcnow()).days} jour(s)')
+                                if self.expired_at and self.expired_at > datetime.utcnow()
+                                else (self.expired_at,'#e85e31',f'Produit expiré depuis '
+                                                                f'{(datetime.utcnow()-self.expired_at).days} jour(s)')
+                                    if self.expired_at and self.expired_at < datetime.utcnow() else ('Date indéfinie','none',''),
+            'stock_sec':self.stock_sec,
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else None,
-            'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else None
+            'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else None,
+            'stocks':[stock.repr(['stock_qts','warehouse','status']) for stock in self.stocks],
+            'stock_qte':sum([stock.stock_qte for stock in self.stocks])
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
 
-class Order(db.Model):
-    __tablename__="order"
-    id = db.Column(db.Integer, primary_key=True)
-    category = db.Column(db.String(50))
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
-    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    total = db.Column(db.Float, default=0)
-    quotation_id = db.Column(db.Integer, db.ForeignKey('quotation.id'))
-    is_delivered = db.Column(db.Boolean, default=0)
-    is_canceled = db.Column(db.Boolean, default=0)
-    taxes = db.relationship('Tax', secondary="order_tax",
-                            primaryjoin="Order.id == foreign(OrderTax.fk_order_id)",
-                            secondaryjoin="Tax.id == foreign(OrderTax.fk_tax_id)",
-                            viewonly=True)
+
+
 
 class OrderTax(db.Model):
     __tablename__="order_tax"
@@ -343,8 +345,7 @@ class Stock(db.Model):
             quantity = self.stock_qte,
             last_purchase = self.last_purchase.date(),
             last_purchase_price = '{:20,.2f}'.format(self.last_purchase_price),
-            status = "#004D33" if (self.stock_sec/self.stock_qte)<0.5 else "#A6001A" if (self.stock_sec/self.stock_qte) in [0.51,1] else "#E06000",
-            stock_sec = self.stock_sec
+            status = ('Normal',"#004D33") if (self.stock_qte/Item.query.get(self.fk_item_id).stock_sec)<0.5 else ('Réapprovisionnement recommandé',"#A6001A") if (self.stock_qte/Item.query.get(self.fk_item_id).stock_sec) in [0.51,1] else ("Réapprovisionnement nécessaire","#E06000"),
         )
         if columns:
             return {key:_dict[key] for key in columns}
@@ -369,11 +370,16 @@ class Subscription(db.Model):
 class Supplier(db.Model):
     __tablename__="supplier"
     id = db.Column(db.Integer, primary_key=True)
-    full_name = db.Column(db.String(10))
-    site = db.Column(db.String(10))
+    full_name = db.Column(db.String(50))
+    site = db.Column(db.String(100))
     category = db.Column(db.String(20))
-    nif = db.Column(db.String(10))
+    nif = db.Column(db.String(100))
     civility = db.Column(db.String(10))
+    orders = db.relationship('Order', backref="supplier_orders", lazy="subquery")
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+
+    def repr(self):
+        return {'id':self.id,'full_name':self.full_name, 'category': self.category}
 
 
 class SupplierCompany(db.Model):
@@ -497,3 +503,40 @@ class Store(db.Model):
             address = self.address,
             contact = self.contact,
         )
+
+class Order(db.Model):
+    __tablename__="order"
+    id = db.Column(db.Integer, primary_key=True)
+    intern_reference = db.Column(db.String(100))
+    category = db.Column(db.String(50))
+    fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
+    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    total = db.Column(db.Float, default=0)
+    quotation_id = db.Column(db.Integer, db.ForeignKey('quotation.id'))
+    is_delivered = db.Column(db.Boolean, default=0)
+    is_canceled = db.Column(db.Boolean, default=0)
+    taxes = db.relationship('Tax', secondary="order_tax",
+                            primaryjoin="Order.id == foreign(OrderTax.fk_order_id)",
+                            secondaryjoin="Tax.id == foreign(OrderTax.fk_tax_id)",
+                            viewonly=True)
+
+    def repr(self, columns=None):
+        _dict={
+            'id':self.id,
+            'category':self.category,
+            'intern_reference':self.intern_reference,
+            'client':Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
+            'delivery_date':self.delivery_date if self.delivery_date else 'Pas encore livré',
+            'supplier':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
+            'created_at':self.created_at.date(),
+            'created_by':User.query.get(self.created_by).full_name,
+            'total':'{:,.2f}'.format(self.total),
+            'quotation': self.quotation_id,
+            'is_delivered' : (('Non livrée',"#d33723") if self.is_delivered and self.is_delivered == False else ('Livrée','#007256') if self.is_delivered and self.is_delivered == True else ('','')) ,
+            'is_canceled': self.is_canceled
+
+        }
+        return {key:_dict[key] for key in columns} if columns else _dict

@@ -17,13 +17,14 @@ class NewItemForm(FlaskForm):
                         render_kw={'placeholder':'Désignation du produit'})
     serie = StringField('Série: ', validators=[DataRequired('Champs obligatoire')],
                         render_kw={'placeholder':'Série du produit'})
-    format = QuerySelectField('Format ', query_factory=lambda : Format.query.filter_by(
+    format = QuerySelectField('Format ',blank_text="Séléctionner le format...",allow_blank =True, query_factory=lambda : Format.query.filter_by(
                                 fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
                                                                                             .first().fk_company_id).all(),
                               validators=[DataRequired('Champs obligatoire')],
                               render_kw={'data-placeholder': 'Séléctionner le format...'})
     aspect = QuerySelectField('Aspect ', validators=[DataRequired('Champs obligatoire')],
                               render_kw={'data-placeholder':'Séléctionner l\'aspect du produit...'},
+                              allow_blank=True,blank_text="Séléctionner l'aspect...",
                               query_factory=lambda: Aspect.query.filter_by(
                                   fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(
                                       fk_user_id=current_user.id) \
@@ -32,9 +33,16 @@ class NewItemForm(FlaskForm):
                                                         ('Carreaux-de-sol','Carreaux-de-sol'),
                                                         ('Carreaux-de-pierre','Carreaux-de-pierre'),
                                                         ('Carreaux-de-parquet','Carreaux-de-parquet'), ('Autres','Autres')],
-                            render_kw={'data-placeholder':'Produit utilisé Pour...'})
+                            render_kw={'data-placeholder':'Produit utilisé Pour...'},
+                            validators=[DataRequired('Champs obligatoire')])
     intern_reference = StringField('Référence interne:',
                                    render_kw={'placeholder':"La référence interne du produit..."})
+    manufacturer=StringField('Produit Par:',
+                             render_kw={'placeholder':'Usine de production'}, validators=[Optional()])
+    unit = StringField('Unité', render_kw={'placeholder':'Unité de stock de produit'},
+                       validators=[Optional()])
+    piece_per_unit=StringField('Pièce/poids par unité: ',
+                               render_kw={'placeholder':'Pièce ou poids par unité'})
     expired_at = DateField('Date d\'expiration:', validators=[Optional()],
                                render_kw={'placeholder':'La date d\'expiration'})
     stock_sec = FloatField('Stock de sécurité',validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':'Le stock de sécurité...'})
@@ -59,7 +67,7 @@ class NewItemForm(FlaskForm):
 
     def validate_expired_at(self, expired_at):
         if expired_at.data :
-            if expired_at.data.date() >= datetime.datetime.utcnow().date():
+            if expired_at.data <= datetime.datetime.utcnow().date():
                 raise ValidationError('Date d\'expiration non valide')
 
 class EditItemForm(NewItemForm):
@@ -248,3 +256,31 @@ class AttachWareHouseForm(FlaskForm):
     stock_sec = StringField('Quantité de Sécurité (Stock de sécurité): ',
                             validators=[DataRequired('Champs obligatoire')])
     submit = SubmitField('Valider')
+
+
+class ClientForm(FlaskForm):
+    full_name=StringField('Nom complet: ',
+                            validators=[DataRequired('Champs obligatoire')],
+                          render_kw={'placeholder':'Nom complet du client'})
+    category=SelectField('Catégorie', validators=[DataRequired('Champs obligatoire')],
+                        choices=[('',''),('Particulier','Particulier'),
+                                 ('Professionel', 'Professionel')],
+                         render_kw={'data-placeholder':'La catégorie du client'})
+    contacts=StringField('Contact(Téléphone)', validators=[DataRequired('Champs obligatoire')],
+                         render_kw={'placeholder':'Contact(Téléphone)'})
+    submit = SubmitField('Ajouter')
+
+
+class SupplierForm(FlaskForm):
+    full_name=StringField('Nom complet: ',
+                            validators=[DataRequired('Champs obligatoire')],
+                          render_kw={'placeholder':'Nom complet du fournisseur'})
+    category=SelectField('Catégorie', validators=[Optional()],
+                        choices=[('',''),('Particulier','Particulier'),
+                                 ('Professionel', 'Professionel')],
+                         render_kw={'data-placeholder':'La catégorie du fournisseur'})
+    contacts=StringField('Contact(Téléphone)', validators=[DataRequired('Champs obligatoire')],
+                         render_kw={'placeholder':'Contact(Téléphone)'})
+    submit = SubmitField('Ajouter')
+
+

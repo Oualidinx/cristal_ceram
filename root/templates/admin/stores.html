@@ -24,6 +24,13 @@
            });
         });
         new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
             language:{
                 search: {
                   placeholder: 'Recherche...',
@@ -65,9 +72,9 @@
                               contact :'{{ store['contact'] }}',
                               actions: gridjs.html(`<div class="dropdown dropstart">
                                   <div class="btn-group">
-                                    <a role="button" class="tax_info btn btn-sm btn-outline-info" data-bs-placement="bottom"
-                                        data-bs-toggle="modal" data-id="{{ store['id'] }}">
-                                        <i class="fa-solid fa-eye"></i></a>
+                                    {#<a role="button" class="tax_info btn btn-sm btn-outline-info" data-bs-placement="bottom"#}
+                                    {#    data-bs-toggle="modal" data-id="{{ store['id'] }}">#}
+                                    {#    <i class="fa-solid fa-eye"></i></a>#}
                                     <a role="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_bp.edit_store',store_id=store['id']) }}"
                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
                                         <i class="fa-solid fa-pen"></i></a>
@@ -94,7 +101,24 @@
 {% endblock %}
 
 {% block main_tag %}
-    <div class="container">
+        <div class="row">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-black fw-light fs-6">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+        </div>
         <div class="row">
             <div class="col" style="position: relative; text-align: right">
                 <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_store') }}">
@@ -115,7 +139,7 @@
 {#            </div>#}
 
         </div>
-    </div>
+
 {% endblock %}
 
 {% block actual_title %}

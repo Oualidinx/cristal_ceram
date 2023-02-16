@@ -1,4 +1,5 @@
 import datetime
+from http import client
 
 from flask import abort, render_template, session, flash, redirect, url_for, request, jsonify
 
@@ -7,7 +8,7 @@ from root import database
 from flask_login import login_required
 from root.admin.forms import *
 from root.auth.forms import ResetPasswordForm
-from root.models import Tax, User, InvoiceTax, OrderTax, Warehouse,  Store, Format, Aspect, Stock, Client
+from root.models import Supplier, Tax, User, InvoiceTax, OrderTax, Warehouse,  Store, Format, Aspect, Stock, Client, Contact
 from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
@@ -894,7 +895,7 @@ def products():
     _products = Item.query.filter_by(fk_company_id=company.id).all()
     liste = None
     if _products:
-        liste = [product.repr(['id','label','serie','intern_reference','expired_at']) for product in _products]
+        liste = [product.repr(['id','label','format','aspect','serie','intern_reference','expired_at','stock_sec']) for product in _products]
     return render_template('admin/items.html', liste = liste)
 
 
@@ -917,12 +918,20 @@ def add_product():
         item = Item()
         item.label = form.label.data
         item.serie = form.serie.data
+        item.manufacturer = form.manufacturer.data if form.manufacturer.data else None
+        item.unit = form.unit.data if form.unit.data else None
+        if form.piece_per_unit.data and not item.unit:
+            flash('Veuillez sélectionner \'unité puis réesseyer','warning')
+            return redirect(url_for('admin_bp.add_product'))
+        else:
+            item.piece_per_unit = float(form.piece_per_unit.data)
         item.stock_sec = form.stock_sec.data
         item.use_for = form.utilisation.data if form.utilisation.data else None
         item.intern_reference = form.intern_reference.data if form.intern_reference.data else None
         item.fk_aspect_id = form.aspect.data.id if form.aspect.data else None
         item.fk_format_id = form.format.data.id if form.format.data else None
         item.used_for = form.utilisation.data
+        item.created_by = current_user.id
         item.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
         item.expired_at = form.expired_at.data if form.expired_at.data else None
         database.session.add(item)
@@ -948,6 +957,9 @@ def edit_product(item_id):
             aspect=Aspect.query.get(item.fk_aspect_id) if item.fk_aspect_id else None,
             used_for = item.use_for if item.use_for else None,
             label = item.label,
+            manufaturer = item.manufacturer if item.manufacturer else None,
+            unit = item.unit if item.unit else None,
+            piece_per_unit = item.piece_per_unit if item.piece_per_unit else None,
             stock_sec = item.stock_sec,
             serie = item.serie if item.serie else None,
             intern_reference = item.intern_reference if item.intern_reference else None,
@@ -971,6 +983,14 @@ def edit_product(item_id):
             item.intern_reference = form.intern_reference.data
         else:
             item.intern_reference = None
+
+        item.manufacturer = form.manufacturer.data if form.manufacturer.data else None
+        item.unit = form.unit.data if form.unit.data else None
+        if form.piece_per_unit.data and not item.unit:
+            flash('Veuillez sélectionner \'unité puis réesseyer', 'warning')
+            return redirect(url_for('admin_bp.edit_product', item_id = item.id))
+        else:
+            item.piece_per_unit = float(form.piece_per_unit.data)
         item.company_id = company
         item.expired_at = form.expired_at.data if form.expired_at.data else None
         item.fk_aspect_id = form.aspect.data
@@ -988,7 +1008,13 @@ def edit_product(item_id):
 @admin_bp.get('/products/<int:item_id>/get')
 @login_required
 def get_item(item_id):
-    return '<h1 class="h1">item info</h1>'
+    item = Item.query.get(item_id)
+    if not item:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+    if item.fk_company_id != company:
+        return render_template('errors/404.html')
+    return render_template('admin/item_info.html', item = item.repr())
 
 
 @admin_bp.get('/stores')
@@ -1120,7 +1146,7 @@ def delete_store(store_id):
     if store.sellers:
         for seller in store.sellers:
             seller.fk_store_id = None
-            database.session.add()
+            database.session.add(seller)
         database.session.commit()
     database.session.delete(store)
     database.session.commit()
@@ -1139,7 +1165,7 @@ def change_password(user_id):
 
     _users = Company.query.get(UserForCompany.query.filter_by(role="manager") \
                                .filter_by(fk_user_id = current_user.id).first().fk_company_id).users
-    if not _users or user not in users:
+    if not _users or user not in _users:
         flash('Employés introuvable','danger')
         return redirect(url_for('admin_bp.edit_user', user_id=user.id))
 
@@ -1158,35 +1184,180 @@ def change_password(user_id):
 def clients():
     _clients = Client.query.filter_by(fk_company_id = UserForCompany.query.filter_by(role="manager") \
                                       .filter_by(fk_user_id = current_user.id).first().fk_company_id).all()
-    liste = list()
+    liste = None
     if _clients:
         liste = [
             client.repr() for client in _clients
         ]
+        print(liste)
     return render_template('admin/clients.html', liste = liste)
 
 
 @admin_bp.get('/clients/<int:client_id>/get')
 @login_required
 def get_client(client_id):
-    pass
-    # data = request.json
-    # client = Client.query.get(int(data['user_id']))
-    # if not client:
-    #     abort(404)
-    # company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
-    # company_clients = Client.query.filter_by(fk_company_id=company.id)
-    # if not company_clients.all():
-    #     abort(404)
-    # client = company_clients.get(client_id)
-    # _dict = Client.query.get(client.id).repr(['contacts'])
-    # return jsonify(message = f"<h4 class='h4 fw-bold'>Client: {client.full_name}</h4> \
-    #                     <span class='fw-bold mb-3'>Catégorie: </span>{client.category} <br> \
-    #                     <span class='fw-bold mb-3'>Contact(s) : </span><br>"+'<br>'.join(_dict['contacts'])), 200
-
+    item = Client.query.get(client_id)
+    if not item:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+    if item.fk_company_id != company:
+        return render_template('errors/404.html')
+    return render_template('admin/client_info.html', item = item.repr())
 
 @admin_bp.get('/clients/<int:client_id>/edit')
 @admin_bp.post('/clients/<int:client_id>/edit')
 @login_required
 def edit_client(client_id):
-    pass
+    form = ClientForm()
+    _client = Client.query.get(client_id)
+    if not _client:
+        return render_template('errors/404.html')
+    if request.method=="GET":
+        form = ClientForm(
+            full_name=_client.full_name,
+            category=_client.category,
+            contacts=Contact.query.get(_client.id).value
+        )
+
+    if form.validate_on_submit():
+        _client.full_name = form.full_name.data
+        _client.category = form.category.data
+        contact = Contact.query.filter_by(fk_client_id=_client.id).filter_by(value=form.contacts.data).first()
+        if not contact:
+            contact = Contact()
+        contact.key = "téléphone"
+        contact.value = form.contacts.data
+        contact.fk_client_id = _client.id
+        database.session.add(contact)
+        database.session.commit()
+        flash('Objet modifié avec succès','success')
+        return redirect(url_for('admin_bp.clients'))
+    return render_template('admin/add_client.html', form = form)
+
+
+
+@admin_bp.get('/client/add')
+@admin_bp.post('/client/add')
+@login_required
+def add_client():
+    form = ClientForm()
+    if form.validate_on_submit():
+        _client = Client()
+        _client.full_name = form.full_name.data
+        _client.category = form.category.data
+        _client.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+        database.session.add(_client)
+        database.session.commit()
+        contact = Contact()
+        contact.key='téléphone'
+        contact.value = form.contacts.data
+        contact.fk_client_id = _client.id
+
+        database.session.add(contact)
+        database.session.commit()
+        flash('Objet ajouté avec succès','success')
+        return redirect(url_for('admin_bp.add_supplier'))
+    return render_template('admin/add_supplier.html', form = form)
+
+
+@admin_bp.get('/client/<int:client_id>/delete')
+@login_required
+def delete_client(client_id):
+    _client = Client.query.get(client_id)
+    if not _client:
+        return render_template('errors/404.html')
+    if _client.orders :
+        flash('Impossible de supprimer ce client',"danger")
+        return redirect(url_for('admin_bp.clients'))
+
+    database.session.delete(_client)
+    database.session.commit()
+    flash('Objet supprimé avec succès','success')
+    return redirect(url_for("admin_bp.clients"))
+
+
+@admin_bp.get('/suppliers')
+@login_required
+def suppliers():
+    _suppliers = Supplier.query.filter_by(fk_company_id = UserForCompany.query.filter_by(role="manager") \
+                                      .filter_by(fk_user_id = current_user.id).first().fk_company_id).all()
+    liste = None
+    if _suppliers:
+        liste = [
+            supplier.repr() for supplier in _suppliers
+        ]
+    return render_template('admin/suppliers.html', liste = liste)
+
+
+@admin_bp.get('/suppliers/<int:supplier_id>/edit')
+@admin_bp.post('/suppliers/<int:supplier_id>/edit')
+@login_required
+def edit_supplier(supplier_id):
+    form = SupplierForm()
+    supplier = Supplier.query.get(supplier_id)
+    if not supplier:
+        return render_template('errors/404.html')
+    if request.method=="GET":
+        form = SupplierForm(
+            full_name=supplier.full_name,
+            category=supplier.category,
+            contacts=Contact.query.get(supplier.id).value
+        )
+
+    if form.validate_on_submit():
+        supplier.full_name = form.full_name.data
+        supplier.category = form.category.data
+        contact = Contact.query.filter_by(fk_client_id=supplier.id).filter_by(value=form.contacts.data).first()
+        if not contact:
+            contact = Contact()
+        contact.key = "téléphone"
+        contact.value = form.contacts.data
+        contact.fk_supplier_id = supplier.id
+        database.session.add(contact)
+        database.session.commit()
+        flash('Objet modifié avec succès','success')
+        return redirect(url_for('admin_bp.suppliers'))
+    return render_template('admin/add_supplier.html', form = form)
+
+
+
+@admin_bp.get('/supplier/add')
+@admin_bp.post('/supplier/add')
+@login_required
+def add_supplier():
+    form = SupplierForm()
+    if form.validate_on_submit():
+        supplier = Supplier()
+        supplier.full_name = form.full_name.data
+        supplier.category = form.category.data
+        supplier.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+        database.session.add(supplier)
+        database.session.commit()
+        _contact = Contact()
+        _contact.key='téléphone'
+        _contact.value = form.contacts.data
+        _contact.fk_client_id = _contact.id
+
+        database.session.add(_contact)
+        database.session.commit()
+        flash('Objet ajouté avec succès','success')
+        return redirect(url_for('admin_bp.add_supplier'))
+    return render_template('admin/add_supplier.html', form = form)
+
+
+
+@admin_bp.get('/suppliers/<int:supplier_id>/delete')
+@login_required
+def delete_supplier(supplier_id):
+    _supplier = Supplier.query.get(supplier_id)
+    if not _supplier:
+        return render_template('errors/404.html')
+    if _supplier.orders :
+        flash('Impossible de supprimer ce fournisseur',"danger")
+        return redirect(url_for('admin_bp.suppliers'))
+
+    database.session.delete(_supplier)
+    database.session.commit()
+    flash('Objet supprimé avec succès','success')
+    return redirect(url_for("admin_bp.suppliers"))
+
