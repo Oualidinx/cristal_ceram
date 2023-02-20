@@ -35,5 +35,10 @@ def create_app(config_name):
     from root.auth import auth_bp
     app.register_blueprint(auth_bp)
 
+    from root.achats import purchases_bp
+    app.register_blueprint(purchases_bp)
+
+    from root.ventes import sales_bp
+    app.register_blueprint(sales_bp)
     return app
 

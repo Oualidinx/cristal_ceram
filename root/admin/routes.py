@@ -13,7 +13,7 @@ from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
 def admin_before_request():
-    session['actual_role'] = "admin"
+    session['role'] = "Manager"
 
 
 @admin_bp.get('/')
@@ -246,6 +246,7 @@ def items():
 @admin_bp.post('/employees/new')
 @login_required
 def create_user():
+    session['end_point'] = 'users'
     form = EmployeeForm()
     company = Company.query.get(UserForCompany.query.filter_by(role="manager").filter_by(
         fk_user_id=current_user.id).first().fk_company_id)
@@ -290,6 +291,7 @@ def create_user():
 @admin_bp.get('/employees')
 @login_required
 def users():
+    session['end_point'] = 'users'
     companies = Company.query.join(UserForCompany, UserForCompany.fk_company_id == Company.id)\
                                 .filter(and_(UserForCompany.role == "manager",UserForCompany.fk_user_id == current_user.id))
     liste = list()
@@ -626,6 +628,8 @@ def disable_user(user_id):
 @admin_bp.post('/employees/get')
 @login_required
 def get_user():
+    session['end_point'] = 'users'
+
     data = request.json
     user = User.query.get(int(data['user_id']))
     if not user:
@@ -745,6 +749,7 @@ def attach_stock(stock_id):
 @admin_bp.get('/products/formats')
 @login_required
 def formats():
+    session['end_point'] = 'product'
     c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     _formats = Format.query.filter_by(fk_company_id=c_id).all()
     liste = None
@@ -761,6 +766,7 @@ def formats():
 @admin_bp.post('/products/format/add')
 @login_required
 def add_format():
+    session['end_point'] = 'product'
     form = FormatForm()
     c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if form.validate_on_submit():
@@ -783,6 +789,7 @@ def add_format():
 @admin_bp.post('/products/formats/<int:format_id>/edit')
 @login_required
 def edit_format(format_id):
+    session['end_point'] = 'product'
     form = EditFormatForm()
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
     format_ = Format.query.filter_by(fk_company_id=company).filter_by(id = format_id).first()
@@ -802,6 +809,7 @@ def edit_format(format_id):
 @admin_bp.get('/products/format/<int:format_id>/delete')
 @login_required
 def delete_format(format_id):
+    session['end_point'] = 'product'
     _format = Format.query.get(format_id)
     if not _format:
         return render_template("errors/404.html", blueprint="admin_bp")
@@ -820,6 +828,7 @@ def delete_format(format_id):
 @admin_bp.post('/products/aspect/add')
 @login_required
 def add_aspect():
+    session['end_point'] = 'product'
     form = AspectForm()
     c_id= UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if form.validate_on_submit():
@@ -840,7 +849,7 @@ def add_aspect():
 @admin_bp.post('/products/aspects/<int:aspect_id>/edit')
 @login_required
 def edit_aspect(aspect_id):
-    print(aspect_id)
+    session['end_point'] = 'product'
     form = EditAspectForm()
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     aspect_ = Aspect.query.filter_by(fk_company_id=company).filter_by(id=aspect_id).first()
@@ -861,6 +870,7 @@ def edit_aspect(aspect_id):
 @admin_bp.get('/products/aspect/<int:aspect_id>/delete')
 @login_required
 def delete_aspect(aspect_id):
+    session['end_point'] = 'product'
     _aspect = Aspect.query.get(aspect_id)
     if not _aspect:
         return render_template("errors/404.html", blueprint="admin_bp")
@@ -878,6 +888,7 @@ def delete_aspect(aspect_id):
 @admin_bp.get('/products/aspects')
 @login_required
 def aspects():
+    session['end_point'] = 'product'
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
     _aspects = Aspect.query.filter_by(fk_company_id=company).all()
     liste = None
@@ -890,6 +901,7 @@ def aspects():
 @admin_bp.get('/products')
 @login_required
 def products():
+    session['end_point'] = 'product'
     company = Company.query.get(UserForCompany.query.filter_by(role="manager") \
                                 .filter_by(fk_user_id = current_user.id).first().fk_company_id)
     _products = Item.query.filter_by(fk_company_id=company.id).all()
@@ -903,6 +915,7 @@ def products():
 @admin_bp.post('/products/add')
 @login_required
 def add_product():
+    session['end_point'] = 'product'
     __formats = Format.query.filter_by(
                                 fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
                                                                                             .first().fk_company_id).all()
@@ -945,6 +958,7 @@ def add_product():
 @admin_bp.post('/products/<int:item_id>/edit')
 @login_required
 def edit_product(item_id):
+    session['end_point'] = 'product'
     item = Item.query.get(item_id)
     if not item:
         return render_template('errors/404.html', blueprint="admin_bp")
@@ -1008,6 +1022,7 @@ def edit_product(item_id):
 @admin_bp.get('/products/<int:item_id>/get')
 @login_required
 def get_item(item_id):
+    session['end_point'] = 'product'
     item = Item.query.get(item_id)
     if not item:
         return render_template('errors/404.html', blueprint="admin_bp")
@@ -1158,6 +1173,8 @@ def delete_store(store_id):
 @admin_bp.post('/employees/<int:user_id>/change_password')
 @login_required
 def change_password(user_id):
+    session['end_point'] = 'users'
+
     user = User.query.get(user_id)
     if not user:
         flash('Employés introuvable','danger')

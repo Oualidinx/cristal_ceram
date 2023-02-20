@@ -416,10 +416,11 @@ class User(UserMixin, db.Model):
             'username' : self.username,
             'role': 'vendeur' if self.fk_store_id and Store.query.get(self.fk_store_id) else 'magasiner' if UserForCompany.query.filter(and_(
                 UserForCompany.fk_warehouse_id is not None, UserForCompany.role == 'magasiner')) \
-                .filter_by(fk_user_id=self.id).all() else '',
-            'status': ('A6001A', "Suspendu(e)") if not self.fk_store_id and not UserForCompany.query.filter(and_(
-                UserForCompany.fk_warehouse_id is not None, UserForCompany.role == 'magasiner')) \
-                .filter_by(fk_user_id=self.id).all() else ("#004D33", "Affecté(e)"),
+                .filter_by(fk_user_id=self.id).first() else '',
+            'status': ('#A6001A', "Suspendu(e)") if not self.fk_store_id and not UserForCompany.query \
+                .filter_by(fk_user_id=self.id).filter(and_(UserForCompany.fk_warehouse_id is not None,
+                                                            UserForCompany.role == 'magasiner')).first()
+                 else ("#004D33", "Affecté(e)"),
             '_session' : ("#004D33","Activé") if not self.is_disabled else ('A6001A',"Désactivé"),
             'location' : Store.query.get(self.fk_store_id) if self.fk_store_id else "Autres...",
             'locations': [str(wh) for wh in Warehouse.query.join(UserForCompany, Warehouse.id == UserForCompany.fk_warehouse_id)\
@@ -540,3 +541,24 @@ class Order(db.Model):
 
         }
         return {key:_dict[key] for key in columns} if columns else _dict
+
+
+class Expense(db.Model):
+    id = db.Column(db.Integer, primary_key = True)
+    label = db.Column(db.String(100))
+    description = db.Column(db.String(1500))
+    amount = db.Column(db.Float, default = 0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+
+    def __repr__(self):
+        return f'{self.id}, {self.label}, {self.amount}'
+
+    def repr(self):
+        _dict = {
+            'id':self.id,
+            'label':self.label,
+            'amount':self.amount
+        }
+        return _dict

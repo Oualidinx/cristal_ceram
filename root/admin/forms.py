@@ -2,8 +2,7 @@ import datetime
 from wsgiref import validate
 
 from flask_wtf import FlaskForm
-from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, FloatField
-from wtforms.fields.html5 import DateField
+from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, FloatField, DateField
 from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
 from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect
 from flask_login import current_user
@@ -212,9 +211,11 @@ class UpdateUserForm(FlaskForm):
     # location = SelectField('Lieu: ', coerce=int, validate_choice=False,
     #                         render_kw={'data-placeholder':'Rôle..'},
     #                        validators=[DataRequired('Champs obligatoire')])
-    warehouses = QuerySelectMultipleField('Les dépôts', query_factory=lambda : Warehouse.query.all(),
+    warehouses = QuerySelectMultipleField('Les dépôts', allow_blank=True, blank_text="Pas encore affecté",
+                                          query_factory=lambda : Warehouse.query.all(),
                                           render_kw={'data-placeholder': "Sélectionner un/des dépôt(s)"})
-    stores = QuerySelectField('Le magasin', query_factory=lambda : Store.query.filter_by(
+    stores = QuerySelectField('Le magasin', allow_blank=True, blank_text='Pas encore affecté',
+                              query_factory=lambda : Store.query.filter_by(
                                                 fk_company_id=UserForCompany.query.filter_by(role="manager") \
                                                     .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
                                            render_kw={'data-placeholder': "Sélectionner un magasin"})
