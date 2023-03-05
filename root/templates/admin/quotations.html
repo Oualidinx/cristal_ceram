@@ -1,88 +1,46 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+    <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
 {% endblock %}
-
-
 {% block main_tag %}
-        <div class="container">
-            <div class="row mt-5">
-                {% with messages = get_flashed_messages(with_categories=true) %}
-                    {% if messages %}
-                        <div class="toast-container position-absolute top-0 end-0 p-3">
-                            {% for category, message in messages %}
-                                <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                    <div class="d-flex">
-                                        <div class="toast-body text-black fw-light fs-6">
-                                            {{ message }}
-                                        </div>
-                                    <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                                  </div>
-                                </div>
-                            {% endfor %}
-                        </div>
-                    {% endif %}
-                {% endwith %}
-                <div class="col" style="position: relative; text-align: right">
-                    <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.create_user') }}">
-                        <i class="fa fa-circle-plus"></i>
-                           Nouveau
-                    </a>
-
-
-                <div id="table"></div>
-                </div>
-            </div>
-            <div class="row bg-danger">
-                <div class="col-lg">
-                   <div class="modal fade" id="userContent" tabindex="-1" aria-labelledby="exampleUserContent" aria-hidden="true">
-                      <div class="modal-dialog modal-dialog-centered">
-                            <div class="modal-content">
-                                  <div class="modal-header">
-                                    <h5 class="modal-title" id="exampleUserContent">Inforamtions détaillée</h5>
-                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                                  </div>
-                                  <div class="modal-body">
-
-                                  </div>
+    <div class="container">
+        <div class="row mt-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-black fw-light fs-6">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
                             </div>
-                      </div>
+                        {% endfor %}
                     </div>
-                </div>
+                {% endif %}
+            {% endwith %}
+            <div class="col" style="position: relative; text-align: right">
+                <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_quotation') }}">
+                    <i class="fa fa-circle-plus"></i>
+                       Ajouter
+                </a>
+            <div id="table"></div>
             </div>
         </div>
-
+    </div>
 {% endblock %}
 
 {% block actual_title %}
-    Les employés
+    Les Devis
 {% endblock %}
-
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
-        function foo(component){
-            console.log(component.dataset['id']);
-            var user_id = component.dataset['id'];
-            // AJAX request
-            $.ajax({
-               url: '{{ url_for('admin_bp.get_user') }}',
-               type: 'POST',
-               data: JSON.stringify({user_id: user_id}),
-                dataType:"json",
-                contentType: "application/json; charset=utf-8",
-               success: function(response){
-                   // Add response in Modal body
-                   {#console.log(response.message)#}
-                   $('.modal-body').html(response.message);
-                   // Display Modal
-                   $('#userContent').modal('show');
-               }
-            });
-        }
         $(document).ready(function (){
             $('.toast').toast('show');
-        })
+        });
         new gridjs.Grid({
             autoWidth:true,
             fixedHeader:true,
@@ -110,75 +68,69 @@
                   results: 'résultats',
                 },
                 loading: 'Chargement...',
-                noRecordsFound: 'Aucun enregistrements',
+                noRecordsFound: 'Ancun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
-                { id: 'id', name: 'Num' },
-                { id: 'full_name', name: 'Nom complet' },
-                { id: 'username', name: 'Pseudonyme' },
-                { id: '_session', name: 'Compte utilisateur' },
-                { id: 'role', name: 'Poste occupé' },
-                { id: 'status', name: 'Etat' },
-                { id: 'location', name: 'Lieu de travail' },
-                { id:'actions', name:'Actions'}
+            { id: 'index', name: 'Indice' },
+            { id: 'intern_reference', name: 'Référence' },
+            { id: 'client', name: 'Client' },
+            { id: 'created_at', name: 'Date' },
+            { id: 'status', name: 'Etat' },
+            { id: 'total', name: 'Montant' },
+            {id:"actions",name:'Actions'}
             ],
-            data: ()=>{
-                return new Promise(resolve => {
-                    setTimeout(()=>
-                        resolve([
-                {% if liste %}
-                    {% for user in liste %}
-                        {
-                              id: '{{ user["id"] }}',
-                              full_name :'{{ user["full_name"] }}',
-                              username :'{{ user['username'] }}',
-                              _session : gridjs.html(`<span class="badge rounded-pill text-white"
-                                                            style="background-color:{{ user['_session'][0]}};" }}>
-                                                                {{ user['_session'][1] }}
-                                                      </span>`),
-                              role :'{{ user['role'] }}',
-                              status :gridjs.html(`<span class="badge rounded-pill text-white"
-                                                        style="background-color:{{ user['status'][0]}};" }}>
-                                                        {{ user['status'][1] }}</span>
-                              `),
-                              location :'{{ user['location'] }}',
-                              actions: gridjs.html(`<div class="dropdown dropstart">
-                                  <div class="btn-group">
-                                        <button id="user-info" class="btn btn-sm btn-outline-info"
-                                            data-id="{{ user['id'] }}" onclick="foo(this);">
-                                            <i class="fa fa-eye"></i></button>
-                                        <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_user',user_id=user['id']) }}"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                            <i class="fa fa-user-pen"></i></a>
-
-                                        <a role="button" class="btn btn-sm btn-outline-danger"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom"
-                                                {% if user['_session'][1]=="Activé" %}
-                                                    title="Bloquer l'accès"
-                                                    href="{{ url_for('admin_bp.disable_user',user_id=user['id']) }}">
-                                                    <i class="fa fa-user-lock"></i>
-                                                {% else %}
-                                                    title="Débloquer l'accès"
-                                                    href="{{ url_for('admin_bp.enable_user',user_id=user['id']) }}">
-                                                    <i class="fa fa-user-unlock"></i>
-                                             {% endif %}
-
-                                            </a>
-                                  </div>
-                            </div>`
-                              )
-                        },
-                    {% endfor %}
-                {% endif %}
-            ]),1000
-                    )
-                })
+            data: () => {
+             return new Promise(resolve => {
+                 setTimeout(()=>
+                    resolve(
+                        [
+                        {% if liste %}
+                            {% for quotation in liste %}
+                                {
+                                    index: '{{ quotation["index"] }}',
+                                    intern_reference: '{{ quotation["intern_reference"] }}',
+                                    client: '{{ quotation['client'] }}',
+                                    created_at: '{{ quotation["created_at"] }}',
+                                    status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ quotation['status'][0]}}">
+                                                        {{ quotation['status'][1]}}</span>`),
+                                    total: '{{ quotation["total"] }} DA',
+                                    actions: gridjs.html (`
+                                                <div class="btn-group">
+                                                    <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('admin_bp.get_quotation', q_id=quotation['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                        <i class="fa-solid fa-eye"></i></a>
+                                                    <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('admin_bp.delete_quotation', q_id=quotation['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                                        <i class="fa-solid fa-trash"></i></a>
+                                                    {#<a role="button" class="btn btn-sm"#}
+                                                    {#    href="{{ url_for('sales_bp.delete_quotation', q_id=quotation['id']) }}">#}
+                                                    {#    <i class="fa-solid fa-arrows-rotate"></i></a>#}
+                                                    <div class="btn-group dropstart" >
+                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+                                                            <i class="fa-solid fa-arrows-rotate"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            <li><a class="dropdown-item" href="{{ url_for('admin_bp.quotation_order', q_id=quotation['id']) }}">Bon commande</a></li>
+                                                            <li><a class="dropdown-item" href="{{ url_for('admin_bp.quotation_invoice', q_id=quotation['id']) }}">Facture de vente action</a></li>
+                                                            <li><a class="dropdown-item" href="{{ url_for('admin_bp.approve_quotation', q_id=quotation['id']) }}">Approuver</a></li>
+                                                        </ul>
+                                                    </div>
+                                                </div>`)},
+                            {% endfor %}
+                        {% endif %}
+                    ]
+                    ),2000
+                 );
+                });
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true
-          }).render(document.getElementById('table'));
+        }).render(document.getElementById('table'));
     </script>
+
 {% endblock %}

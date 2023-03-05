@@ -1,151 +1,210 @@
-{% extends "admin/admin_layout.html" %}
+{% extends "layouts/sales_layout.html" %}
 {% block main_tag %}
-    <div class="container">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                {% for category , message in messages %}
-                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                          <div class="d-flex">
-                            <div class="toast-body">
-                            {{ message }}
-                           </div>
-                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                          </div>
-                        </div>
-                    </div>
-                {% endfor %}
-            {% endif %}
-        {% endwith %}
         <div class="row">
-            <form method="post">
-                {{form.hidden_tag()}}
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        {{ form.label.label(class="form-control-label") }}
-                        {% if form.label.errors %}
-                            {{ form.label(class="form-control form-control-md") }}
-                            {% for error in form.label.errors %}
-                                <div class="alert alert-danger">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            {{ form.label(class="form-control form-control-md") }}
-                        {% endif %}
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                        {% for category, message in messages %}
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-black fw-light fs-6">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        {% endfor %}
                     </div>
-                </div>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        {{ form.limit_number.label(class="form-control-label") }}
-                        {% if form.limit_number.errors %}
-                            {{ form.limit_number(class="form-control form-control-md") }}
-                            {% for error in form.limit_number.errors %}
-                                <div class="alert alert-danger">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            {{ form.limit_number(class="form-control form-control-md") }}
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        Session: {{ _session.label }}
-{#                        {{ form.session.label(class="form-control-label") }}#}
-{#                        {% if form.session.errors %}#}
-{#                            {{ form.session(class="form-control form-control-md") }}#}
-{#                            {% for error in form.session.errors %}#}
-{#                                <div class="alert alert-danger">#}
-{#                                    {{ error }}#}
-{#                                </div>#}
-{#                            {% endfor %}#}
-{#                        {% else %}#}
-{#                            {{ form.session(class="form-control form-control-md") }}#}
-{#                        {% endif %}#}
-                    </div>
-                </div>
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        {{ form.language.label(class="form-control-label") }}
-                        {% if form.language.errors %}
-                            {{ form.language(class="form-control form-control-md") }}
-                            {% for error in form.language.errors %}
-                                <div class="alert alert-danger">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            {{ form.language(class="form-control form-control-md") }}
-                        {% endif %}
-                    </div>
-                </div>
-                <div class="row">
-                    <div class="col-md-6">
-                        {{ form.level.label(class="form-control-label") }}
-                        {% if form.level.errors %}
-                            {{ form.level(class="form-control form-control-md") }}
-                            {% for error in form.level.errors %}
-                                <div class="alert alert-danger">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            {{ form.level(class="form-control form-control-md") }}
-                        {% endif %}
-                    </div>
-                </div>
-            <br>
-{#                <div class="row mb-4">#}
-{#                    <div class="col-md-6">#}
-{#                        {{ form.on_test.label(class="form-control-label") }}#}
-{#                        {{ form.on_test() }}#}
-{#                    </div>#}
-{#                </div>#}
-{#            <br>#}
-                <div class="row mb-4">
-                    <div class="col-md-6">
-                        {{ form.description.label(class="form-control-label") }}
-                        {% if form.description.errors %}
-                            {{ form.description(class="form-control form-control-md") }}
-                            {% for error in form.description.errors %}
-                                <div class="alert alert-danger">
-                                    {{ error }}
-                                </div>
-                            {% endfor %}
-                        {% else %}
-                            {{ form.description(class="form-control form-control-md") }}
-                        {% endif %}
-                    </div>
-                </div>
-                <br>
-                <div class="row mb-4" style="text-align: right;">
-                    <div class="col-md-6">
-                        {{ form.submit(class="btn btn-md btn-primary") }}
-                    </div>
-                </div>
-            </form>
+                {% endif %}
+            {% endwith %}
         </div>
-    </div>
+        <div class="row mt-5 w-100">
+            <div class="card">
+                <div class="card-body">
+                    <form id="form" method="POST">
+                        {{form.hidden_tag()}}
+                        <div class="row g-1 justify-content-end p-3">
+                            <div class="col-md-1">
+                                {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                            </div>
+                            {% if to_approve and to_approve==True%}
+                                <div class="col-md-1">
+                                    <a role="button"
+                                       href="#"
+                                       class="btn btn-sm btn-success rounded-pill">Approuver</a>
+                                </div>
+                            {% endif %}
+                            {% if to_print and to_print==True %}
+                                <div class="col-md-1">
+                                    <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                    </a>
+                                </div>
+                            {% endif %}
+
+                        </div>
+                        <div class="row g-1 mb-4">
+                            <div class="col-md">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text"> {{ form.client.label }}</div>
+                                    {% if form.client.errors %}
+                                        {{ form.client(class="select-client form-select is-invalid") }}
+                                        {% for error in form.client.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ form.client(class="select-client form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-md">
+                                <div class="input-group has-validation">
+                                    <div class="input-group-text"> {{ form.quotation_date.label }}</div>
+                                    {% if form.quotation_date.errors %}
+                                        {{ form.quotation_date(class="form-select is-invalid") }}
+                                        {% for error in form.quotation_date.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.quotation_date(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                        {#      Table Heading      #}
+                        <div class="row g-5 mb-lg-3 text-center">
+                            <div class="col-md-5">
+                                {{ nested.item.label }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ nested.quantity.label }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ nested.unit_price.label }}
+                            </div>
+                            <div class="col-md-2">
+                                {{ nested.amount.label }}
+                            </div>
+                            <div class="col-md-1">
+                                Actions
+                            </div>
+                        </div>
+                        {#      Table Rows      #}
+                        {% for entry in form.entities %}
+                            <div class="row g-1 mb-sm-4">
+                                <div class="col-sm-5">
+                                    {% if entry.item.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ entry.item(class="select-item form-select-sm is-invalid") }}
+                                            {% for error in entry.item.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ entry.item(class="select-item form-select-sm") }}
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="input-group input-group-sm has-validation">
+                                        {% if entry.quantity.errors %}
+                                            {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
+                                            {% for error in entry.quantity.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+
+                                        {% else %}
+                                            {{ entry.quantity(class="form-control form-control-sm") }}
+                                        {% endif %}
+                                        <div class="input-group-text">{{ entry.unit.data }}</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="input-group has-validation">
+                                        {% if entry.unit_price.errors %}
+
+                                            {{ entry.unit_price(class="form-control form-control-sm is-invalid") }}
+                                            {% for error in entry.unit_price.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+
+                                        {% else %}
+                                            {{ entry.unit_price(class="form-control form-control-sm") }}
+                                        {% endif %}
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    <div class="input-group input-group-sm has-validation">
+                                        {% if entry.amount.errors %}
+                                            {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm is-invalid") }}
+                                            {% for error in entry.amount.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm") }}
+                                        {% endif %}
+                                        <div class="input-group-text">DZD</div>
+                                    </div>
+                                </div>
+                                <div class="col-sm-1 text-center">
+                                    {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="row mb-4" >
+                            <div class="col-sm">
+                                {{ form.add(class='btn btn-sm btn-primary rounded-pill') }}
+                                {{ form.fin(class='btn btn-sm btn-success rounded-pill') }}
+                            </div>
+                        </div>
+                        <div class="row  justify-content-end mb-4">
+                            <div class="col-md-5 p-5">
+                                <h2 class="h2"><span class="fw-bold">Total: </span>{{ "{:,.2f}".format(somme) }} DZD</h2>
+                            </div>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
 {% endblock %}
 {% block additional_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/summernote.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
 {% endblock %}
 
 {% block actual_title %}
-    Mise à jour de formations
+    Nouveau Devis
 {% endblock %}
 
 {% block additional_scripts %}
-    <script src="{{ url_for('static', filename='js/summernote.min.js') }}"></script>
     <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
     <script>
         $(document).ready(function() {
+            $('.select-item').change(function(){
+            });
             $('.toast').toast('show');
-            $('select').select2({});
-            $('#description').summernote();
+            $('.select-client').select2({
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'
+            })
+            $('.select-item').select2({
+                 theme: "bootstrap-5",
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                 selectionCssClass: 'select2--small',
+                 dropdownCssClass: 'select2--small',
+            });
         });
     </script>
 {% endblock %}

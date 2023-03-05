@@ -168,10 +168,8 @@ class EmployeeForm(FlaskForm):
                              render_kw={'placeholder':'Mot de passe'})
     confirm_password = PasswordField('Confirmer le mot de passe: ', validators=[DataRequired('Champs obligatoire'), EqualTo('password','mot de passe erroné')],
                                      render_kw={'placeholder':'Confirmer le mot de passe: '})
-    role = SelectField('Rôle: ', choices=[('',''),(1, 'Vendeur'), (2, 'Magasiner')],
-                       render_kw={'data-placeholder':'Séléctionner le rôle ...'})
-    location = SelectField('Lieu: ', validate_choice=False,
-                           render_kw={'data-placeholder':'Séléctionner le lieu ...'})
+    role = SelectField('Rôle: ', choices=[(0,''),(1, 'Vendeur'), (2, 'Magasiner')], validate_choice=False, coerce=int)
+    location = SelectField('Lieu: ', validate_choice=False, coerce=int,choices=[(0,'Aucune location')])
     submit = SubmitField('Ajouter')
     def validate_full_name(self, full_name):
         if name_regex.search(full_name.data) is None:

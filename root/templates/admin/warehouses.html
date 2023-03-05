@@ -7,33 +7,31 @@
 {% endblock %}
 
 {% block main_tag %}
-    <div class="container">
-        <div class="row mt-5">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="toast-container position-absolute top-0 end-0 p-3">
-                        {% for category, message in messages %}
-                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                <div class="d-flex">
-                                    <div class="toast-body text-black fw-light fs-6">
-                                        {{ message }}
-                                    </div>
-                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                              </div>
-                            </div>
-                        {% endfor %}
-                    </div>
-                {% endif %}
-            {% endwith %}
-            <div class="col" style="position: relative; text-align: right">
-                <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_warehouse') }}">
-                    <i class="fa fa-circle-plus"></i>
-                       Nouveau
-
-                </a>
-            </div>
-            <div id="table"></div>
+    <div class="row mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute top-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="col" style="position: relative; text-align: right">
+            <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_warehouse') }}">
+                <i class="fa fa-circle-plus"></i>
+                   Ajouter
+            </a>
         </div>
+{#    {{ liste }}#}
+        <div id="table"></div>
     </div>
 {% endblock %}
 
@@ -42,15 +40,13 @@
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');
-        })
+        });
         new gridjs.Grid({
             autoWidth:true,
             fixedHeader:true,
             style:{
-                table:{
-                    'width':"100%"
-                }
-            },
+                table: {
+                    'width': "100%"}},
             language:{
                 search: {
                   placeholder: 'Recherche...',
@@ -73,10 +69,13 @@
                 noRecordsFound: 'Aucun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
-                { id: 'id', name: 'Num' },
+
+                { id: 'index', name: '' },
+                { id: 'id', name: 'Code' },
                 { id: 'name', name: 'Nom' },
                 { id: 'address', name: 'Adresse' },
                 { id: 'contact', name: 'Telephone' },
+                { id: 'magasiner', name: 'Magasiner' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -86,16 +85,21 @@
                 {% if liste %}
                     {% for warehouse in liste %}
                         {
+                              index: '{{ warehouse["index"] }}',
                               id: '{{ warehouse["id"] }}',
                               name :'{{ warehouse["name"] }}',
                               address :'{{ warehouse["address"] }}',
                               contact :'{{ warehouse['contact'] }}',
+                              magasiner :{% if warehouse['magasiner'] %}'{{ warehouse['magasiner'] }}'
+                                        {% else %}gridjs.html(`<span class="badge rounded-pill"
+                                                                    style="background-color: #9C1A1C;">
+                                                                        N'est pas affecté</span>`){% endif %},
                               actions: gridjs.html(`<div class="dropdown dropstart">
                                   <div class="btn-group">
-                                        <a role="button" class="btn btn-outline-primary" href="{{ url_for('admin_bp.edit_warehouse',warehouse_id=warehouse['id']) }}"
+                                        <a role="button" class="btn btn-sm btn-outline-primary" href="{{ url_for('admin_bp.edit_warehouse',warehouse_id=warehouse['id']) }}"
                                             data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
                                             <i class="fa-solid fa-pen"></i></a>
-                                        <a role="button" class="btn btn-outline-primary" href="{{ url_for('admin_bp.delete_warehouse',warehouse_id=warehouse['id']) }}"
+                                        <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_warehouse',warehouse_id=warehouse['id']) }}"
                                             data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
                                             <i class="fa-solid fa-trash"></i></a>
                                   </div>

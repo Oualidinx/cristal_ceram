@@ -15,19 +15,20 @@
         {% endblock additional_styles %}
 
         <style>
-
+            body{
+                background-color: #F6F5F2;
+            }
 
             .nav-link{
                 color: white;
             }
-            .nav-link:hover,
-            a:hover{
+            .nav-link:hover{
                 color: #77BBD9;
             }
             .navbar-custom,
             .sb-sidenav-menu,
             .btn-custom{
-                background-color: #203D46;
+                background-color: #2E3741;
             }
 
             {#.nav-link:hover{#}
@@ -38,7 +39,7 @@
         <body class="sb-nav-fixed">
             <nav class="sb-topnav navbar navbar-custom navbar-expand">
                 <!-- Navbar Brand-->
-                <a class="navbar-brand ps-3 text-white" href="#">CristalCeram </a>
+                <span class="navbar-brand ps-3 text-white">CristalCeram</span>
                 <!-- Sidebar Toggle-->
                 <button class="btn btn-sm order-1 order-lg-0 me-4 me-lg-0 btn-custom" id="sidebarToggle" href="#!">
                     <i style="color: white;" class="fas fa-bars"></i>
@@ -62,37 +63,32 @@
                     <nav class="sb-sidenav accordion" style="background-color: #597A96;" id="sidenavAccordion">
                         <div class="sb-sidenav-menu">
                             <div class="nav text-white">
-                                <a class="nav-link" href="#">
+                                <a class="nav-link" href="{{ url_for('sales_bp.index') }}">
                                     <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                     Tableau de bord du site
                                 </a>
-                                <div class="sb-sidenav-menu-heading">Ventes</div>
-                                <a class="nav-link {% if session ['sales_endpoint']=='invoices' %}active{% endif %}" href="#">
-                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-folder-open"></i></div>
-                                    Les factures client
-{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
+                                <div class="sb-sidenav-menu-heading">Gestion</div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSales__" aria-expanded="false" aria-controls="collapsePurchases">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Les Ventes
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
-                                <a class="nav-link {% if session ['sales_endpoint']=='orders' %}active{% endif %}" href="#">
-                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-folder-open"></i></div>
-                                    Les commandes clients
-{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
-                                </a>
-                                <a class="nav-link {% if session ['sales_endpoint']=='quotations' %}active{% endif %}" href="#">
-                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-folder-open"></i></div>
-                                    Les devis
-{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
-                                </a>
-                                <a class="nav-link" href="#">
-                                    <div class="sb-nav-link-icon"><i class="fa-solid fa-people-group"></i></div>
-                                    Les cients
-{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
-                                </a>
-                        </div>
-                        <div class="sb-sidenav-footer text-white">
-                            <div class="small">Employé: {{ session['nom_complet'] }}</div>
-                            <div class="small">Connecté en tant que: {{ session['role'] }}</div>
-                            Gestion de Commercial
-                        </div>
+                                <div class="collapse {% if session['endpoint']=='sales' %}show{% endif %}" id="collapseSales__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav ">
+                                        <a class="nav-link" href="{{ url_for('sales_bp.quotations') }}">Les devis</a>
+{#                                        <a class="nav-link" href="{{ url_for('sales_bp.orders') }}">Les commandes clients</a>#}
+                                        <a class="nav-link" href="{{ url_for('sales_bp.orders') }}">Les commandes clients</a>
+{#                                        <a class="nav-link" href="{{ url_for('sales_bp.invoices') }}">Les factures de ventes</a>#}
+                                        <a class="nav-link" href="#">Les factures de ventes</a>
+{#                                        <a class="nav-link" href="{{ url_for('sales_bp.clients') }}">Les clients</a>#}
+                                        <a class="nav-link" href="#">Les clients</a>
+                                    </nav>
+                                </div>
+                            </div>
+                            <div class="sb-sidenav-footer text-white">
+                                <div class="small">Connecté en tant que: {{ session['role'] }}</div>
+                                Gestion Commerciale
+                            </div>
                         </div>
                     </nav>
                 </div>
@@ -100,6 +96,7 @@
                 <main>
                     <div class="container-fluid px-4">
                         <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
+
                         {% block main_tag %}
                         {% endblock main_tag %}
                     </div>

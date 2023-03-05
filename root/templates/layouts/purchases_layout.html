@@ -39,7 +39,7 @@
         <body class="sb-nav-fixed">
             <nav class="sb-topnav navbar navbar-custom navbar-expand">
                 <!-- Navbar Brand-->
-                <a class="navbar-brand ps-3 text-white" href="#">CristalCeram </a>
+                <span class="navbar-brand ps-3 text-white">CristalCeram </span>
                 <!-- Sidebar Toggle-->
                 <button class="btn btn-sm order-1 order-lg-0 me-4 me-lg-0 btn-custom" id="sidebarToggle" href="#!">
                     <i style="color: white;" class="fas fa-bars"></i>
@@ -63,100 +63,40 @@
                     <nav class="sb-sidenav accordion" style="background-color: #597A96;" id="sidenavAccordion">
                         <div class="sb-sidenav-menu">
                             <div class="nav text-white">
-                                <a class="nav-link" href="#">
+                                <a class="nav-link" href="{{ url_for('purchases_bp.index') }}">
                                     <div class="sb-nav-link-icon"><i class="fas fa-tachometer-alt"></i></div>
                                     Tableau de bord du site
                                 </a>
                                 <div class="sb-sidenav-menu-heading">Gestion</div>
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePurchases__" aria-expanded="false" aria-controls="collapsePurchases">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Produits
+                                    Les Achats
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
-                                <div class="collapse" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="{{url_for('admin_bp.products')}}">Voir La liste des produits</a>
-                                        <a class="nav-link" href="{{ url_for('admin_bp.formats') }}">Voir La liste des formats</a>
-                                        <a class="nav-link" href="{{ url_for('admin_bp.aspects') }}">Voir La liste des aspects</a>
-                                    </nav>
-                                </div>
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsePages" aria-expanded="false" aria-controls="collapsePages">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-book-open"></i></div>
-                                    Employés
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                </a>
-                                <div class="collapse" id="collapsePages" aria-labelledby="headingTwo" data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav accordion" id="sidenavAccordionPages">
-                                         <a class="nav-link" href="{{ url_for('admin_bp.users') }}">Voir La liste des Employés</a>
-                                    </nav>
-                                </div>
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate" aria-expanded="false" aria-controls="collapseAggregate">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Clients
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                </a>
-                                <div class="collapse" id="collapseAggregate" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav">
-                                        <a class="nav-link" href="{{ url_for('admin_bp.clients') }}">Voir La liste des clients</a>
-                                    </nav>
-                                </div>
-
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseAggregate__" aria-expanded="false" aria-controls="collapseAggregate">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Les Fournisseurs
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                </a>
-                                <div class="collapse" id="collapseAggregate__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                <div class="collapse {% if session['endpoint']=='orders' %}show{% endif %}" id="collapsePurchases__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav ">
-                                        <a class="nav-link" href="{{ url_for('admin_bp.suppliers') }}">Voir La liste de fournisseurs</a>
+                                        <a class="nav-link" href="{{ url_for('purchases_bp.purchases_orders') }}">Commandes fournisseurs</a>
+                                        <a class="nav-link" href="{{ url_for('purchases_bp.purchases_receipts') }}">Les bon de réception</a>
+                                        <a class="nav-link" href="{{ url_for('purchases_bp.purchases_invoices') }}">Les factures d'achat</a>
                                     </nav>
                                 </div>
 
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseDepot__" aria-expanded="false" aria-controls="collapseDepot">
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapsestock__" aria-expanded="false" aria-controls="collapsestock">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Les Dépôts
+                                        Stocks
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
-                                <div class="collapse" id="collapseDepot__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                <div class="collapse {% if session['endpoint']=='stocks' %}show{% endif %}" id="collapsestock__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav ">
-                                        <a class="nav-link" href="{{url_for('admin_bp.warehouses')}}">Voir La liste de Dépôts</a>
-{#                                        <a class="nav-link" href="#">Consulter le/les stock(s)</a>#}
+                                        <a class="nav-link" href="{{ url_for('purchases_bp.add_exit_voucher') }}">Bon de sortie</a>
+                                        <a class="nav-link" href="{{ url_for('purchases_bp.stocks') }}">Gestion de stock</a>
                                     </nav>
                                 </div>
-
-{#                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"#}
-{#                                                        data-bs-target="#collapseMagasins__"#}
-{#                                                        aria-expanded="false" aria-controls="collapseMagasins">#}
-{#                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>#}
-{#                                    Les Magasins#}
-{#                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>#}
-{#                                </a>#}
-{#                                <div class="collapse" id="collapseMagasins__" aria-labelledby="headingOne"#}
-{#                                                        data-bs-parent="#sidenavAccordion">#}
-{#                                    <nav class="sb-sidenav-menu-nested nav ">#}
-{#                                        <a class="nav-link" href="#">Voir La liste de Magasins</a>#}
-{#                                    </nav>#}
-{#                                </div>#}
-
-                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse"
-                                                        data-bs-target="#collapseBoutiques__"
-                                                        aria-expanded="false" aria-controls="collapseBoutiques">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
-                                    Les point(s) de vente
-                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
-                                </a>
-                                <div class="collapse" id="collapseBoutiques__" aria-labelledby="headingOne"
-                                                        data-bs-parent="#sidenavAccordion">
-                                    <nav class="sb-sidenav-menu-nested nav ">
-                                        <a class="nav-link" href="{{ url_for('admin_bp.stores') }}">Voir La liste de Boutiques</a>
-                                    </nav>
-                                </div>
-
-                        </div>
-                        <div class="sb-sidenav-footer text-white">
-                            <div class="small">Connecté en tant que: {{ session['role'] }}</div>
-                            Gestion Commerciale
-                        </div>
+                            </div>
+                            <div class="sb-sidenav-footer text-white">
+                                <div class="small">Connecté en tant que: {{ session['role'] }}</div>
+                                Gestion Commerciale
+                            </div>
                         </div>
                     </nav>
                 </div>

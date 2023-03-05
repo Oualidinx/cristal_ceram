@@ -154,16 +154,16 @@
             $( '#location' ).select2( {
                 theme: "bootstrap-5",
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
-                placeholder: $( this ).data( 'placeholder' ),
+                placeholder: "Sélectionner le local...",
             } );
 
             $('#role' ).select2( {
                 theme: "bootstrap-5",
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
-                placeholder: $( this ).data( 'placeholder' ),
+                placeholder:"Sélectionner le rôle...",
             } );
            $("#role").change(function(){
-                var items="";
+                {#var items="<option value='0'></option>";#}
                 $.ajax({
                     url:'{{ url_for('admin_bp.items') }}',
                     type:"POST",
