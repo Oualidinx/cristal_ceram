@@ -294,8 +294,6 @@ def create_user():
             database.session.commit()
             flash('Employé ajouté avec succès','success')
             return redirect(url_for("admin_bp.create_user"))
-    # else:
-    print(form.data)
     return render_template("admin/new_user.html", form = form)
 
 
@@ -452,189 +450,6 @@ def disable_user(user_id):
     return render_template('errors/404.html', blueprint="admin_bp")
 
 
-# @admin_bp.get('/users/<int:user_id>/enable')
-# @login_required
-# def enable_user(user_id):
-#     user = User.query.get(user_id)
-#     if not user:
-#         return render_template("errors/404.html", blueprint="admin_bp")
-#
-#     if not user.is_disabled:
-#         flash('Erreur', 'danger')
-#         return redirect(url_for("admin_bp.users"))
-#     user.is_disabled = False
-#     database.session.add(user)
-#     user_for_company = UserForCompany()
-#     user_for_company.fk_company_id = Warehouse.query.get(user.fk_warehouse_id).fk_company_id
-#     user_for_company.fk_user_id = user.id
-#     database.session.add(user_for_company)
-#     database.session.commit()
-#     flash('Opération se termine avec succès', "success")
-#     return redirect(url_for("admin_bp.users"))
-
-#
-# @admin_bp.get('/users/<int:user_id>/attach/warehouses/<int:warehouse_id>')
-# @login_required
-# def attach_user_warehouse(user_id, warehouse_id):
-#     user=User.query.get(user_id)
-#     if not user:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#
-#     user_for_company = UserForCompany.query.filter(UserForCompany.role =='magasiner').filter_by(fk_user_id = user.id)
-#     if len(user_for_company.all()) > 0 or user.fk_store_id:
-#         flash('Employé déjà attaché à un dépôt. Veuillez d\'abord détacher-le de l\'ancien dépôt puis réessayer','danger')
-#         return redirect(url_for('admin_bp.users'))
-#
-#     warehouse = Warehouse.query.get(warehouse_id)
-#     if not warehouse:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#
-#     current_companies = Company.query.join(UserForCompany, Company.id == UserForCompany.fk_company_id) \
-#         .filter(and_(UserForCompany.role == "manager", UserForCompany.fk_user_id == current_user.id)) \
-#         .all()
-#     if not current_companies:
-#         return render_template('errors/404.html',blueprint="admin_bp")
-#     founded = False
-#     fk_company_id = None
-#     while not founded:
-#         for company in current_companies:
-#             if user in company.users and warehouse in company.warehouses:
-#                 fk_company_id = company.id
-#                 founded = True
-#     if not founded:
-#         return render_template("errors/404.html", blueprint="admin_bp")
-#     temp = user_for_company.filter_by(fk_warehouse_id = warehouse.id).first()
-#     # if not temp:
-#     #     return render_template('errors/404.html', blueprint="admin_bp")
-#     temp = UserForCompany(
-#         role="magasiner",
-#         fk_user_id=user.id,
-#         fk_company_id= fk_company_id,
-#         fk_warehouse_id = warehouse.id
-#     )
-#     database.session.add(temp)
-#     database.session.commit()
-#     flash('Opération se termine avec succès','success')
-#     return redirect(url_for('admin_bp.users'))\
-
-
-# @admin_bp.get('/users/<int:user_id>/detach')
-# @admin_bp.post('/users/<int:user_id>/detach')
-# @login_required
-# def detach_user_warehouse(user_id):
-#     user = User.query.get(user_id)
-#     if not user:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#     user_warehouses = Warehouse.query.filter_by(role="magasiner").filter_by(fk_user_id=user.id).all()
-#     if not user_warehouses:
-#         flash('Cet employé n\'est pas un magasiner','warning')
-#         return redirect(url_for('admin_bp.edit_user', user_id = user.id))
-#
-#     form = WarehousesForm()
-#     query =  Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id ) \
-#                                                             .filter(UserForCompany.fk_user_id == user.id)
-#     if not query.all():
-#         flash('Erreur','danger')
-#         return redirect(url_for('admin_bp.edit_user', user_id = user.id))
-#     form.warehouses.query_factory = lambda : Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id ) \
-#                                                             .filter(UserForCompany.fk_user_id == user.id).all()
-#     if form.validate_on_submit():
-#         if len(form.warehouses.data) == len(query.all()):
-#             flash(f"Opération impossible: vous ne pouvez pas détacher l'employée {user.full_name} de tout les lieux. Veuillez d'abord changer son role puis réessayer",'danger')
-#             return redirect(url_for("admin_bp.edit_user", user_id=user.id))
-#         founded = False
-#         for ID in form.warehouses.data:
-#             user_for_company = query.filter_by(fk_warehouse_id = int(ID)).first()
-#             if user_for_company:
-#                 founded = True
-#                 database.session.delete(user_for_company)
-#         if founded:
-#             database.session.commit()
-#         flash('Opération terminée avec succès','success')
-#     return redirect(url_for("admin_bp.edit_user", user_id = user.id))
-
-#
-# @admin_bp.get('/users/<int:user_id>/attach/stores/<int:store_id>')
-# @login_required
-# def attach_user_store(user_id, store_id):
-#     user = User.query.get(user_id)
-#     if not user:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#     user_for_company = UserForCompany.query.filter(UserForCompany.role == 'magasiner').filter_by(fk_user_id=user.id)
-#     if len(user_for_company.all()) > 0 or user.fk_store_id:
-#         flash('Employé déjà attaché à un dépôt. Veuillez d\'abord détacher-le de l\'ancien dépôt puis réessayer','danger')
-#         return redirect(url_for('admin_bp.users'))
-#     store = Store.query.get(store_id)
-#     if not store:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#     current_companies = Company.query.join(UserForCompany, Company.id == UserForCompany.fk_company_id) \
-#         .filter(and_(UserForCompany.role == "manager", UserForCompany.fk_user_id == current_user.id)) \
-#         .all()
-#     if not current_companies:
-#         return render_template('errors/404.html',blueprint="admin_bp")
-#     founded = False
-#     fk_company_id = 0
-#     while not founded:
-#         for company in current_companies:
-#             if user in company.users and store in company.stores:
-#                 fk_company_id = company.id
-#                 founded = True
-#
-#     if not founded:
-#         return render_template("errors/404.html", blueprint="admin_bp")
-#     user.fk_store_id = store.id
-#     database.session.add(user)
-#     temp = UserForCompany(
-#         role="vendeur",
-#         fk_user_id = user.id,
-#         fk_company_id = fk_company_id,
-#         fk_warehouse_id=None
-#     )
-#     database.session.add(temp)
-#     database.session.commit()
-#     flash('Opération se termine avec succès','success')
-#     return redirect(url_for('admin_bp.users'))
-
-#
-# @admin_bp.get('/users/<int:user_id>/detach/stores/<int:store_id>')
-# @login_required
-# def detach_user_store(user_id, store_id):
-#     user = User.query.get(user_id)
-#     if not user:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#     user_for_company = UserForCompany.query.filter(UserForCompany.role == 'magasiner').filter_by(fk_user_id=user.id)
-#     if not len(user_for_company) == 0 and not user.fk_store_id:
-#         flash('Employé déjà détaché','danger')
-#         return redirect(url_for('admin_bp.users'))
-#
-#     store = Store.query.get(store_id)
-#     if not store:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#
-#     current_companies = Company.query.join(UserForCompany, Company.id == UserForCompany.fk_company_id) \
-#         .filter(and_(UserForCompany.role == "manager", UserForCompany.fk_user_id == current_user.id)) \
-#         .all()
-#     if not current_companies:
-#         return render_template('errors/404.html',blueprint="admin_bp")
-#     founded = False
-#     while not founded:
-#         for company in current_companies:
-#             if user in company.users and store in company.stores:
-#                 founded = True
-#
-#     if not founded:
-#         return render_template("errors/404.html", blueprint="admin_bp")
-#     user.fk_store_id = None
-#     database.session.add(user)
-#     temp = UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id = user.id).first()
-#     if not temp:
-#         return render_template('errors/404.html', blueprint="admin_bp")
-#     database.session.delete(temp)
-#     database.session.commit()
-#     flash('Opération se termine avec succès','success')
-#     return redirect(url_for('admin_bp.users'))
-
-
 # @admin_bp.get('/employees/get')
 @admin_bp.post('/employees/get')
 @login_required
@@ -650,7 +465,13 @@ def get_user():
     if company.fk_company_id != user_company.first().fk_company_id:
         abort(404)
     user_company = user_company.filter_by(fk_company_id=company.id).first()
-    _dict = User.query.get(user.id).repr(['locations'])
+
+    _dict = User.query.get(user.id).repr(['location','locations'])
+    if user.fk_store_id:
+        return jsonify(message=f"<h4 class='h4 fw-bold'>{user.full_name}</h4> \
+                                <span class='fw-bold mb-3'>Pseudonyme: </span>{user.username} <br> \
+                                <span class='fw-bold mb-3'>Rôle: </span>{user_company.role if user_company is not None else '/'} <br> \
+                                <span class='fw-bold mb-3'>Lieu(x) de travail: </span><br>" + _dict['location']), 200
     return jsonify(message = f"<h4 class='h4 fw-bold'>{user.full_name}</h4> \
                         <span class='fw-bold mb-3'>Pseudonyme: </span>{user.username} <br> \
                         <span class='fw-bold mb-3'>Rôle: </span>{user_company.role if user_company is not None else '/'} <br> \
@@ -724,14 +545,14 @@ def detach_stock(stock_id):
 @login_required
 def attach_stock(stock_id):
     form = AttachWareHouseForm()
+    stock = Stock.query.get(stock_id)
     if request.method == 'GET':
-        stock = Stock.query.get(stock_id)
         if not stock:
             return render_template("errors/404.html", blueprint="admin_bp")
 
-        company = Company.query.get(Warehouse.query.get(stock.fk_warehouse_id))
-        if not company:
-            return render_template('errors/404.html', blueprint="admin_bp")
+        company = Company.query.get(Warehouse.query.get(stock.fk))
+        # if not company:
+        #     return render_template('errors/404.html', blueprint="admin_bp")
 
         if User.query.filter_by(role="manager") \
                 .filter_by(fk_user_id=current_user.id).filter_by(fk_company_id=company.id).first() is None:
@@ -1247,7 +1068,7 @@ def edit_client(client_id):
         form = ClientForm(
             full_name=_client.full_name,
             category=_client.category,
-            contacts=Contact.query.get(_client.id).value
+            contacts=Contact.query.get(_client.id).value if Contact.query.get(_client.id) else ''
         )
 
     if form.validate_on_submit():
@@ -1284,7 +1105,6 @@ def add_client():
         contact.key='téléphone'
         contact.value = form.contacts.data
         contact.fk_client_id = _client.id
-
         database.session.add(contact)
         database.session.commit()
         flash('Objet ajouté avec succès','success')
@@ -1373,7 +1193,6 @@ def add_supplier():
         _contact.key='téléphone'
         _contact.value = form.contacts.data
         _contact.fk_client_id = _contact.id
-
         database.session.add(_contact)
         database.session.commit()
         flash('Objet ajouté avec succès','success')

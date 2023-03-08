@@ -22,7 +22,7 @@
         {% endwith %}
         <div class="col" style="position: relative; text-align: right">
             <a role="button" class="btn btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_order') }}">
-                <i class="fa fa-circle-plus"></i>
+                <i class="fa fa-plus"></i>
                    Ajouter
             </a>
             <div id="table"></div>
@@ -65,7 +65,7 @@
                   results: 'résultats',
                 },
                 loading: 'Chargement...',
-                noRecordsFound: 'Ancun enregistrements',
+                noRecordsFound: 'Aucun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                     { id: 'index',              name: '' },
@@ -75,7 +75,7 @@
                     { id: 'created_at',         name: 'Date' },
                     { id: 'total',              name: 'Montant' },
                     { id: 'status',             name: 'État' },
-                    { id: 'delivery_date',      name: 'Date de livraison' },
+                    {#{ id: 'delivery_date',      name: 'Date de livraison' },#}
                     { id: "actions",            name:'Actions'}
             ],
             data: () => {
@@ -92,15 +92,17 @@
                                     supplier_contact: '{{ order['supplier_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
-                                    status: {% if not order['is_delivered'] and not order['is_canceled'] %}
-                                                gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">Non traité</span>`),
+                                     {% if not order['is_delivered'] and not order['is_canceled'] %}
+                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">
+                                                            Non traité</span>`),
+
                                             {% else %}
-                                                gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][0]}}">
-                                                                {{ order['is_delivered'][1]}}</span>
-                                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][0]}}">
-                                                                {{ order['is_canceled'][1]}}</span>`),
+                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}};">
+                                                                {{ order['is_delivered'][0]}}</span>
+                                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}};">
+                                                                {{ order['is_canceled'][0]}}</span>`),
                                             {% endif %}
-                                    delivery_date: "{{ order['delivery_date'] }}",
+                                    {#delivery_date: "{{ order['delivery_date'] }}",#}
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
                                                     <a role="button" class="btn btn-sm"
@@ -116,9 +118,13 @@
                                                             <i class="fa-solid fa-arrows-rotate"></i>
                                                         </button>
                                                         <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item " href="#">Bon de réception</a></li>
-                                                            <li><a class="dropdown-item" href="#">Facture d'achat</a></li>
-                                                            <li><a class="dropdown-item" href="#">Approuver</a></li>
+                                                            {% if order['is_delivered'] and order['is_delivered'] == True %}
+                                                                <li><a class="dropdown-item "
+                                                                    href="{{ url_for('purchases_bp.order_receipt', o_id=order['id']) }}">
+                                                                        Bon de réception</a></li>
+                                                            {% endif %}
+                                                            {#<li><a class="dropdown-item" href="#">Facture d'achat</a></li>#}
+                                                            {#<li><a class="dropdown-item" href="#">Approuver</a></li>#}
                                                         </ul>
                                                     </div>
                                                 </div>`)},

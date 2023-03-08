@@ -120,6 +120,7 @@ class Client(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     orders = db.relationship('Order', backref="client_orders", lazy="subquery")
     quotations = db.relationship('Quotation', backref="client_quotations", lazy="subquery")
+    contacts = db.relationship('Contact', backref="client_contacts", lazy="subquery")
 
     def __repr__(self):
         return f'{self.id}, {self.full_name}'
@@ -131,7 +132,7 @@ class Client(db.Model):
             'category':self.category,
             'contact':Contact.query.filter_by(fk_client_id=self.id).first(),
             'orders':[order.repr(['id','created_at','intern_reference','total','is_delivered']) for order in self.orders],
-            'contacts':Contact.query.filter_by(fk_client_id=self.id).all(),
+            'contacts':self.contacts if self.contacts else None ,
             'nb_cmd':len(self.orders)
         }
         return {key:_dict[key] for key in columns} if columns else _dict
@@ -182,6 +183,7 @@ class Entry(db.Model):
     total_price = db.Column(db.Float, default=0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     fk_quotation_id = db.Column(db.Integer, db.ForeignKey('quotation.id'))
+    fk_purchase_receipt_id = db.Column(db.Integer, db.ForeignKey('purchase_receipt.id'))
     fk_invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'))
     fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     fk_item_id = db.Column(db.Integer, db.ForeignKey('item.id'))
@@ -219,6 +221,7 @@ class Invoice(db.Model):
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    fk_receipt_id = db.Column(db.Integer, db.ForeignKey('purchase_receipt.id'))
     taxes = db.relationship('Tax', secondary="invoice_tax",
                             primaryjoin="Invoice.id == foreign(InvoiceTax.fk_invoice_id)",
                             secondaryjoin="Tax.id == foreign(InvoiceTax.fk_tax_id)",
@@ -490,7 +493,7 @@ class User(UserMixin, db.Model):
                                                             UserForCompany.role == 'magasiner')).first()
                  else ("#004D33", "Affecté(e)"),
             '_session' : ("#004D33","Activé") if not self.is_disabled else ('A6001A',"Désactivé"),
-            'location' : Store.query.get(self.fk_store_id) if self.fk_store_id else "Autres...",
+            'location' : str(Store.query.get(self.fk_store_id)) if self.fk_store_id else "Autres...",
             'locations': [str(wh) for wh in Warehouse.query.join(UserForCompany, Warehouse.id == UserForCompany.fk_warehouse_id)\
                                 .filter(UserForCompany.fk_user_id == self.id).all()]
         }
@@ -576,6 +579,7 @@ class Store(db.Model):
             contact = self.contact,
         )
 
+
 class Order(db.Model):
     __tablename__="order"
     id = db.Column(db.Integer, primary_key=True)
@@ -584,6 +588,7 @@ class Order(db.Model):
     total = db.Column(db.Float, default=0)
     delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    is_deleted = db.Column(db.Boolean, default = False)
     is_delivered = db.Column(db.Boolean)
     is_canceled = db.Column(db.Boolean)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -605,14 +610,14 @@ class Order(db.Model):
             'client':Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
             'client_contacts': Contact.query.filter_by(fk_client_id=self.fk_client_id).all() if self.fk_client_id else [],
             'supplier':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            'supplier_contacts': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
+            'supplier_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
             'delivery_date':("#f8a300",self.delivery_date.date()) if self.is_delivered is None else ('#007256', self.delivery_date.date()),
             # (datetime.utcnow().date() - self.delivery_date.date()).days > 0 and
             'created_at':self.created_at.date(),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),
             'quotation': Quotation.query.get(self.fk_quotation_id).intern_reference if self.fk_quotation_id else '/',
-            'is_delivered' : ('Non livrée',"#d33723") if self.is_delivered and self.is_delivered == False else ('Livrée','#007256') if self.is_delivered and self.is_delivered == True else None ,
+            'is_delivered' : ('pas reçus',"#d33723") if self.is_delivered and self.is_delivered == False else ('reçu','#007256') if self.is_delivered and self.is_delivered == True else None ,
             'is_canceled': ('Annulée',"#d33723") if self.is_canceled and self.is_canceled == False else ('Acceptée','#007256') if self.is_canceled and self.is_canceled == True else None,
             'entries': [entry.repr() for entry in self.entries]
         }
@@ -624,6 +629,7 @@ class Expense(db.Model):
     label = db.Column(db.String(100))
     description = db.Column(db.String(1500))
     amount = db.Column(db.Float, default = 0)
+    is_deleted = db.Column(db.Boolean, default = False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
@@ -638,3 +644,36 @@ class Expense(db.Model):
             'amount':self.amount
         }
         return _dict
+
+
+class PurchaseReceipt(db.Model):
+    __tablename__="purchase_receipt"
+    id = db.Column(db.Integer, primary_key=True)
+    intern_reference = db.Column(db.String(50))
+    total = db.Column(db.Float, default = 0)
+    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
+    is_deleted = db.Column(db.Boolean, default=False)
+    invoices = db.relationship('Invoice', backref="purchase_receipt_invoices", lazy="subquery")
+    entries = db.relationship('Entry', backref="receipt_entries", lazy="subquery")
+
+    def repr_(self, columns=None):
+        _dict={
+            'id':self.id,
+            'intern_reference':self.intern_reference,
+            's':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
+            's_c': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
+            'created_at':self.created_at.date(),
+            'created_by':User.query.get(self.created_by).full_name,
+            'total':'{:,.2f} DZD'.format(self.total),
+            'order_id':self.fk_order_id,
+            'order': Order.query.filter_by(category="achat").filter_by(id=self.fk_order_id).first().intern_reference if self.fk_order_id else '/',
+            'is_canceled': ('Annulé',"#d33723") if self.is_deleted and self.is_deleted == False else ('Acceptée','#007256')
+                                                    if self.is_deleted and self.is_deleted == True else None,
+            'entries': [entry.repr() for entry in self.entries],
+            'invoice':None if not self.invoices else [invoice.repr() for invoice in self.invoices]
+        }
+        return {key:_dict[key] for key in columns} if columns else _dict

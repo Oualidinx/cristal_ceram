@@ -1,0 +1,350 @@
+{% extends "layouts/purchases_layout.html" %}
+{% block main_tag %}
+    <div class="row">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+    </div>
+    <div class="row mt-5">
+        <div class="card">
+            <div class="card-body">
+                <form id="form" method="POST">
+                    {{form.hidden_tag()}}
+                    <div class="row g-1 justify-content-end p-3">
+                        <div class="col-md-1">
+                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                        </div>
+                    {% if new_command and new_command==true %}
+                        <div class="col-md-2">
+                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_purchase_receipts') }}">
+                                <i class="fa fa-plus"></i>
+                                   Nouvelle commande
+                            </a>
+                        </div>
+                    {% endif %}
+                        {% if to_print and to_print==True %}
+                            <div class="col-md-1">
+                                <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                </a>
+                            </div>
+                        {% endif %}
+
+                    </div>
+                    <div class="row g-1 mb-4">
+                        <div class="col-md">
+                            <div class="input-group has-validation p-3">
+                                <div class="input-group-text"> {{ form.command_reference.label }}</div>
+                                {% if form.command_reference.errors %}
+                                    {{ form.command_reference(class="form-select is-invalid") }}
+                                    {% for error in form.command_reference.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+
+                                {% else %}
+                                    {{ form.command_reference(class="form-select") }}
+                                {% endif %}
+                            </div>
+{#                            <div class="input-group has-validation p-3">#}
+{#                                <div class="input-group-text"> {{ form.recipient.label }}</div>#}
+{#                                {% if form.recipient.errors %}#}
+{#                                    {{ form.recipient(class="form-select is-invalid") }}#}
+{#                                    {% for error in form.recipient.errors %}#}
+{#                                        <div class="invalid-feedback">#}
+{#                                            {{ error }}#}
+{#                                        </div>#}
+{#                                    {% endfor %}#}
+{##}
+{#                                {% else %}#}
+{#                                    {{ form.recipient(class="form-select") }}#}
+{#                                {% endif %}#}
+{#                            </div>#}
+                        </div>
+                        <div class="col-md">
+                            <div class="input-group has-validation p-3">
+                                <div class="input-group-text"> {{ form.order_date.label }}</div>
+                                {% if form.order_date.errors %}
+                                    {{ form.order_date(class="form-select is-invalid") }}
+                                    {% for error in form.order_date.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+                                {% else %}
+                                    {{ form.order_date(class="form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+{#                        <div class="col-md">#}
+{#                            #}
+{#                        </div>#}
+                    </div>
+                    {#      Table Heading      #}
+                    <div class="row g-5 mb-lg-3 text-center">
+                        <div class="col-md-5">
+                            {{ nested.item.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.quantity.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.unit_price.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.amount.label }}
+                        </div>
+                        <div class="col-md-1">
+                            Actions
+                        </div>
+                    </div>
+                    {#      Table Rows      #}
+                    {% for entry in form.entities %}
+                        <div class="row g-1 mb-sm-4">
+                            <div class="col-sm-5">
+                                {% if entry.item.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ entry.item(class="select-item form-select-sm is-invalid") }}
+                                        {% for error in entry.item.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ entry.item(class="select-item form-select-sm") }}
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group input-group-sm has-validation">
+                                    {% if entry.quantity.errors %}
+                                        {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.quantity.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ entry.quantity(class="form-control form-control-sm") }}
+                                    {% endif %}
+                                    <div class="input-group-text">{{ entry.unit.data }}</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group has-validation">
+                                    {% if entry.unit_price.errors %}
+
+                                        {{ entry.unit_price(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.unit_price.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ entry.unit_price(class="form-control form-control-sm") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group input-group-sm has-validation">
+                                    {% if entry.amount.errors %}
+                                        {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.amount.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm") }}
+                                    {% endif %}
+                                    <div class="input-group-text">DZD</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-1 text-center">
+                                {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="row mb-4" >
+                        <div class="col-sm">
+                            {{ form.add(class='btn btn-sm rounded-pill') }}
+                            {{ form.fin(class='btn btn-sm btn-success rounded-pill') }}
+                        </div>
+                    </div>
+{#                        <div class="row  justify-content-end mb-4">#}
+{#                            <div class="col-md-5 p-5">#}
+{#                                <h2 class="h2"><span class="fw-bold">Total: </span>{{ "{:,.2f}".format(somme) }} DZD</h2>#}
+{#                            </div>#}
+{#                        </div>#}
+                </form>
+            </div>
+        </div>
+    </div>
+
+{% endblock %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
+{% endblock %}
+
+{% block actual_title %}
+    Bon de réception
+{#    templateResult: formatRepo,#}
+{#  templateSelection: formatRepoSelection#}
+{#});#}
+{##}
+{#function formatRepo (repo) {#}
+{#  if (repo.loading) {#}
+{#    return repo.text;#}
+{#  }#}
+{##}
+{#  var $container = $(#}
+{#    "<div class='select2-result-repository clearfix'>" +#}
+{#      "<div class='select2-result-repository__avatar'><img src='" + repo.owner.avatar_url + "' /></div>" +#}
+{#      "<div class='select2-result-repository__meta'>" +#}
+{#        "<div class='select2-result-repository__title'></div>" +#}
+{#        "<div class='select2-result-repository__description'></div>" +#}
+{#        "<div class='select2-result-repository__statistics'>" +#}
+{#          "<div class='select2-result-repository__forks'><i class='fa fa-flash'></i> </div>" +#}
+{#          "<div class='select2-result-repository__stargazers'><i class='fa fa-star'></i> </div>" +#}
+{#          "<div class='select2-result-repository__watchers'><i class='fa fa-eye'></i> </div>" +#}
+{#        "</div>" +#}
+{#      "</div>" +#}
+{#    "</div>"#}
+{#  );#}
+{##}
+{#  $container.find(".select2-result-repository__title").text(repo.full_name);#}
+{#  $container.find(".select2-result-repository__description").text(repo.description);#}
+{#  $container.find(".select2-result-repository__forks").append(repo.forks_count + " Forks");#}
+{#  $container.find(".select2-result-repository__stargazers").append(repo.stargazers_count + " Stars");#}
+{#  $container.find(".select2-result-repository__watchers").append(repo.watchers_count + " Watchers");#}
+{##}
+{#  return $container;#}
+{#}#}
+{##}
+{#function formatRepoSelection (repo) {#}
+{#  return repo.full_name || repo.text;#}
+{#}#}
+{% endblock %}
+
+{% block additional_scripts %}
+
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        $(document).ready(function() {
+            $('.select-item').change(function(){
+            });
+            $('.toast').toast('show');
+
+            $('.select-item').select2({
+                 theme: "bootstrap-5",
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                 selectionCssClass: 'select2--small',
+                 dropdownCssClass: 'select2--small',
+            });
+
+            $('#command_reference').select2({
+                theme:'bootstrap-5',
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
+                placeholder: 'Code Commande...',
+                minimumInputLength: 1,
+                ajax: {
+                    url: "{{ url_for('purchases_bp.get_commands') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data: function(params) {
+                        return {
+                            q: params.term,
+                            // search term
+                            page: params.page
+                        };
+                    },
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: (params.page * 30) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+            });
+        });
+    </script>
+{% endblock %}
+
+
+{#ajax: {#}
+{#                    url: "{{ url_for('purchases_bp.get_commands') }}",#}
+{#                    dataType: 'json',#}
+{#                    delay: 250,#}
+{#                    data: function(params) {#}
+{#                        return {#}
+{#                            q: params.term,#}
+{#                            // search term#}
+{#                            page: params.page#}
+{#                        };#}
+{#                    },#}
+{#                    processResults: function(data, params) {#}
+{#                        params.page = params.page || 1;#}
+{#                        return {#}
+{#                            results: data.items,#}
+{#                            pagination: {#}
+{#                                more: (params.page * 30) < data.total_count#}
+{#                            }#}
+{#                        };#}
+{#                    },#}
+{#                    cache: true#}
+{#                },#}
+
+
+
+            {#$('#recipient').select2({#}
+            {#    theme:'bootstrap-5',#}
+            {#    width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',#}
+            {#    selectionCssClass: 'select2--small',#}
+            {#    dropdownCssClass: 'select2--small',#}
+            {#    placeholder: 'Recherche un bénéficiaire',#}
+            {#    minimumInputLength: 1,#}
+            {#    ajax: {#}
+            {#        url: "{{ url_for('purchases_bp.get_commands') }}",#}
+            {#        dataType: 'json',#}
+            {#        delay: 250,#}
+            {#        data: function(params) {#}
+            {#            return {#}
+            {#                q: params.term,#}
+            {#                // search term#}
+            {#                page: params.page#}
+            {#            };#}
+            {#        },#}
+            {#        processResults: function(data, params) {#}
+            {#            params.page = params.page || 1;#}
+            {#            return {#}
+            {#                results: data.items,#}
+            {#                pagination: {#}
+            {#                    more: (params.page * 30) < data.total_count#}
+            {#                }#}
+            {#            };#}
+            {#        },#}
+            {#        cache: true#}
+            {#    },#}
+            {#});#}

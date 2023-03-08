@@ -1,5 +1,6 @@
 {% extends "layouts/purchases_layout.html" %}
 {% block main_tag %}
+    <div class="container">
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -18,7 +19,7 @@
                 {% endif %}
             {% endwith %}
         </div>
-        <div class="row mt-5 w-100">
+        <div class="row mt-5">
             <div class="card">
                 <div class="card-body">
                     <form id="form" method="POST">
@@ -27,13 +28,14 @@
                             <div class="col-md-1">
                                 {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
                             </div>
-                            {% if to_approve and to_approve==True%}
-                                <div class="col-md-1">
-                                    <a role="button"
-                                       href="#"
-                                       class="btn btn-sm btn-success rounded-pill">Approuver</a>
-                                </div>
-                            {% endif %}
+                        {% if new_command and new_command==true %}
+                            <div class="col-md-2">
+                                <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_order') }}">
+                                    <i class="fa fa-plus"></i>
+                                       Nouvelle commande
+                                </a>
+                            </div>
+                        {% endif %}
                             {% if to_print and to_print==True %}
                                 <div class="col-md-1">
                                     <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
@@ -177,6 +179,7 @@
                 </div>
             </div>
         </div>
+    </div>
 
 {% endblock %}
 {% block additional_styles %}

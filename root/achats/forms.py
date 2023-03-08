@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm, Form
 from wtforms_sqlalchemy.fields import QuerySelectField
-from wtforms.fields import SubmitField, FieldList, FormField, DateField, DecimalField, StringField
+from wtforms.fields import SelectField, SubmitField, FieldList, FormField, DateField, DecimalField, StringField
 from datetime import datetime
 from wtforms.validators import ValidationError, Optional, DataRequired
 from root.models import Client, UserForCompany, Item, Supplier
@@ -44,12 +44,26 @@ class ExitVoucherForm(FlaskForm):
 
 
 class PurchaseOrderForm(FlaskForm):
-    supplier = QuerySelectField('Fournisseur: ', query_factory=lambda: Supplier.query \
+    fournisseur = QuerySelectField('Fournisseur ', query_factory=lambda: Supplier.query \
                               .filter_by(is_deleted=False) \
                               .filter_by(fk_company_id=UserForCompany.query.filter_by(role="magasiner") \
                                          .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
-                              allow_blank=True, blank_text='Sélectionner un fournisseur...',
+                              allow_blank=True, blank_text='Sélectionner un bénéficiaire ...',
                               validators=[Optional()])
+
+    order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
+    entities = FieldList(FormField(EntryField), min_entries=1)
+    add = SubmitField('Ajouter produit')
+    fin = SubmitField('Terminer')
+    submit = SubmitField('Sauvegarder')
+
+
+class PurchaseReceiptForm(FlaskForm):
+    recipient = SelectField('Bénéficiaire: ',coerce=int,
+                            validators=[Optional()])
+    command_reference = SelectField('Code commande:',
+                                    coerce=int,
+                                    validators=[Optional()])
     order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
     entities = FieldList(FormField(EntryField), min_entries=1)
     add = SubmitField('Ajouter produit')
