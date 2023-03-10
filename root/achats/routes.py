@@ -2,7 +2,7 @@ from root import database as db
 from flask_login import login_required, current_user
 from flask import jsonify, url_for, session, render_template,request, redirect, flash
 from datetime import datetime
-from root.achats.forms import EntryField, ExitVoucherForm, PurchaseOrderForm, PurchaseReceiptForm
+from root.achats.forms import EntryField, ExitVoucherForm, PurchaseOrderForm, PurchaseReceiptForm, PurchaseEntryField
 from root.models import UserForCompany, ExitVoucher, Entry, Item, Stock, DeliveryNote, Order, Supplier, PurchaseReceipt, Client
 from root.achats import purchases_bp
 from sqlalchemy.sql import and_, or_
@@ -445,7 +445,7 @@ def new_purchase_receipt():
                     sum_amounts -= entry.amount.data
                     del form.entities.entries[_index]
                     return render_template("purchases/new_receipt.html",
-                                           form=form, nested=EntryField())
+                                           form=form, nested=PurchaseEntryField())
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
                 _.unit_price = entry.unit_price.data
@@ -469,7 +469,7 @@ def new_purchase_receipt():
             })
             return render_template('purchases/new_receipt.html',
                                    form=form,
-                                   nested=EntryField())
+                                   nested=PurchaseEntryField())
         if form.fin.data:
             if enumerate(form.entities):
                 sum_amounts = 0
@@ -479,7 +479,7 @@ def new_purchase_receipt():
                     sum_amounts += entry.amount.data
             return render_template('purchases/new_receipt.html',
                                    form=form,
-                                   nested=EntryField())
+                                   nested=PurchaseEntryField())
         if form.order_date.data:
             _q.created_at = form.order_date.data
         _q.created_by = current_user.id
@@ -525,7 +525,7 @@ def new_purchase_receipt():
                                new_command=True,
                                nested=EntryField(),
                                to_print=True)
-    return render_template("purchases/new_receipt.html", form=form, nested=EntryField(), somme=0)
+    return render_template("purchases/new_receipt.html", form=form, nested=PurchaseEntryField(), somme=0)
 
 
 @purchases_bp.get('/receipt/<int:r_id>/get')
@@ -605,11 +605,10 @@ def get_commands():
     if "q" in request.args:
         commands = commands.filter(Order.is_canceled == None) \
             .filter(Order.intern_reference.like(func.lower(f'%{request.args["q"]}%')))
-        print(commands.all())
     data = list()
     if commands.all():
         for command in commands.all():
-            b = Client.query.get(command.fk_client_id)
+            b = Client.query.get(command.fk_client_id) if command.fk_client_id else None
             if b:
                 data.append({
                     'id': command.id,
@@ -627,3 +626,26 @@ def get_commands():
                        items = data), 200
     return jsonify(total_count=0,
                    items = []), 404
+
+
+@purchases_bp.get('/command_items')
+@login_required
+def get_command_items():
+    if 'q' not in request.args:
+        return '', 400
+    command = Order.query.get(int(request.args.get('q')))
+    data = list()
+    if command:
+        for entry in command.entries:
+            data.append({
+                'id':entry.fk_item_id,
+                'text':str(Item.query.get(entry.fk_item_id))
+            })
+        return jsonify(
+            total_count = len(data),
+            items = data
+        ),200
+    return jsonify(
+        total_count = 0,
+        items = list()
+    ),404

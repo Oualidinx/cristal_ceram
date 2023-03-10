@@ -57,6 +57,8 @@ class PurchaseOrderForm(FlaskForm):
     fin = SubmitField('Terminer')
     submit = SubmitField('Sauvegarder')
 
+class PurchaseEntryField(EntryField):
+    item = SelectField('Désignation', coerce=int, validators=[DataRequired('Champs obligatoire')])
 
 class PurchaseReceiptForm(FlaskForm):
     recipient = SelectField('Bénéficiaire: ',coerce=int,
@@ -65,7 +67,7 @@ class PurchaseReceiptForm(FlaskForm):
                                     coerce=int,
                                     validators=[Optional()])
     order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
-    entities = FieldList(FormField(EntryField), min_entries=1)
+    entities = FieldList(FormField(PurchaseEntryField), min_entries=1)
     add = SubmitField('Ajouter produit')
     fin = SubmitField('Terminer')
     submit = SubmitField('Sauvegarder')
