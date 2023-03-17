@@ -120,10 +120,9 @@ class Client(db.Model):
     is_deleted = db.Column(db.Boolean, default=False)
     orders = db.relationship('Order', backref="client_orders", lazy="subquery")
     quotations = db.relationship('Quotation', backref="client_quotations", lazy="subquery")
-    contacts = db.relationship('Contact', backref="client_contacts", lazy="subquery")
 
     def __repr__(self):
-        return f'{self.id}, {self.full_name}'
+        return f'Client: {self.id}, {self.full_name}'
 
     def repr(self, columns=None):
         _dict={
@@ -155,7 +154,7 @@ class Contact(db.Model):
 class DeliveryNote(db.Model):
     __tablename__="delivery_note"
     id = db.Column(db.Integer, primary_key=True)
-    intern_reference = db.Column(db.String(100))
+    intern_reference = db.Column(db.String(1500))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     is_canceled = db.Column(db.Boolean)
     is_validated= db.Column(db.Boolean)
@@ -167,7 +166,7 @@ class DeliveryNote(db.Model):
 class ExitVoucher(db.Model):
     __tablename__="exit_voucher"
     id = db.Column(db.Integer, primary_key=True)
-    intern_reference = db.Column(db.String(100))
+    intern_reference = db.Column(db.String(1500))
     fk_delivery_note_id  = db.Column(db.Integer, db.ForeignKey('delivery_note.id'))
     fk_order_id  = db.Column(db.Integer, db.ForeignKey('order.id'))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -213,14 +212,18 @@ class Invoice(db.Model):
     __tablename__="invoice"
     id = db.Column(db.Integer, primary_key=True)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
-    inv_type = db.Column(db.String(100))
+    inv_type = db.Column(db.String(20))
     total = db.Column(db.Float, default=0)
+    intern_reference = db.Column(db.String(1500))
+    reference_supplier_invoice = db.Column(db.String(1500))
     is_delivered = db.Column(db.Boolean)
     is_canceled = db.Column(db.Boolean)
     is_valid = db.Column(db.Boolean)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_company_id=db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
     fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
     fk_receipt_id = db.Column(db.Integer, db.ForeignKey('purchase_receipt.id'))
     taxes = db.relationship('Tax', secondary="invoice_tax",
                             primaryjoin="Invoice.id == foreign(InvoiceTax.fk_invoice_id)",
@@ -230,18 +233,17 @@ class Invoice(db.Model):
     payments = db.relationship("Pay", backref="invoice_payments", lazy="subquery")
 
     def repr(self, columns=None):
-        payed_amount = [payment.amount for payment in self.payments] if self.payments else 0
-        rest = self.total - payed_amount
+        payment_amounts = sum([t.amount for t in Expense.query.filter_by(fk_invoice_id=self.id).all()])
         _dict={
             'id':self.id,
             'category':self.inv_type,
             'intern_reference':self.intern_reference,
             'client':Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
             'client_contacts': Contact.query.filter_by(fk_client_id=Order.query.get(self.fk_order_id).fk_client_id).all()
-                                if Order.query.get(self.fk_order_id).fk_client_id
+                                if self.fk_client_id
                                 else [],
             'supplier':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            'supplier_contacts': Contact.query.filter_by(fk_client_id=Order.query.get(self.fk_order_id).fk_client_id).all() if self.fk_supplier_id else [],
+            'supplier_contacts': Contact.query.filter_by(fk_supplier_id=Order.query.get(self.fk_order_id).fk_supplier_id).all() if self.fk_supplier_id and Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).first() else [],
             'created_at':self.created_at.date(),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),
@@ -252,7 +254,7 @@ class Invoice(db.Model):
             'is_canceled': ('Annulée',"#d33723") if self.is_canceled and self.is_canceled == False
                                         else ('Acceptée','#007256') if self.is_canceled and self.is_canceled == True
                                         else None,
-            'is_paid':None,
+            'is_paid':('Payé','#007256') if (self.total - payment_amounts) == 0 else ('Partiel. Payée','#ffab00') if Expense.query.filter_by(fk_invoice_id=self.id).first() else ('Non payé','#e62200'),
             'entries': [entry.repr() for entry in self.entries]
         }
         return {key:_dict[key] for key in columns} if columns else _dict
@@ -279,7 +281,8 @@ class Item(db.Model):
     __tablename__="item"
     id = db.Column(db.Integer, primary_key=True)
     serie = db.Column(db.String(100), nullable=True)
-    intern_reference = db.Column(db.String(100))
+    intern_reference = db.Column(db.String(1500))
+
     label = db.Column(db.String(1500))
     unit_price = db.Column(db.Float, default = 0)
     purchase_price = db.Column(db.Float, default = 0)
@@ -364,7 +367,7 @@ class Pay(db.Model):
 class Quotation(db.Model):
     __tablename__="quotation"
     id = db.Column(db.Integer, primary_key=True)
-    intern_reference = db.Column(db.String(50))
+    intern_reference = db.Column(db.String(1500))
     total = db.Column(db.Float, default = 0)
     fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
@@ -448,7 +451,7 @@ class Supplier(db.Model):
     orders = db.relationship('Order', backref="supplier_orders", lazy="subquery")
 
     def __repr__(self):
-        return f'{self.id}, {self.full_name}'
+        return f'Fournisseur: {self.id}, {self.full_name}'
     def repr(self):
         return {'id':self.id,'full_name':self.full_name, 'category': self.category}
 
@@ -583,7 +586,7 @@ class Store(db.Model):
 class Order(db.Model):
     __tablename__="order"
     id = db.Column(db.Integer, primary_key=True)
-    intern_reference = db.Column(db.String(100))
+    intern_reference = db.Column(db.String(1500))
     category = db.Column(db.String(50))
     total = db.Column(db.Float, default=0)
     delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
@@ -601,6 +604,12 @@ class Order(db.Model):
                             secondaryjoin="Tax.id == foreign(OrderTax.fk_tax_id)",
                             viewonly=True)
     entries=db.relationship("Entry", backref="order_entries", lazy="subquery")
+
+    def __repr__(self):
+        if self.fk_client_id:
+            return f'{str.upper(Client.query.get(self.fk_client_id).full_name)}, {self.intern_reference} ,Le {str(self.created_at.date())}'
+        return f'{str.upper(Supplier.query.get(self.fk_supplier_id).full_name)}, {self.intern_reference} ,Le {str(self.created_at.date())}'
+
 
     def repr(self, columns=None):
         _dict={
@@ -625,6 +634,7 @@ class Order(db.Model):
 
 
 class Expense(db.Model):
+    __tablename__="expense"
     id = db.Column(db.Integer, primary_key = True)
     label = db.Column(db.String(100))
     description = db.Column(db.String(1500))
@@ -632,8 +642,9 @@ class Expense(db.Model):
     is_deleted = db.Column(db.Boolean, default = False)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    fk_invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-
+    fk_category_id = db.Column(db.Integer, db.ForeignKey('expense_category.id'))
     def __repr__(self):
         return f'{self.id}, {self.label}, {self.amount}'
 
@@ -646,10 +657,20 @@ class Expense(db.Model):
         return _dict
 
 
+class ExpenseCategory(db.Model):
+    __tablename__="expense_category"
+    id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(100))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    expenses = db.relationship('Expense', backref="category_expenses", lazy="subquery")
+
+    def __repr__(self):
+        return f'{self.id}, {self.label}'
+
 class PurchaseReceipt(db.Model):
     __tablename__="purchase_receipt"
     id = db.Column(db.Integer, primary_key=True)
-    intern_reference = db.Column(db.String(50))
+    intern_reference = db.Column(db.String(1500))
     total = db.Column(db.Float, default = 0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
     fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))

@@ -58,7 +58,6 @@
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
     <script>
         function foo(component){
-            console.log(component.dataset['id']);
             var user_id = component.dataset['id'];
             // AJAX request
             $.ajax({

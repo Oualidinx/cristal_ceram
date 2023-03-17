@@ -97,13 +97,17 @@
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
                                      {% if not order['is_delivered'] and not order['is_canceled'] %}
-                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">Non payé</span>`),
-                                            {% else %}
+                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">à facturer</span>`),
+                                    {% else %}
                                                 status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}}">
                                                                 {{ order['is_delivered'][0]}}</span>
                                                                 <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}}">
                                                                 {{ order['is_canceled'][0]}}</span>`),
-                                            {% endif %}
+                                    {% endif %}
+                                    {% if order['invoice']%}
+                                         status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #007256;">
+                                                                facturée</span>`),
+                                    {% endif %}
                                     {#delivery_date: "{{ order['delivery_date'] }}",#}
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
@@ -111,18 +115,12 @@
                                                         href="{{ url_for('purchases_bp.get_receipt', r_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
-                                                    <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('purchases_bp.delete_receipt', r_id=order['id']) }}"
-                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                                        <i class="fa-solid fa-trash"></i></a>
                                                     <div class="btn-group dropstart" >
                                                         <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
                                                             <i class="fa-solid fa-arrows-rotate"></i>
                                                         </button>
                                                         <ul class="dropdown-menu">
-                                                            {#<li><a class="dropdown-item " href="#">Bon de livraison</a></li>#}
                                                             <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
-                                                            {#<li><a class="dropdown-item" href="#">Approuver</a></li>#}
                                                         </ul>
                                                     </div>
                                                 </div>`)},
