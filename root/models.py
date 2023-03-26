@@ -27,8 +27,21 @@ class Company(db.Model):
                             secondaryjoin="and_(User.id == foreign(UserForCompany.fk_user_id), UserForCompany.role!='manager')")
     warehouses = db.relationship('Warehouse', backref="company_warehouses", lazy="subquery")
     stores = db.relationship('Store', backref="company_stores", lazy="subquery")
+    addresses = db.relationship('Address', backref="company_addresses", lazy="subquery")
+    contacts = db.relationship('Contact', backref="company_contacts", lazy="subquery")
+
     def __repr__(self):
         return f'<Company:{self.id}, {self.name}>'
+
+    def repr(self, columns=None):
+        _dict={
+            'id':self.id,
+            'name':self.name,
+            'site':self.site,
+            'contacts' : [contact.repr() for contact in self.contacts if not User.query.get(contact.fk_user_id).is_disabled] if self.contacts else [],
+            'addresses': [adr.repr() for adr in self.addresses] if self.addresses else []
+        }
+        return {key:_dict[key] for key in columns} if columns else _dict
 
 class Tax(db.Model):
     __tablename__="tax"
@@ -66,13 +79,22 @@ class Tax(db.Model):
 class Address(db.Model):
     __tablename__="address"
     id = db.Column(db.Integer, primary_key=True)
+    label = db.Column(db.String(2500))
     country = db.Column(db.String(100))
     zip_code = db.Column(db.Integer)
     description = db.Column(db.String(1500))
     address_type = db.Column(db.String(50))
-    supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
-    client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
+    fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
+    fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+
+    def __repr__(self):
+        address = self.label
+        if self.zip_code:
+            address += f', {self.zip_code}'
+        if self.country:
+            address += f', {self.country}'
+        return address
 
 
 class BankAccount(db.Model):
@@ -150,6 +172,14 @@ class Contact(db.Model):
     def __repr__(self):
         return f'{self.key}: {self.value}'
 
+    def rep(self):
+        _dict={
+            'id':self.id,
+            'key':self.key,
+            'full_name':User.query.get(self.fk_user_id).full_name,
+            'value':self.value
+        }
+        return _dict
 
 class DeliveryNote(db.Model):
     __tablename__="delivery_note"
@@ -190,13 +220,17 @@ class Entry(db.Model):
     fk_delivery_note_id = db.Column(db.Integer, db.ForeignKey('delivery_note.id'))
 
     def repr(self):
-        credentials = Item.query.get(self.fk_item_id).repr(['intern_reference',"serie", 'label', 'format', 'aspect'])
+        item = Item.query.get(self.fk_item_id)
+        credentials = item.repr(['intern_reference',"serie", 'label', 'format', 'aspect'])
         designation = "{serie}, {label}, {format}, {aspect}".format(**credentials)
         return {
             'intern_reference':credentials['intern_reference'],
             'designation':designation,
             'qs': self.quantity,
-            'amount': self.total_price
+            'qc':round(self.quantity/item.piece_per_unit, 2),
+            'unit':item.unit,
+            'unit_price': '{:,.2f}'.format(self.unit_price),
+            'amount': '{:,.2f}'.format(self.total_price)
         }
 
 
@@ -234,16 +268,18 @@ class Invoice(db.Model):
 
     def repr(self, columns=None):
         payment_amounts = sum([t.amount for t in Expense.query.filter_by(fk_invoice_id=self.id).all()])
+        company = Company.query.get(self.fk_company_id)
         _dict={
             'id':self.id,
+            'company_address': company.addresses[0] if company.addresses else "/",
             'category':self.inv_type,
             'intern_reference':self.intern_reference,
             'client':Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
             'client_contacts': Contact.query.filter_by(fk_client_id=Order.query.get(self.fk_order_id).fk_client_id).all()
                                 if self.fk_client_id
                                 else [],
-            'supplier':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            'supplier_contacts': Contact.query.filter_by(fk_supplier_id=Order.query.get(self.fk_order_id).fk_supplier_id).all() if self.fk_supplier_id and Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).first() else [],
+            'beneficiary':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
+            'beneficiary_contact': Contact.query.filter_by(fk_supplier_id=Order.query.get(self.fk_order_id).fk_supplier_id).all() if self.fk_supplier_id and Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).first() else [],
             'created_at':self.created_at.date(),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),
@@ -468,7 +504,6 @@ class User(UserMixin, db.Model):
     id = db.Column(db.Integer, primary_key=True)
     full_name = db.Column(db.String(256))
     username = db.Column(db.String(256))
-    # role = db.Column(db.String(10))
     password_hash = db.Column(db.String(256))
     email = db.Column(db.String(10))
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
@@ -612,14 +647,16 @@ class Order(db.Model):
 
 
     def repr(self, columns=None):
+        company = Company.query.get(self.fk_company_id)
         _dict={
             'id':self.id,
             'category':self.category,
+            'company_address': company.addresses[0] if company.addresses else "/",
             'intern_reference':self.intern_reference,
             'client':Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
             'client_contacts': Contact.query.filter_by(fk_client_id=self.fk_client_id).all() if self.fk_client_id else [],
-            'supplier':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            'supplier_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
+            'beneficiary':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
+            'beneficiary_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
             'delivery_date':("#f8a300",self.delivery_date.date()) if self.is_delivered is None else ('#007256', self.delivery_date.date()),
             # (datetime.utcnow().date() - self.delivery_date.date()).days > 0 and
             'created_at':self.created_at.date(),
@@ -673,20 +710,22 @@ class PurchaseReceipt(db.Model):
     intern_reference = db.Column(db.String(1500))
     total = db.Column(db.Float, default = 0)
     created_at = db.Column(db.DateTime, default=datetime.utcnow())
-    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
+    is_deleted = db.Column(db.Boolean, default=False)
+    fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
-    is_deleted = db.Column(db.Boolean, default=False)
     invoices = db.relationship('Invoice', backref="purchase_receipt_invoices", lazy="subquery")
     entries = db.relationship('Entry', backref="receipt_entries", lazy="subquery")
 
     def repr_(self, columns=None):
+        company=Company.query.get(self.fk_company_id)
         _dict={
             'id':self.id,
             'intern_reference':self.intern_reference,
-            's':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            's_c': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
+            'company_address': company.addresses[0] if company.addresses else "/",
+            'beneficiary':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
+            'beneficiary_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
             'created_at':self.created_at.date(),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),

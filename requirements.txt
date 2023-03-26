@@ -23,6 +23,7 @@ itsdangerous==2.1.2
 Jinja2==3.1.2
 Mako==1.2.4
 MarkupSafe==2.1.1
+num2words==0.5.12
 Pillow==9.4.0
 pkg_resources==0.0.0
 pycparser==2.21
@@ -31,6 +32,7 @@ PyMySQL==1.0.2
 pyphen==0.13.2
 python-dotenv==0.21.0
 pytz==2022.7.1
+setuptools==67.6.0
 six==1.16.0
 SQLAlchemy==2.0.4
 tinycss2==1.2.1

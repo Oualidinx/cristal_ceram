@@ -1,6 +1,3 @@
-import datetime
-from http import client
-
 from flask import abort, render_template, session, flash, redirect, url_for, request, jsonify
 
 from root.admin import admin_bp
@@ -311,9 +308,6 @@ def users():
                 user.repr(columns=['id', 'full_name', 'username','_session','role', 'status','location'])
                     for user in  t_users
             ]
-            # print(liste)
-
-        # liste = None
     return  render_template('admin/users.html', liste =  liste)
 
 
@@ -491,31 +485,6 @@ def stocks():
                 liste = liste + warehouse.stocks
     _liste = [obj.repr() for obj in liste]
     return render_template('admin/stocks.html', liste = _liste)
-
-
-@admin_bp.get('/stocks/add')
-@admin_bp.post('/stocks/add')
-@login_required
-def add_stock():
-    form = StockForm()
-    if request.method=="GET":
-        form.item.query_factory = lambda : Item.query.filter_by(created_by = current_user.id).all()
-        form.warehouse.query_factory = lambda :  Warehouse.query.join(Company, Company.id == Warehouse.fk_company_id) \
-                                                                .join(UserForCompany, UserForCompany.fk_company_id == Company.id) \
-                                                                .filter(and_(UserForCompany.role=="manager", UserForCompany.fk_user_id == current_user.id))\
-                                                                .all()
-    if form.validate_on_submit():
-        stock = Stock()
-        stock.stock_qte = float(form.stock_qte.data) if form.stock_qte.data else None
-        stock.stock_sec = float(form.stock_sec.data)
-        if Warehouse.query.get(form.warehouse.data) is None or Item.query.get(form.item.data) is None:
-            return render_template('errors/404.html', blueprint="admin_bp")
-        stock.fk_warehouse_id = int(form.warehouse.data)
-        stock.fk_item_id = int(form.item.data)
-        database.session.add(stock)
-        database.session.commit()
-        flash("Objet ajouté avec succès","success")
-    return render_template("admin/new_stock.html", form = form)
 
 
 @admin_bp.get('/stock/<int:stock_id>/detach')
@@ -1543,3 +1512,48 @@ def invoices():
 @login_required
 def delivery_notes():
     return render_template('sales/deliveries.html')
+
+
+@admin_bp.get('/inventory')
+@admin_bp.post('/inventory')
+@login_required
+def create_inventory():
+    form = InventoryForm()
+    if form.validate_on_submit():
+        stock= Stock.query.filter_by(fk_item_id = form.item.data.id) \
+                    .filter_by(fk_warehouse_id = form.warehouse.data.id)\
+                    .first()
+        if  not stock:
+            stock = Stock()
+        stock.fk_warehouse_id = form.warehouse.data.id
+        stock.fk_item_id = form.item.data.id
+        stock.stock_qte = form.quantity.data
+        stock.created_by = current_user.id
+        stock.last_purchase = form.purchase_date.data
+        stock.last_purchase_price = form.purchase_price.data
+        database.session.add(stock)
+        database.session.commit()
+        item = Item.query.get(form.item.data.id)
+        item.stock_quantity += stock.stock_qte
+        database.session.add(item)
+        database.session.commit()
+        entry = Entry()
+        entry.quantity= stock.stock_qte
+        entry.unit_price =stock.last_purchase_price
+        entry.total_price= stock.stock_qte*stock.last_purchase_price
+        database.session.add(entry)
+        database.session.commit()
+        flash('Objet crée avec succès','success')
+        # return redirect(url_for('admin_bp.create_inventory'))
+        return render_template('admin/new_invoice.html', form = form)
+    return render_template('admin/new_inventory.html', form = form)
+
+
+@admin_bp.post('/item_unit')
+@login_required
+def get_unit():
+    data = request.json
+    item = Item.query.get(int(data['item_id']))
+    if not item:
+        return '',404
+    return jsonify(unit=item.unit),200

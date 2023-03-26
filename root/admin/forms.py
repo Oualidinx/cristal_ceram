@@ -2,7 +2,7 @@ import datetime
 from wsgiref import validate
 
 from flask_wtf import FlaskForm
-from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, FloatField, DateField
+from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, DecimalField, DateField,FloatField
 from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
 from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect
 from flask_login import current_user
@@ -283,3 +283,23 @@ class SupplierForm(FlaskForm):
     submit = SubmitField('Ajouter')
 
 
+class InventoryForm(FlaskForm):
+    item = QuerySelectField('Produit', validators=[DataRequired('Champs Obligatoire')], query_factory=lambda : Item.query.filter_by(fk_company_id =
+                                                                    UserForCompany.query.filter_by(role="manager") \
+                                                                    .filter_by(fk_user_id=current_user.id) \
+                                                                                   .first().fk_company_id).all(),
+                            allow_blank=True,
+                            blank_text='Sélectionner un produit...'
+                            )
+    warehouse = QuerySelectField('Dépôt', validators=[DataRequired('Champs obligatoire')],
+                                 query_factory=lambda : Warehouse.query.filter_by(fk_company_id =
+                                                                    UserForCompany.query.filter_by(role="manager") \
+                                                                    .filter_by(fk_user_id=current_user.id) \
+                                                                                   .first().fk_company_id).all(),
+                                 allow_blank=True,
+                                 blank_text='Sélectionner un dépôt...'
+                                 )
+    quantity = DecimalField('Quantité de stock', validators=[DataRequired('Champs obligatoire')])
+    purchase_price = DecimalField('Prix d\'achat', validators=[DataRequired('Champs obligatoire')])
+    purchase_date = DateField('Date d\'achat', validators = [DataRequired('Champs obligatoire')])
+    submit = SubmitField('Sauvegarder')

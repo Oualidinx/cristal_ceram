@@ -196,8 +196,8 @@
                                 {
                                     index: '{{ order["index"] }}',
                                     intern_reference: '{{ order["intern_reference"] }}',
-                                    supplier: '{{ order['supplier'] }}',
-                                    supplier_contact: '{{ order['supplier_contacts'][0] }}',
+                                    supplier: '{{ order['beneficiary'] }}',
+                                    supplier_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
                                     status: gridjs.html(`<span class="badge rounded-pill"
@@ -220,7 +220,10 @@
                                                             {#data-bs-target="#exampleModal"#}
                                                             ><i class="fa-regular fa-money-bill-1"></i>
                                                          </button>
-
+                                                        <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('purchases_bp.print_invoice', i_id=order['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                        <i class="fa-solid fa-eye"></i></a>
                                                     </div>
                                                 </div>`)},
                             {% endfor %}

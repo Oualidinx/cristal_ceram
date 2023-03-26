@@ -1,13 +1,15 @@
 from root import database as db
+from num2words import num2words
 from flask_login import login_required, current_user
 from flask import jsonify, url_for, session, render_template,request, redirect, flash
 from datetime import datetime
 from root.achats.forms import PaiementForm,EntryField, ExitVoucherForm, PurchaseOrderForm, PurchaseReceiptForm
 from root.models import UserForCompany, ExitVoucher, Entry, Item, Stock, DeliveryNote, Order, Supplier\
-                        , PurchaseReceipt, Client, Invoice, User, Expense, Pay
+                        , PurchaseReceipt, Client, Invoice, User, Expense, Pay, Company, Warehouse
 from root.achats.forms import InvoiceForm, InvoiceEntryField
 from root.achats import purchases_bp
 from sqlalchemy.sql import func
+from flask_weasyprint import render_pdf, HTML
 import datetime
 @purchases_bp.before_request
 def purchases_before_request():
@@ -108,7 +110,6 @@ def add_exit_voucher():
         db.session.add(_q)
         db.session.commit()
         for e in entities:
-            # sum_amounts += e.total_price
             e.fk_order_id = _q.id
             db.session.add(e)
             db.session.commit()
@@ -258,7 +259,7 @@ def new_order():
             _q.created_at = form.order_date.data
         _q.created_by = current_user.id
         _q.fk_company_id = company
-        _q.fk_supplier_id= form.supplier.data.id
+        _q.fk_supplier_id= form.fournisseur.data.id
         _q.fk_client_id = None
         _q.total = sum_amounts
         last_q = Order.query.filter_by(category="achat").filter_by(fk_company_id = company).order_by(Order.created_at.desc()).first()
@@ -275,7 +276,7 @@ def new_order():
         db.session.commit()
         sum_amounts = 0
         for e in entities:
-            sum_amounts = e.total_price
+            sum_amounts += e.total_price
             e.fk_order_id = _q.id
             e.fk_quotation_id, e.fk_exit_voucher_id=None, None
             e.fk_invoice_id, e.fk_delivery_note_id = None, None
@@ -308,7 +309,8 @@ def order_receipt(o_id):
 
     company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id = current_user.id).first().fk_company_id
     if order.fk_company_id != company:
-        return render_template('errors/404.html', blueprint="purchases_bp")
+        return render_template('errors/404.html', 
+                               blueprint="purchases_bp")
 
     if order.is_canceled:
         flash('Impossible de créer un bon réception pour une commande annulé','danger')
@@ -344,6 +346,9 @@ def order_receipt(o_id):
             stock.last_purchase_price = e.unit_price
             db.session.add(stock)
             db.session.commit()
+        # else:
+            # flash(f'Veuillez rajouter des stock pour le produit {Item.query.get(e.fk_item_id)}','warning')
+            # return redirect(url_for('purchases_bp.purchases_receipts'))
         db.session.add(e)
         db.session.commit()
     flash(f'Entrée {p_receipt.intern_reference} sauvegardée','success')
@@ -567,15 +572,14 @@ def new_purchase_receipt():
                 _q.intern_reference = "BR-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
         else:
             _q.intern_reference = "BR-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
-        # db.session.add(_q)
-        # db.session.commit()
         sum_amounts = 0
         for e in entities:
             sum_amounts = e.total_price
-            # e.fk_purchase_receipt_id = _q.id
             e.fk_order_id = None
             e.fk_quotation_id, e.fk_exit_voucher_id = None, None
             e.fk_invoice_id, e.fk_delivery_note_id = None, None
+            warhouses = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id) \
+                                        .filter_by(fk_user_id = current_user.id)
             stock = Stock.query.filter_by(fk_item_id=e.fk_item_id).first()
             if not stock:
                 db.session.rollback()
@@ -585,7 +589,12 @@ def new_purchase_receipt():
                                        somme = sum_amounts)
             db.session.add(e)
             db.session.commit()
+
             stock.stock_qte += e.quantity
+            item = Item.query.filter_by(id = e.fk_item_id).first()
+            item.stock_quantity += e.quantity
+            db.session.add(item)
+            db.session.commit()
             stock.last_purchase_price = e.unit_price
             db.session.add(stock)
             db.session.commit()
@@ -682,10 +691,13 @@ def receipt_invoice(r_id):
         else:
             invoice.intern_reference = "FAC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
 
-
         invoice.fk_order_id = PurchaseReceipt.query.get(invoice.fk_receipt_id).fk_order_id
         db.session.add(invoice)
         db.session.commit()
+        for entry in receipt.entries:
+            entry.fk_invoice_id = invoice.id
+            db.session.add(entry)
+            db.session.commit()
         flash('Document sauvegardée','success')
         return redirect(url_for("purchases_bp.purchases_receipts"))
     return render_template('purchases/new_invoice.html',somme=sum_amounts,
@@ -846,3 +858,85 @@ def get_info():
                 code=invoice.intern_reference,
                 montant='{:,.2f}'.format(invoice.total),
                 reste='{:,.2f}'.format(invoice.total - total)),200
+
+
+@purchases_bp.get('/invoices/<int:i_id>/print')
+@login_required
+def print_invoice(i_id):
+    invoice = Invoice.query.filter_by(inv_type='achat').filter_by(id=i_id).first()
+    if not invoice:
+        return render_template('errors/404.html', blueprint='purchases_bp')
+    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if invoice.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(invoice.total, lang='fr') + " dinars algérien"
+    virgule = invoice.total - float(int(invoice.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                           company=company.repr(),
+                           object=invoice.repr(),
+                           titre="Facture d'achat",
+                           total_letters=str.upper(total_letters))
+
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'factur d\'achat_{invoice.intern_reference}.pdf',
+                      automatic_download=False)
+
+@purchases_bp.get('/receipt/<int:r_id>/print')
+@login_required
+def print_receipt(r_id):
+    receipt = PurchaseReceipt.query.filter_by(id=r_id).first()
+    if not receipt:
+        return render_template('errors/404.html', blueprint='purchases_bp')
+    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if receipt.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(receipt.total, lang='fr')+" dinars algérien"
+    virgule = receipt.total - float(int(receipt.total))
+    if virgule>0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                    company = company.repr(),
+                    object=receipt.repr_(),
+                    titre="Bon de réception",
+                    total_letters=str.upper(total_letters))
+
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'bon de réception_{receipt.intern_reference}.pdf',
+                      automatic_download=False)
+
+
+@purchases_bp.get('/order/<int:o_id>/print')
+@login_required
+def print_order(o_id):
+    order = Order.query.filter_by(category='achat').filter_by(id=o_id).first()
+    if not order:
+        return render_template('errors/404.html', blueprint='purchases_bp')
+    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=13).first()
+    if not company:
+        return render_template('errors/401.html')
+    if order.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(order.total, lang='fr') + " dinars algérien"
+    virgule = order.total - float(int(order.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                    company = company.repr(),
+                    titre="Bon d'achat",
+                    object=order.repr(),
+                    total_letters=str.upper(total_letters))
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'bon de achat_{order.intern_reference}.pdf',
+                      automatic_download=False)

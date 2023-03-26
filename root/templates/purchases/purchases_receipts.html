@@ -91,9 +91,9 @@
                                 {
                                     index: '{{ order["index"] }}',
                                     intern_reference: '{{ order["intern_reference"] }}',
-                                    order: gridjs.html(`<a class="link-info" href="{{ url_for('purchases_bp.get_order', o_id= order['order_id']) }}">{{ order['order'] }}</a>`),
-                                    supplier: '{{ order['s'] }}',
-                                    supplier_contact: '{{ order['s_c'][0] }}',
+                                    order: gridjs.html(`<a class="link-info" href="{{ url_for('purchases_bp.print_order', o_id= order['order_id']) }}">{{ order['order'] }}</a>`),
+                                    supplier: '{{ order['beneficiary'] }}',
+                                    supplier_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
                                      {% if not order['is_delivered'] and not order['is_canceled'] %}
@@ -112,16 +112,18 @@
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
                                                     <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('purchases_bp.get_receipt', r_id=order['id']) }}"
+                                                        href="{{ url_for('purchases_bp.print_receipt', r_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
                                                     <div class="btn-group dropstart" >
                                                         <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
                                                             <i class="fa-solid fa-arrows-rotate"></i>
                                                         </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
-                                                        </ul>
+                                                        {% if not order['invoice'] %}
+                                                            <ul class="dropdown-menu">
+                                                                <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
+                                                            </ul>
+                                                        {% endif %}
                                                     </div>
                                                 </div>`)},
                             {% endfor %}

@@ -1,8 +1,10 @@
 from flask_wtf import FlaskForm
-from wtforms.fields import StringField, PasswordField, SubmitField
+from wtforms.fields import StringField, PasswordField, SubmitField, FloatField
 from wtforms.validators import DataRequired, ValidationError, EqualTo
-from wtforms.fields import EmailField
-from root.models import User
+from wtforms.fields import EmailField, DateField
+from root.models import User, UserForCompany, Item, Warehouse
+from wtforms_sqlalchemy.fields import QuerySelectField
+from flask_login import current_user
 
 
 class LoginForm(FlaskForm):
@@ -31,3 +33,6 @@ class RequestToken(FlaskForm):
         user = User.query.filter_by(email = email.data).filter_by(role="student").filter_by(is_deleted = 0).first()
         if not user:
             raise ValidationError('Email invalide')
+
+
+
