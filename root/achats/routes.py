@@ -3,12 +3,12 @@ from num2words import num2words
 from flask_login import login_required, current_user
 from flask import jsonify, url_for, session, render_template,request, redirect, flash
 from datetime import datetime
-from root.achats.forms import PaiementForm,EntryField, ExitVoucherForm, PurchaseOrderForm, PurchaseReceiptForm
+from root.achats.forms import PaiementForm,EntryField, ExitVoucherEntryField, ExitVoucherForm, PurchaseOrderForm, PurchaseReceiptForm
 from root.models import UserForCompany, ExitVoucher, Entry, Item, Stock, DeliveryNote, Order, Supplier\
                         , PurchaseReceipt, Client, Invoice, User, Expense, Pay, Company, Warehouse
 from root.achats.forms import InvoiceForm, InvoiceEntryField
 from root.achats import purchases_bp
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_
 from flask_weasyprint import render_pdf, HTML
 import datetime
 @purchases_bp.before_request
@@ -24,116 +24,7 @@ def index():
     return render_template('purchases/index.html')
 
 
-@purchases_bp.get('/sales/exit_voucher/add')
-@purchases_bp.post('/sales/exit_voucher/add')
-@login_required
-def add_exit_voucher():
-    session['endpoint']="stocks"
-    # form = ExitVoucherForm()
-    # return render_template('sales/add_exit_voucher.html', form = form)
-    session['endpoint'] = 'sales'
-    form = ExitVoucherForm()
-    company = UserForCompany.query.filter_by(role="magasiner") \
-        .filter_by(fk_user_id=current_user.id).first().fk_company_id
-    # clients = Client.query.filter_by(fk_company_id=company)
-    # if not clients:
-    #     flash("Veuillez d'abord ajouter des clients", 'warning')
-
-    if form.validate_on_submit():
-        entities = list()
-        _q = ExitVoucher()
-        # sum_amounts = 0
-        if enumerate(form.entities):
-            for _index, entry in enumerate(form.entities):
-                if entry.quantity.data:
-                    entry.amount.data = entry.unit_price.data * entry.quantity.data
-                if entry.delete_entry.data:
-                    # sum_amounts -= entry.amount.data
-                    del form.entities.entries[_index]
-                    return render_template("sales/new_quotation.html",
-                                           form=form, nested=EntryField(),
-                                           # somme=sum_amounts
-                                           )
-                _ = Entry()
-                _.fk_item_id = entry.item.data.id
-                _.purchase_price = entry.purchase_price.data
-                _.quantity = entry.quantity.data
-                _.total_price = entry.amount.data
-                entities.append(_)
-        if form.add.data:
-            if enumerate(form.entities):
-                for _index, entry in enumerate(form.entities):
-                    if entry.quantity.data:
-                        entry.amount.data = entry.purchase_price.data * entry.quantity.data
-                    # sum_amounts += entry.amount.data
-            form.entities.append_entry({
-                'label': Item.query.filter_by(is_disabled=False) \
-                    .filter_by(fk_company_id=UserForCompany.query.filter_by(role="vendeur") \
-                               .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
-                'unit_price': 0,
-                'quantity': 1,
-                'amount': 0
-            })
-            return render_template('purchases/add_exit_voucher.html', form=form, nested=EntryField(),
-                                   # somme=sum_amounts
-                                   )
-        if form.fin.data:
-            if enumerate(form.entities):
-                for _index, entry in enumerate(form.entities):
-                    if entry.quantity.data:
-                        entry.amount.data = entry.purchase_price.data * entry.quantity.data
-                    # sum_amounts += entry.amount.data
-            return render_template('purchases/add_exit_voucher.html', form=form, nested=EntryField(),
-                                   # somme=sum_amounts
-                                   )
-
-        # if form.exit_date.data:
-        #     _q.created_at = form.exit_date.data
-        _q.created_by = current_user.id
-        # _q.fk_company_id = company
-        # _q.fk_client_id = form.client.data.id
-        # _q.total = sum_amounts
-        # db.session.add(_q)
-        # db.session.commit()
-        last_q = ExitVoucher.query.filter_by(fk_company_id=company).order_by(ExitVoucher.created_at.desc()).first()
-        # print(last_q)
-        if last_q:
-            last_intern_ref = last_q.intern_reference.split('-')[1].split('/')[0]
-            year = last_q.intern_reference.split('-')[1].split('/')[2]
-            if year == datetime.datetime.now().date().year:
-                _q.intern_reference = "BS-" + (last_intern_ref + 1) + "/" + str(company) + "/" + str(
-                    datetime.datetime.now().date().year)
-            else:
-                _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
-        else:
-            _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
-        db.session.add(_q)
-        db.session.commit()
-        for e in entities:
-            e.fk_order_id = _q.id
-            db.session.add(e)
-            db.session.commit()
-            item = Item.query.get(e.fk_item_id)
-            item.stock_quantity -= e.quantity
-            db.session.add(item)
-            db.session.commit()
-            stock = Stock.query.filter_by(fk_item_id=e.fk_item_id).first()
-            stock.stock_qte -= e.quantity
-            db.session.add(stock)
-            db.session.commit()
-        # _q.total = sum_amounts
-        db.session.add(_q)
-        db.session.commit()
-        flash('Bon de sortie crée avec succès', 'success')
-        # return redirect(url_for('sales_bp.add_quotation'))
-        return render_template("purchases/add_exit_voucher.html", form=form,
-                               nested=EntryField(),
-                               to_approve=True,
-                               to_print=True)
-    return render_template("purchases/add_exit_voucher.html", form=form, nested=EntryField())
-
-
-@purchases_bp.get('/sales/delivery/<int:bl_id>/approve')
+@purchases_bp.get('/delivery/<int:bl_id>/approve')
 @login_required
 def approve_delivery(bl_id):
     d_note = DeliveryNote.query.get(bl_id)
@@ -164,21 +55,14 @@ def approve_delivery(bl_id):
     return redirect(url_for('sales_bp.delivery_notes'))
 
 
-# @purchases_bp.get('/sales/delivery')
-# @login_required
-# def delivery_notes():
-#     return render_template('sales/deliveries.html')
-
-
 @purchases_bp.get('/orders')
 @login_required
 def purchases_orders():
     session['endpoint']="orders"
-    _orders = Order.query.filter_by(category="achat").filter_by(is_deleted=False) \
-        .filter_by(fk_company_id = UserForCompany.query.filter_by(role="magasiner") \
+    _orders = Order.query.filter_by(category="achat").filter_by(fk_company_id = UserForCompany.query.filter_by(role="magasiner") \
                         .filter_by(fk_user_id = current_user.id) \
                         .first().fk_company_id
-            ).all()
+            ).filter(Order.is_deleted==False).all()
     liste = list()
     if _orders:
         indexe = 1
@@ -298,7 +182,6 @@ def new_order():
 @purchases_bp.get('/orders/<int:o_id>/receipt')
 @login_required
 def order_receipt(o_id):
-    # print("receipt")
     session['endpoint']="orders"
     order = Order.query.get(o_id)
     if not order:
@@ -742,9 +625,11 @@ def get_commands():
     company = UserForCompany.query.filter_by(role="magasiner") \
                                     .filter_by(fk_user_id=current_user.id).first().fk_company_id
     commands = Order.query.filter(Order.is_deleted == False).filter_by(fk_company_id = company)
-    if "q" in request.args:
+    if 'type' in request.args:
+        commands = commands.filter_by(category=request.args.get('type'))
+    if "search" in request.args:
         commands = commands.filter(Order.is_canceled == None) \
-            .filter(Order.intern_reference.like(func.lower(f'%{request.args["q"]}%')))
+            .filter(Order.intern_reference.like(func.lower(f'%{request.args["search"]}%')))
     data = list()
     if commands.all():
         for command in commands.all():
@@ -833,12 +718,6 @@ def get_purchase_price():
     return jsonify(text=f"Article ne se trouve pas dans la commande {Order.query.get(data['cmd_id']).intern_reference}"),404
 
 
-@purchases_bp.get('/stocks')
-@login_required
-def stocks():
-    return "Stocks"
-
-
 @purchases_bp.post('/info')
 @login_required
 def get_info():
@@ -884,8 +763,9 @@ def print_invoice(i_id):
 
     response = HTML(string=html)
     return render_pdf(response,
-                      download_filename=f'factur d\'achat_{invoice.intern_reference}.pdf',
+                      download_filename=f'facture d\'achat_{invoice.intern_reference}.pdf',
                       automatic_download=False)
+
 
 @purchases_bp.get('/receipt/<int:r_id>/print')
 @login_required
@@ -921,7 +801,7 @@ def print_order(o_id):
     order = Order.query.filter_by(category='achat').filter_by(id=o_id).first()
     if not order:
         return render_template('errors/404.html', blueprint='purchases_bp')
-    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=13).first()
+    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
     if not company:
         return render_template('errors/401.html')
     if order.fk_company_id != company.fk_company_id:
@@ -940,3 +820,139 @@ def print_order(o_id):
     return render_pdf(response,
                       download_filename=f'bon de achat_{order.intern_reference}.pdf',
                       automatic_download=False)
+
+
+
+@purchases_bp.get('/exit_voucher/add')
+@purchases_bp.post('/exit_voucher/add')
+@login_required
+def add_exit_voucher():
+    session['endpoint']="stocks"
+    form = ExitVoucherForm()
+    company = UserForCompany.query.filter_by(role="magasiner") \
+        .filter_by(fk_user_id=current_user.id).first().fk_company_id
+    if form.validate_on_submit():
+        entities = list()
+        _q = ExitVoucher()
+        if DeliveryNote.query.get(form.motif.data.id):
+            _q.fk_delivery_note_id = form.motif.data.id
+        else:
+            _q.fk_order_id = form.motif.data.id
+        if enumerate(form.entities):
+            for _index, entry in enumerate(form.entities):
+                if entry.delete_entry.data:
+                    del form.entities.entries[_index]
+                    return render_template("purchases/add_exit_voucher.html",
+                                           form=form, nested=ExitVoucherEntryField())
+                _ = Entry()
+                _.fk_item_id = entry.item.data.id
+                _.quantity = entry.quantity.data
+                entities.append(_)
+        if form.add.data:
+            form.entities.append_entry({
+                'item': Item.query.filter_by(is_disabled=False) \
+                    .filter_by(fk_company_id=UserForCompany.query.filter_by(role="magasiner") \
+                               .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
+                'quantity': 1,
+            })
+            return render_template('purchases/add_exit_voucher.html', form=form, nested=ExitVoucherEntryField())
+        if form.exit_date.data:
+            _q.created_at = form.exit_date.data
+        _q.created_by = current_user.id
+        last_q = ExitVoucher.query.filter_by(fk_company_id=company).order_by(ExitVoucher.created_at.desc()).first()
+        if last_q:
+            last_intern_ref = last_q.intern_reference.split('-')[1].split('/')[0]
+            year = last_q.intern_reference.split('-')[1].split('/')[2]
+            if year == datetime.datetime.now().date().year:
+                _q.intern_reference = "BS-" + (last_intern_ref + 1) + "/" + str(company) + "/" + str(
+                    datetime.datetime.now().date().year)
+            else:
+                _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        else:
+            _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        db.session.add(_q)
+        db.session.commit()
+        for e in entities:
+            e.fk_exit_voucher_id = _q.id
+            db.session.add(e)
+            db.session.commit()
+            stock = Stock.query.filter_by(fk_item_id=e.fk_item_id).first()
+            stock.stock_qte -= e.quantity
+            db.session.add(stock)
+            db.session.commit()
+        db.session.add(_q)
+        db.session.commit()
+        flash('Bon de sortie cré avec succès', 'success')
+        return render_template("purchases/add_exit_voucher.html", form=form,
+                               nested=ExitVoucherEntryField(),
+                               to_approve=True,
+                               to_print=True)
+    return render_template("purchases/add_exit_voucher.html", form=form, nested=ExitVoucherEntryField())
+
+
+@purchases_bp.get('/exit_voucher/all')
+@login_required
+def exit_vouchers():
+    session['endpoint']='stocks'
+    company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    exit_vouchers_1 = ExitVoucher.query.join(DeliveryNote, DeliveryNote.id == ExitVoucher.fk_delivery_note_id) \
+                                        .join(Order, Order.id == DeliveryNote.fk_order_id) \
+                                        .filter(Order.fk_company_id == company.fk_company_id).all()
+    exit_vouchers_2 = ExitVoucher.query.join(Order, Order.id == ExitVoucher.fk_order_id) \
+                                        .filter(Order.fk_company_id == company.fk_company_id).all()
+    _f_liste = exit_vouchers_1 + exit_vouchers_2
+    liste =  list()
+    indexe = 1
+    if _f_liste:
+        for obj in _f_liste:
+            _dict = obj.repr()
+            _dict.update({
+                'indexe':indexe
+            })
+            liste.append(_dict)
+            indexe += 1
+    return render_template('purchases/exit_voucher.html', liste = liste)
+
+
+@purchases_bp.get('/docs')
+@login_required
+def get_bl_bc():
+    company = UserForCompany.query.filter_by(role="magasiner") \
+        .filter_by(fk_user_id=current_user.id).first().fk_company_id
+    commands = Order.query.join(Client, Client.id == Order.fk_client_id).filter(Client.is_deleted == False) \
+                            .filter(Order.is_deleted == False) \
+                            .filter(Order.is_canceled == None) \
+                            .filter(Order.category=='vente').filter(Order.fk_company_id==company)
+    if "search" in request.args:
+        commands = commands.filter(or_(
+                                        Order.intern_reference.like(func.lower(f'%{request.args["search"]}%')),
+                                        Client.full_name.like(func.lower(f'%{request.args["search"]}%'))
+                                )).order_by(Order.created_at.desc())
+    data = list()
+    if commands.all():
+        for command in commands.all():
+            b = Client.query.get(command.fk_client_id) if command.fk_client_id else None
+            if b:
+                data.append({
+                    'id': command.id,
+                    'title':'Bon de commande',
+                    'client': str.upper(Client.query.get(command.fk_client_id).full_name),
+                    'code':command.intern_reference,
+                    'date':str(command.created_at.date())
+                })
+        return jsonify(total_count=len(data),
+                       items=data), 200
+    return jsonify(total_count=0,
+                   items=[]), 404
+
+
+@purchases_bp.post('/item_unit')
+@login_required
+def get_unit():
+    data = request.json
+    item = Item.query.get(int(data['item_id']))
+    if not item:
+        return '',404
+    return jsonify(unit=item.unit),200

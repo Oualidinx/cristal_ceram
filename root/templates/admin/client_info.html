@@ -25,7 +25,7 @@
     </div>
     <div class="row g-lg-4">
         <div class="col-md">
-            <h4 class="h2 mb-5">Détails</h4>
+            <h4 class="h2 mb-4">Détails</h4>
             <table class="table table-hover">
                   <tbody>
                         {% if item %}
@@ -51,7 +51,7 @@
                   </tbody>
             </table>
         </div>
-        <div class="col-md">
+        <div class="col-md-8">
             <h4  class="h3 mb-5">Etat des commandes</h4>
             <div id="table"></div>
             <div class="row w-50">
@@ -103,22 +103,25 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'intern_reference', name: 'Référence' },
-                { id: 'status', name: 'Etat' },
                 { id: 'delivery_date', name: 'Date de livraison' },
-                { id: 'total', name: 'Montant total' }
+                { id: 'total', name: 'Montant total' },
+                {#{ id: 'status', name: 'Etat' }#}
             ],
             data: ()=>{
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
-                            {% if item['stocks'] %}
-                                {% for stock in item['stocks'] %}
+                            {% if liste %}
+                                {% for cmd in liste %}
                                     {
-                                      intern_reference: '{{ stock["intern_reference"] }}',
-                                      total: '{{ stock["total"] }}',
-                                      delivery_date :'{{ stock["delivery_date"] }}',
-                                      status :gridjs.html(`<span class="badge rounded-pill" style="background-color:{{ stock['status'] }}">
-                                      </span>`)
+                                      intern_reference: '{{ cmd["intern_reference"] }}',
+                                      total: '{{ cmd["total"] }}',
+                                      delivery_date :gridjs.html(`<span class="badge rounded-pill" style="background-color:{{ cmd['delivery_date'][0] }}">
+                                        {{ cmd['delivery_date'][1] }}
+                                      </span>`),
+                                      {#status :gridjs.html(`<span class="badge rounded-pill" style="background-color:{{ cmd['is_delivered'][0] }}">#}
+{#                                        {{ cmd['is_delivered'][1] }}#}
+{#                                      </span>`)#}
                                     },
                                 {% endfor %}
                             {% endif %}
@@ -127,7 +130,7 @@
                             })
                         },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

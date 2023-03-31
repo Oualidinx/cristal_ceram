@@ -1,0 +1,139 @@
+{% extends "layouts/sales_layout.html" %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+{% endblock %}
+
+
+{% block main_tag %}
+    <div class="container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="row mt-5">
+
+            <div class="col mt-5" style="position: relative; text-align: right">
+                <a role="button" class="btn btn-outline-primary rounded rounded-pill" href="{{ url_for('sales_bp.add_client') }}">
+                       Ajouter
+                </a>
+
+
+            <div id="table"></div>
+            </div>
+        </div>
+        <div class="row bg-danger">
+            <div class="col-lg">
+               <div class="modal fade" id="userContent" tabindex="-1" aria-labelledby="exampleUserContent" aria-hidden="true">
+                  <div class="modal-dialog modal-dialog-centered">
+                        <div class="modal-content">
+                              <div class="modal-header">
+                                <h5 class="modal-title" id="exampleUserContent">Inforamtions détaillée</h5>
+                                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                              </div>
+                              <div class="modal-body">
+
+                              </div>
+                        </div>
+                  </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block actual_title %}
+    Les clients
+{% endblock %}
+
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        })
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                { id: 'id', name: 'Num' },
+                { id: 'full_name', name: 'Nom complet' },
+                { id: 'category', name: 'Catégorie' },
+                { id: 'contact', name: 'Numéro de téléphone' },
+                { id:'actions', name:'Actions'}
+            ],
+            data: ()=>{
+                return new Promise(resolve => {
+                    setTimeout(()=>
+                        resolve([
+                {% if liste %}
+                    {% for client in liste %}
+                        {
+                            id: '{{ client["id"] }}',
+                            full_name :'{{ client["full_name"] }}',
+                            category :'{{ client['category'] }}',
+                            contact :'{{ client['contact'] }}',
+                            actions: gridjs.html(`
+                                <div class="dropdown dropstart">
+                                    <div class="btn-group">
+                                        <a role="button" class="btn btn-sm" href="{{ url_for('sales_bp.edit_client', client_id=client['id']) }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
+                                            <i class="fa-solid fa-user-pen"></i></a>
+                                        <a role="button" class="btn btn-sm" href="{{ url_for('sales_bp.delete_client', client_id=client['id'])}}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                            <i class="fa-solid fa-user-minus"></i></a>
+                                    </div>
+                                </div>`
+                              )
+                        },
+                    {% endfor %}
+                {% endif %}
+            ]),1000
+                    )
+                })
+            },
+            search: {
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+          }).render(document.getElementById('table'));
+    </script>
+{% endblock %}

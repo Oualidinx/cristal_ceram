@@ -122,7 +122,7 @@
                                     {% else %}
                                         {{ entry.quantity(class="form-control form-control-sm") }}
                                     {% endif %}
-                                    <div class="input-group-text">{{ entry.unit.data }}</div>
+                                    <div class="input-group-text" id="unit"></div>
                                 </div>
                             </div>
                             <div class="col-sm-2">
@@ -221,6 +221,13 @@
                     url: "{{ url_for('purchases_bp.get_commands') }}",
                     dataType: 'json',
                     delay: 250,
+                    data:function(params){
+                        let query = {
+                            search:params.term,
+                            type:'achat'
+                        };
+                        return query;
+                    },
                     processResults: function(data, params) {
                         params.page = params.page || 1;
                         return {

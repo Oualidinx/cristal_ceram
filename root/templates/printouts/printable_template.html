@@ -115,7 +115,7 @@
         </tr>
         {% for foo in object['entries'] %}
             <tr>
-                <td>N°</td>
+                <td>{{ foo['indexe'] }}</td>
                 <td>{{ foo['intern_reference'] }}</td>
                 <td>{{ foo['designation'] }}</td>
                 <td>{{ foo['qc'] }} </td>
@@ -124,7 +124,6 @@
                 <td>{{ foo['amount'] }}</td>
             </tr>
         {% endfor %}
-
 
         <tr style="text-align: right;">
             <td colspan="6"><span >TOTAL</span> </td>

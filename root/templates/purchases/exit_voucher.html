@@ -1,0 +1,126 @@
+{% extends "layouts/purchases_layout.html" %}
+{% block additional_styles %}
+    <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+{% endblock %}
+{% block main_tag %}
+    <div class="row mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute top-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="col" style="position: relative; text-align: right">
+            <a role="button" class="btn btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.add_exit_voucher') }}">
+                <i class="fa fa-plus"></i>
+                   Ajouter
+            </a>
+            <div id="table"></div>
+        </div>
+    </div>
+{% endblock %}
+{% block actual_title %}
+    Sorties
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        });
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                    { id: 'indexe',              name: 'N°' },
+                    { id: 'intern_reference',   name: 'Code' },
+                    { id: 'created_at',         name: 'Date' },
+                    { id: 'delivery_note',             name: 'BL' },
+                    { id: 'order',     name: 'BC' },
+                    { id: 'warehouse',     name: 'Dépôt' },
+                    {#{ id: "actions",   name:'Actions'}#}
+            ],
+            data: () => {
+             return new Promise(resolve => {
+                 setTimeout(()=> {
+                         resolve(
+                             [
+                                 {% if liste %}
+                                     {% for order in liste %}
+                                         {
+                                             indexe: '{{ order["indexe"] }}',
+                                             intern_reference: '{{ order["intern_reference"] }}',
+                                             created_at: '{{ order["created_at"] }}',
+                                             {% if order['delivery_note'] %}
+                                                 delivery_note: gridjs.html(`<a class="link-info"
+                                                                         href="{{ url_for('purchases_bp.print_delivery_note', bl_id= order['delivery_note'][0]) }}">{{ order['delivery_note'][1] }}</a>`),
+                                             {% else %}
+                                                 delivery_note: gridjs.html(`<a class="link-info" href="#">/</a>`),
+                                             {% endif %}
+                                             {% if order['order'] %}
+                                                 order: gridjs.html(`<a class="link-info" href="{{ url_for('purchases_bp.print_order', o_id= order['order'][0]) }}">{{ order['order'][1] }}</a>`),
+                                             {% else %}
+                                                 order: gridjs.html(`<a class="link-info" href="#">/</a>`),
+                                             {% endif %}
+                                             warehouse: '{{ order["warehouse"] }}',
+                                             {#actions: gridjs.html(`#}
+                                             {#        <div class="btn-group">#}
+                                             {#            <a role="button" class="btn btn-sm"#}
+                                             {#                href="{{ url_for('purchases_bp.print_exit_voucher', e_id=order['id']) }}"#}
+                                             {#                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">#}
+                                             {#                <i class="fa-solid fa-eye"></i></a>#}
+                                             {#        </div>`)#}
+                                         },
+                                     {% endfor %}
+                                 {% endif %}
+                             ]
+                         );
+                     },1000
+                 );
+                });
+            },
+            search: {
+                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+        }).render(document.getElementById('table'));
+    </script>
+
+{% endblock %}

@@ -7,7 +7,7 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="OUAREM Oualid" />
-
+{#        <link rel="stylesheet" href="https/://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />#}
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
         <script src="{{ url_for('static', filename='js/all.js') }}"></script>
@@ -30,11 +30,29 @@
             .btn-custom{
                 background-color: #2E3741;
             }
+            @font-face {
+              font-family: 'Material Symbols Sharp';
+              font-style: normal;
+              font-weight: 100 700;
+              src: url('{{ url_for('static', filename='webfonts/gNMVW2J8Roq16WD5tFNRaeLQk6-SHQ_R00k4aWE.woff2')}}') format('woff2');
+            }
 
-            {#.nav-link:hover{#}
-            {#    color: ;#}
-            {#}#}
-        </style>
+            .material-symbols-sharp {
+              font-family: 'Material Symbols Sharp';
+              font-weight: normal;
+              font-style: normal;
+              font-size: 24px;
+              line-height: 1;
+              letter-spacing: normal;
+              text-transform: none;
+              display: inline-block;
+              white-space: nowrap;
+              word-wrap: normal;
+              direction: ltr;
+              -moz-font-feature-settings: 'liga';
+              -moz-osx-font-smoothing: grayscale;
+            }
+</style>
     </head>
         <body class="sb-nav-fixed">
             <nav class="sb-topnav navbar navbar-custom navbar-expand">
@@ -69,19 +87,19 @@
                                 </a>
                                 <div class="sb-sidenav-menu-heading">Gestion</div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSales__" aria-expanded="false" aria-controls="collapsePurchases">
-                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    <div class="sb-nav-link-icon"><span class="material-symbols-sharp">
+                                            shopping_cart
+                                        </span></div>
                                     Les Ventes
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse {% if session['endpoint']=='sales' %}show{% endif %}" id="collapseSales__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav ">
                                         <a class="nav-link" href="{{ url_for('sales_bp.quotations') }}">Les devis</a>
-{#                                        <a class="nav-link" href="{{ url_for('sales_bp.orders') }}">Les commandes clients</a>#}
                                         <a class="nav-link" href="{{ url_for('sales_bp.orders') }}">Les commandes clients</a>
-{#                                        <a class="nav-link" href="{{ url_for('sales_bp.invoices') }}">Les factures de ventes</a>#}
-                                        <a class="nav-link" href="#">Les factures de ventes</a>
-{#                                        <a class="nav-link" href="{{ url_for('sales_bp.clients') }}">Les clients</a>#}
-                                        <a class="nav-link" href="#">Les clients</a>
+                                        <a class="nav-link" href="{{ url_for('sales_bp.deliveries') }}">Bons de livraison</a>
+                                        <a class="nav-link" href="{{ url_for('sales_bp.invoices') }}">Les factures de ventes</a>
+                                        <a class="nav-link" href="{{ url_for('sales_bp.clients') }}">Les clients</a>
                                     </nav>
                                 </div>
                             </div>
@@ -93,15 +111,15 @@
                     </nav>
                 </div>
                 <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid px-4">
-                        <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
+                    <main>
+                        <div class="container-fluid px-4">
+                            <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
 
-                        {% block main_tag %}
-                        {% endblock main_tag %}
-                    </div>
-                </main>
-            </div>
+                            {% block main_tag %}
+                            {% endblock main_tag %}
+                        </div>
+                    </main>
+                </div>
             </div>
 
             <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>

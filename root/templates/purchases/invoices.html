@@ -10,7 +10,7 @@
             {% if messages %}
                 <div class="toast-container position-absolute top-0 end-0 p-3">
                     {% for category, message in messages %}
-                        <div class=".flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                        <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                             <div class="d-flex">
                                 <div class="toast-body text-black fw-light fs-6">
                                     {{ message }}
@@ -97,7 +97,6 @@
     <script>
         function get(event){
             let dataset = event.dataset;
-            console.log(dataset['code']);
             $.ajax({
                 url:"{{url_for('purchases_bp.get_info')}}",
                 data:JSON.stringify({

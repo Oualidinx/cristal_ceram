@@ -347,7 +347,6 @@ def edit_user(user_id):
         user_for_company = UserForCompany.query \
             .filter_by(fk_user_id=user.id) \
             .filter_by(fk_company_id=company.fk_company_id)
-        print(f'role {type(form.role.data)} ')
         if form.role.data == 2:
             if user_for_company.first().role=="magasiner":
                 _w = len(user_for_company.all())
@@ -475,6 +474,9 @@ def get_user():
 @admin_bp.get('/stocks')
 @login_required
 def stocks():
+    """
+                            à revoir
+    """
     user_companies = UserForCompany.query.filter_by(fk_user_id = current_user.id).all()
     if not user_companies or len(user_companies) == 0:
         return render_template('errors/404.html', blueprint="admin_bp")
@@ -864,8 +866,6 @@ def add_store():
         database.session.commit()
         flash('Objet ajouté avec success','success')
         return redirect(url_for('admin_bp.add_store'))
-    else:
-        print(form.errors)
     return render_template("admin/new_store.html", form = form)
 
 
@@ -1008,7 +1008,6 @@ def clients():
         liste = [
             client.repr() for client in _clients
         ]
-        print(liste)
     return render_template('admin/clients.html', liste = liste)
 
 
@@ -1022,7 +1021,17 @@ def get_client(client_id):
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if item.fk_company_id != company:
         return render_template('errors/404.html')
-    return render_template('admin/client_info.html', item = item.repr())
+    index = 1
+    liste = list()
+    for order in item.repr(['orders'])['orders']:
+        _dict = order
+        _dict.update({
+            'index':index
+        })
+        liste.append(_dict)
+        index += 1
+    return render_template('admin/client_info.html', item = item.repr(['id','nb_cmd','contact','category','full_name']), liste = liste)
+
 
 @admin_bp.get('/clients/<int:client_id>/edit')
 @admin_bp.post('/clients/<int:client_id>/edit')
@@ -1032,12 +1041,12 @@ def edit_client(client_id):
     form = ClientForm()
     _client = Client.query.get(client_id)
     if not _client:
-        return render_template('errors/404.html')
+        return render_template('errors/404.html', blueprint="admin_bp")
     if request.method=="GET":
         form = ClientForm(
             full_name=_client.full_name,
             category=_client.category,
-            contacts=Contact.query.get(_client.id).value if Contact.query.get(_client.id) else ''
+            contacts=Contact.query.filter_by(fk_client_id = _client.id).first().value if Contact.query.filter_by(fk_client_id = _client.id).first() else ''
         )
 
     if form.validate_on_submit():
@@ -1077,8 +1086,8 @@ def add_client():
         database.session.add(contact)
         database.session.commit()
         flash('Objet ajouté avec succès','success')
-        return redirect(url_for('admin_bp.add_supplier'))
-    return render_template('admin/add_supplier.html', form = form)
+        return redirect(url_for('admin_bp.add_client'))
+    return render_template('admin/add_client.html', form = form)
 
 
 @admin_bp.get('/client/<int:client_id>/delete')
@@ -1087,12 +1096,14 @@ def delete_client(client_id):
     session['endpoint'] = 'sales'
     _client = Client.query.get(client_id)
     if not _client:
-        return render_template('errors/404.html')
-    if _client.orders :
-        flash('Impossible de supprimer ce client',"danger")
+        return render_template('errors/404.html', blueprint="admin_bp")
+    if not _client.orders and not _client.quotations and not _client.invoices:
+        database.session.delete(_client)
+        database.session.commit()
         return redirect(url_for('admin_bp.clients'))
 
-    database.session.delete(_client)
+    _client.is_deleted = True
+    database.session.add(_client)
     database.session.commit()
     flash('Objet supprimé avec succès','success')
     return redirect(url_for("admin_bp.clients"))
@@ -1525,9 +1536,11 @@ def create_inventory():
                     .first()
         if  not stock:
             stock = Stock()
-        stock.fk_warehouse_id = form.warehouse.data.id
-        stock.fk_item_id = form.item.data.id
-        stock.stock_qte = form.quantity.data
+            stock.fk_warehouse_id = form.warehouse.data.id
+            stock.fk_item_id = form.item.data.id
+            database.session.add(stock)
+            database.session.commit()
+        stock.stock_qte += float(form.quantity.data)
         stock.created_by = current_user.id
         stock.last_purchase = form.purchase_date.data
         stock.last_purchase_price = form.purchase_price.data
@@ -1545,7 +1558,7 @@ def create_inventory():
         database.session.commit()
         flash('Objet crée avec succès','success')
         # return redirect(url_for('admin_bp.create_inventory'))
-        return render_template('admin/new_invoice.html', form = form)
+        return render_template('admin/new_inventory.html', form = form)
     return render_template('admin/new_inventory.html', form = form)
 
 

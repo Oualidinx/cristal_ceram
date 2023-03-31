@@ -1,5 +1,6 @@
 {% extends "layouts/admin_layout.html" %}
 {% block main_tag %}
+    <div class="container">
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -20,7 +21,7 @@
             {% endwith %}
         </div>
 
-        <div class="row mt-5 w-75">
+        <div class="row mt-5">
             <div class="card ">
                 <div class="card-body">
                     <form method="post">
@@ -172,10 +173,10 @@
                     success: function (response){
                         if (response.messages!==null){
                             var data = response.messages
+                            var items="";
                               $.each(data,function(index, item){
                                  items= items+ '<option value="' + item.ID+'">'+item.name+'</option>';
-                              });
-                                console.log(items);
+                              });+
                               $("#location").html(items);
                         }
                     }

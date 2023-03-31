@@ -3,9 +3,9 @@
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
-                    <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
                         {% for category, message in messages %}
-                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                 <div class="d-flex">
                                     <div class="toast-body text-black fw-light fs-6">
                                         {{ message }}
@@ -19,8 +19,8 @@
             {% endwith %}
         </div>
         <div class="row mt-5 w-100">
-            <div class="card">
-                <div class="card-body">
+{#            <div class="card">#}
+{#                <div class="card-body">#}
                     <form id="form" method="POST">
                         {{form.hidden_tag()}}
                         <div class="row g-1 justify-content-end p-3">
@@ -115,7 +115,7 @@
                                         {% if entry.quantity.errors %}
                                             {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
                                             {% for error in entry.quantity.errors %}
-                                                <div class="invalid-feedback">
+                                                <div class="invalid-fessedback">
                                                     {{ error }}
                                                 </div>
                                             {% endfor %}
@@ -123,7 +123,7 @@
                                         {% else %}
                                             {{ entry.quantity(class="form-control form-control-sm") }}
                                         {% endif %}
-                                        <div class="input-group-text">{{ entry.unit.data }}</div>
+                                        {{ entry.unit(class='form-control form-control-sm') }}
                                     </div>
                                 </div>
                                 <div class="col-sm-2">
@@ -174,8 +174,8 @@
                             </div>
                         </div>
                     </form>
-                </div>
-            </div>
+{#                </div>#}
+{#            </div>#}
         </div>
 
 {% endblock %}
@@ -193,6 +193,21 @@
     <script>
         $(document).ready(function() {
             $('.select-item').change(function(){
+                const onlyInputs = $(this).parent().parent().find('input');
+                console.log(onlyInputs[1]);
+                $.ajax({
+                    url:"{{ url_for('sales_bp.get_unit') }}",
+                    type:'POST',
+                    data:JSON.stringify({
+                        item_id:$(this).val()
+                    }),
+                    contentType:'application/json',
+                    statusCode:{
+                        200:function (data){
+                            onlyInputs[1].setAttribute('value',data.unit);
+                        }
+                    }
+                })
             });
             $('.toast').toast('show');
             $('.select-client').select2({

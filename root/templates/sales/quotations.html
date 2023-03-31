@@ -4,49 +4,40 @@
 {% endblock %}
 {% block main_tag %}
     <div class="container">
+        <div class="row">
+
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category , message in messages %}
-                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
-                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                          <div class="d-flex">
-                            <div class="toast-body">
-                            {{ message }}
-                           </div>
+                <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
                             <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                           </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
-        <div class="row">
-            <div class="col">
-                <div class="card">
-                    <div class="card-header card-header-primary">
-                      <div class="row">
-                          <div class="col-sm">
-                              <h4 class="card-title ">Les Devis</h4>
-                          </div>
-                      </div>
-                    </div>
-                    <div class="card-body">
-                        <div class="row justify-content-center">
-                            <div class="col-sm-2 position-absolute mt-2 end-0" style="z-index: 1;">
-                                <div class="btn-group">
-                                    <a class="btn btn-md btn-primary rounded-pill" href="{{ url_for('sales_bp.add_quotation') }}">Ajouter</a>
-                                </div>
-                            </div>
-                            <div class="col-sm-11">
-                                <div id="table"></div>
-                            </div>
-                        </div>
+        </div>
+        <div class="row mt-5 position-relative">
+            <div class="col mt-5"  style="text-align: right">
+                <div class="col" style="position: relative; text-align: right">
+                    <div class="btn-group">
+                        <a class="btn btn-md btn-outline-primary rounded rounded-pill" href="{{ url_for('sales_bp.add_quotation') }}">Ajouter</a>
                     </div>
                 </div>
+                <div id="table"></div>
             </div>
         </div>
     </div>
 
+{% endblock %}
+{% block actual_title %}
+    Les devis
 {% endblock %}
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
@@ -98,43 +89,47 @@
                     resolve(
                         [
                         {% if liste %}
-                            {% for course in liste %}
+                            {% for quote in liste %}
                                 {
-                                    index: '{{ course["index"] }}',
-                                    intern_reference: '{{ course["intern_reference"] }}',
-                                    client: '{{ course['client'] }}',
-                                    created_at: '{{ course["created_at"] }}',
-                                    status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ course['status'][0]}}">
-                                                        {{ course['status'][1]}}</span>`),
-                                    total: '{{ course["total"] }} DA',
+                                    index: '{{ quote["index"] }}',
+                                    intern_reference: '{{ quote["intern_reference"] }}',
+                                    client: '{{ quote['client'] }}',
+                                    created_at: '{{ quote["created_at"] }}',
+                                    status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ quote['status'][0]}}">
+                                                        {{ quote['status'][1]}}</span>`),
+                                    total: '{{ quote["total"] }} DZD',
                                     actions: gridjs.html (`
-                                                <div class="btn-group">
-                                                    <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('sales_bp.get_quotation', q_id=course['id']) }}"
-                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
-                                                        <i class="fa-solid fa-eye"></i></a>
-                                                    <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('sales_bp.delete_quotation', q_id=course['id']) }}"
-                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                                        <i class="fa-solid fa-trash"></i></a>
-                                                    {#<a role="button" class="btn btn-sm"#}
-                                                    {#    href="{{ url_for('sales_bp.delete_quotation', q_id=course['id']) }}">#}
-                                                    {#    <i class="fa-solid fa-arrows-rotate"></i></a>#}
-                                                    <div class="btn-group dropstart" >
-                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
-                                                            <i class="fa-solid fa-arrows-rotate"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item " href="#">Bon commande</a></li>
-                                                            <li><a class="dropdown-item" href="#">Facture de vente action</a></li>
-                                                            <li><a class="dropdown-item" href="#">Approuver</a></li>
-                                                        </ul>
-                                                    </div>
-                                                </div>`)},
+                                        <div class="btn-group">
+                                            <a role="button" class="btn btn-sm"
+                                                href="{{ url_for('sales_bp.get_quotation', q_id=quote['id']) }}"
+                                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                <i class="fa-solid fa-eye"></i></a>
+                                            <a role="button" class="btn btn-sm"
+                                                href="{{ url_for('sales_bp.delete_quotation', q_id=quote['id']) }}"
+                                                data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                                <i class="fa-solid fa-trash"></i></a>
+                                            <div class="btn-group dropstart" >
+                                                <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+                                                    <i class="fa-solid fa-arrows-rotate"></i>
+                                                </button>
+                                                <ul class="dropdown-menu">
+                                                    <li><a class="dropdown-item " href="{{ url_for('sales_bp.quotation_order', q_id = quote['id']) }}">
+                                                        Bon commande
+                                                        </a></li>
+                                                    {#<li><a class="dropdown-item" href="#">Facture de vente</a></li>#}
+                                                    <li>
+                                                    <a class="dropdown-item"
+                                                    href="{{ url_for('sales_bp.approve_quotation', q_id=quote['id']) }}">
+                                                        Approuver
+                                                    </a>
+                                                    </li>
+                                                </ul>
+                                            </div>
+                                        </div>`)},
                             {% endfor %}
                         {% endif %}
                     ]
-                    ),2000
+                    ),100
                  );
                 });
             },
