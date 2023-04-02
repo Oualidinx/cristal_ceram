@@ -257,6 +257,7 @@ class Entry(db.Model):
     __tablename__="entry"
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Float, default = 0)
+    in_stock = db.Column(db.Float, default = 0)
     tva = db.Column(db.Integer, db.ForeignKey('tva.id'))
     unit_price = db.Column(db.Float, default=0)
     total_price = db.Column(db.Float, default=0)
@@ -273,9 +274,33 @@ class Entry(db.Model):
         item = Item.query.get(self.fk_item_id)
         credentials = item.repr(['intern_reference',"serie", 'label', 'format', 'aspect'])
         designation = "{serie}, {label}, {format}, {aspect}".format(**credentials)
+        doc_reference =(DeliveryNote.query.get(self.fk_invoice_id).created_at.date(),
+                         DeliveryNote.query.get(self.fk_invoice_id).intern_reference) \
+                            if self.fk_exit_voucher_id and self.fk_invoice_id \
+                                else (Order.query.get(self.fk_order_id).created_at.date(),Order.query.get(self.fk_order_id).intern_reference) \
+                                    if self.fk_exit_voucher_id and self.fk_order_id else None
+        doc_reference = (PurchaseReceipt.query.get(self.fk_purchase_receipt_id).created_at.date(), 
+                         PurchaseReceipt.query.get(self.fk_purchase_receipt_id).intern_reference) if self.fk_order_id else doc_reference
+        beneficiary = PurchaseReceipt.query.get(self.fk_purchase_receipt_id).fk_supplier_id if self.fk_purchase_receipt_id else None
+        client_query = Client.query
+        beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id)).fk_client_id,
+                        client_query.get(Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id)).fk_client_id).full_name)  \
+                        if self.fk_exit_voucher_id and self.fk_delivery_note_id \
+                            else (Order.query.get(self.fk_order_id).fk_client_id, 
+                                  client_query.get(Order.query.get(self.fk_order_id).fk_client_id).full_name) \
+                                if self.fk_exit_voucher_id and self.fk_order_id \
+                                    else beneficiary
+
+
         return {
             'intern_reference':credentials['intern_reference'],
+            'date_reference':doc_reference[0] if doc_reference else None,
+            'reference':doc_reference[1] if doc_reference else None,
             'designation':designation,
+            'beneficiary':beneficiary,
+
+            'type':'entré' if self.fk_purchase_receipt_id else 'sortie',
+            'status':('Livré',"#0072B5") if self.fk_exit_voucher_id else ("Reçus","#0072B5") if self.fk_purchase_receipt_id else None,
             'qs': self.quantity,
             'qc':int(round(self.quantity/item.piece_per_unit, 2))+1 if (round(self.quantity/item.piece_per_unit, 2) - int(round(self.quantity/item.piece_per_unit, 2))) > 0 else round(self.quantity/item.piece_per_unit, 2),
             'unit':item.unit,
@@ -396,11 +421,10 @@ class Item(db.Model):
     fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
     fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
     stocks = db.relationship('Stock', backref="item_stocks", lazy="subquery")
+    entries = db.relationship('Entry', backref="item_entries", lazy="subquery")
+
     def __repr__(self):
         return f'{self.label}, {Format.query.get(self.fk_format_id).label}, {Aspect.query.get(self.fk_aspect_id).label}'
-        # return f'{self.label}, ' \
-        #        f'{Format.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_format_id).label}, ' \
-        #        f'{Aspect.query.get(ItemAspectFormat.query.filter(fk_item_id = self.id).fk_aspect_id).label}'
 
     def repr(self, columns=None):
         _dict={
@@ -422,13 +446,9 @@ class Item(db.Model):
             'stock_sec':self.stock_sec,
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
-            'stocks':[stock.repr(['quantity','warehouse','status','stock_value']) for stock in self.stocks],
             'stock_qte':sum([stock.stock_qte for stock in self.stocks])
         }
         return {key: _dict[key] for key in columns} if columns else _dict
-
-
-
 
 
 class OrderTax(db.Model):
@@ -725,8 +745,6 @@ class Order(db.Model):
                 'indexe':indexe
             })
             entries.append(d)
-        print(self.is_canceled)
-        print(('Acceptée','#007256') if self.is_canceled is not None and (self.is_canceled == False) else None)
         _dict={
             'id':self.id,
             'category':self.category,
@@ -766,13 +784,15 @@ class Expense(db.Model):
     def __repr__(self):
         return f'{self.id}, {self.label}, {self.amount}'
 
-    def repr(self):
+    def repr(self, columns=None):
         _dict = {
-            'id':self.id,
             'label':self.label,
-            'amount':self.amount
+            'amount':'{:,.2f}'.format(self.amount),
+            'date':self.created_at,
+            'category':ExpenseCategory.query.get(self.fk_category_id).label,
+
         }
-        return _dict
+        return {key:_dict[key] for key in columns} if columns else _dict
 
 
 class ExpenseCategory(db.Model):
@@ -780,10 +800,21 @@ class ExpenseCategory(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(100))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
+    is_deleted = db.Column(db.Boolean, default = False)
     expenses = db.relationship('Expense', backref="category_expenses", lazy="subquery")
 
     def __repr__(self):
-        return f'{self.id}, {self.label}'
+        return f'{self.id}-- {self.label}'
+
+    def repr(self):
+        _dict= {
+            'id':self.id,
+            'label': self.label,
+            'expenses':[
+                expense.repr() for expense in self.expenses
+            ]
+        }
+        return _dict
 
 class PurchaseReceipt(db.Model):
     __tablename__="purchase_receipt"

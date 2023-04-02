@@ -105,6 +105,7 @@ def new_order():
                                            somme = sum_amounts)
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
                 _.unit_price = entry.unit_price.data
                 _.quantity = entry.quantity.data
                 _.total_price = entry.amount.data
@@ -278,6 +279,7 @@ def purchases_invoices():
         db.session.commit()
         flash(f'{form.data.get("code")} a été payée','success')
         return redirect(url_for('purchases_bp.purchases_invoices'))
+
     return render_template("purchases/invoices.html", liste = liste, form=form)
 
 
@@ -369,17 +371,19 @@ def new_purchase_receipt():
                     del form.entities.entries[_index]
                     return render_template("purchases/new_receipt.html",
                                            form=form, nested=EntryField())
-                _ = Entry()
-                _.fk_item_id = entry.item.data.id
-                _.unit_price = entry.unit_price.data
+                
                 _entry = Entry.query.filter(Entry.fk_order_id != None).filter_by(fk_order_id=form.command_reference.data.id).first()
                 if _entry:
                     if _entry.quantity > entry.quantity.data:
                         flash(f"La quantity du {Item.query.get(entry.fk_item_id).label} est suppérieur à la quantity commandée","warning")
                         return render_template("purchases/new_receipt.html",
+                                       
                                                form=form, nested=EntryField(),
                                                somme=sum_amounts)
-
+                _ = Entry()
+                _.fk_item_id = entry.item.data.id
+                # _.in_stock = entry.item.data.stock_quantity
+                _.unit_price = entry.unit_price.data
                 _.quantity = entry.quantity.data
                 _.total_price = entry.amount.data
                 entities.append(_)
@@ -469,12 +473,12 @@ def new_purchase_receipt():
                 flash(f"Article {Item.query.get(e.fk_item_id).label} n'a pas de stock",'warning')
                 return render_template("purchases/new_receipt.html",
                                        form = form,nested=EntryField(),
-                                       somme = sum_amounts)
-            db.session.add(e)
-            db.session.commit()
-
+                                       somme = sum_amounts)            
             stock.stock_qte += e.quantity
             item = Item.query.filter_by(id = e.fk_item_id).first()
+            e.in_stock = item.stock_quantity
+            db.session.add(e)
+            db.session.commit()
             item.stock_quantity += e.quantity
             db.session.add(item)
             db.session.commit()
@@ -846,6 +850,7 @@ def add_exit_voucher():
                                            form=form, nested=ExitVoucherEntryField())
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
                 _.quantity = entry.quantity.data
                 entities.append(_)
         if form.add.data:
@@ -956,3 +961,4 @@ def get_unit():
     if not item:
         return '',404
     return jsonify(unit=item.unit),200
+

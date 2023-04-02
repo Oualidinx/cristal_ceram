@@ -4,7 +4,7 @@ from wsgiref import validate
 from flask_wtf import FlaskForm
 from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, SelectField, DecimalField, DateField,FloatField
 from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
-from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect
+from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect, ExpenseCategory
 from flask_login import current_user
 from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
 from sqlalchemy.sql import and_
@@ -130,7 +130,7 @@ class WarehouseForm(FlaskForm):
     name = StringField('Nom:', validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':"Nome du dépôt"})
     address = StringField('Adresse: ', validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':"L'adresse du dépôt"})
     contact = StringField('Contact (Téléphone): ', validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':"Contact(Téléphone)"})
-    submit = SubmitField('Ajouter')
+    submit = SubmitField('Valider')
 
 
 class StoreForm(FlaskForm):
@@ -236,7 +236,7 @@ class FormatForm(FlaskForm):
 
 class AspectForm(FlaskForm):
     label = StringField("Nom de l'aspect: ", validators=[DataRequired('Champs obligatoire')], render_kw={'data-placeholder':'Nom de l\'aspect'})
-    submit = SubmitField('Ajouter')
+    submit = SubmitField('Valider')
 
 
 class EditFormatForm(FlaskForm):
@@ -303,3 +303,27 @@ class InventoryForm(FlaskForm):
     purchase_price = DecimalField('Prix d\'achat', validators=[DataRequired('Champs obligatoire')])
     purchase_date = DateField('Date d\'achat', validators = [DataRequired('Champs obligatoire')])
     submit = SubmitField('Sauvegarder')
+
+
+class ExpenseForm(FlaskForm):
+    label = StringField('Titre: ', validators=[DataRequired('Champs obligatoire')])
+    description = StringField('Description: ', validators=[Optional('Champs optionel')])
+    amount = DecimalField('Montant: ', validators=[DataRequired('Champs obligatoire')])
+    expense_category=QuerySelectField('Catégorie de dépense: ',
+                      query_factory= lambda : ExpenseCategory.query. \
+                            filter_by(fk_company_id = UserForCompany.query
+                                .filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+                                                        ).all(),
+                      validators=[DataRequired('Champs obligatoire')],
+                      allow_blank=True,
+                      blank_text="Sélectionner la catégorie")
+    submit = SubmitField('Valider')
+
+    def validate_amount(self, amount):
+        if float(amount.data)<=0:
+            raise ValidationError('Valeur du montant est invalide')
+
+
+class ExpenseCategoryForm(FlaskForm):
+    label = StringField('Titre: ', validators=[DataRequired('Champs obligatoire')])
+    submit = SubmitField('Valider')

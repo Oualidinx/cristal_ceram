@@ -308,6 +308,7 @@ def quotation_order(q_id):
     for entry in quotation.entries:
         # _ = Entry()
         entry.fk_order_id = order.id
+        entry.in_stock = entry.item.data.stock_quantity
         item = Item.query.get(entry.fk_item_id)
         item.stock_quantity -= entry.quantity
         db.session.add(item)
@@ -451,6 +452,7 @@ def add_order():
                                            somme = sum_amounts)
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
                 _.unit_price = entry.unit_price.data
                 _.quantity = entry.quantity.data
                 _.total_price = entry.amount.data
@@ -499,11 +501,13 @@ def add_order():
         for e in entities:
             sum_amounts += e.total_price
             e.fk_order_id = _q.id
+            
             item = Item.query.get(entry.fk_item_id)
+            e.in_stock = item.stock_quantity
+            db.session.add(e)
+            db.session.commit()
             item.stock_quantity -= entry.quantity
             db.session.add(item)
-            db.session.commit()
-            db.session.add(e)
             db.session.commit()
         _q.total = sum_amounts
         db.session.add(_q)
@@ -776,6 +780,7 @@ def add_exit_voucher():#Créer un bon de livraison
                                            )
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                
                 # _.purchase_price = entry.purchase_price.data
                 _.quantity = entry.quantity.data
                 # _.total_price = entry.amount.data
@@ -828,6 +833,7 @@ def add_exit_voucher():#Créer un bon de livraison
         # db.session.commit()
         for e in entities:
             e.fk_exit_voucher_id = _q.id
+            e.in_stock = entry.item.data.stock_quantity
             db.session.add(e)
             db.session.commit()
             item = Item.query.get(e.fk_item_id)

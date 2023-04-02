@@ -1,12 +1,12 @@
 from flask import abort, render_template, session, flash, redirect, url_for, request, jsonify
 
 from root.admin import admin_bp
-from root import database
+from root import database as db
 from flask_login import login_required
 from root.admin.forms import *
 from root.auth.forms import ResetPasswordForm
-from root.models import Supplier, Tax, User, InvoiceTax, OrderTax, Warehouse,  Store, \
-                        Format, Aspect, Stock, Client, Contact, Quotation
+from root.models import Supplier, Tax, User, InvoiceTax, OrderTax, Warehouse,  Store
+from root.models import Format, Aspect, Stock, Client, Contact, Quotation, Expense
 from werkzeug.security import generate_password_hash
 
 @admin_bp.before_request
@@ -32,10 +32,10 @@ def new_taxes():
         tax.label = form.label.data
         tax.value = float(form.value.data)
         tax.sign = form.sign.data
-        if form.sell_or_bye.data:
-            tax.for_sell = True
-        else:
-            tax.for_buy = True
+        # if form.sell_or_bye.data:
+        #     tax.for_sell = True
+        # else:
+        #     tax.for_buy = True
 
         if form.applied_before_TVA.data:
             tax.applied_before_TVA = True
@@ -44,10 +44,10 @@ def new_taxes():
         if form.on_applied_products.data:
             tax.on_applied_products = True
 
-        if form.on_applied_TVA.data:
-            tax.on_applied_TVA = True
-        database.session.add(tax)
-        database.session.commit()
+        # if form.on_applied_TVA.data:
+        #     tax.on_applied_TVA = True
+        db.session.add(tax)
+        db.session.commit()
         flash('Ajout avec succès','success')
         return redirect(url_for('admin_bp.new_taxes'))
     return render_template('admin/new_taxes.html', form = form)
@@ -66,8 +66,8 @@ def delete_tax(tax_id):
         flash('Opération impossible: tax déjà utilisé', 'danger')
         return redirect(url_for("admin_bp.taxes"))
 
-    database.session.delete(tax)
-    database.session.commit()
+    db.session.delete(tax)
+    db.session.commit()
     flash('Suppression avec succès','success')
     return redirect(url_for('admin_bp.taxes'))
 
@@ -109,8 +109,8 @@ def edit_tax(tax_id):
         if form.on_applied_products.data:
             tax.on_applied_products = form.on_applied_products.data
 
-        database.session.add(tax)
-        database.session.commit()
+        db.session.add(tax)
+        db.session.commit()
         flash('Ajout avec succès', 'success')
         return redirect(url_for('admin_bp.new_taxes'))
     return render_template('admin/new_taxes.html', form=form)
@@ -145,28 +145,8 @@ def taxes():
     return render_template('admin/taxes.html', liste = liste)
 
 
-
-@admin_bp.get('/warehouses/add')
-@admin_bp.post('/warehouses/add')
-@login_required
-def add_warehouse():
-    form = WarehouseForm()
-    if form.validate_on_submit():
-        warehouse = Warehouse(
-            name = form.name.data,
-            address = form.address.data,
-            contact = form.contact.data,
-            fk_company_id = UserForCompany.query.filter_by(fk_user_id = current_user.id) \
-                .filter_by(role="manager").first().fk_company_id
-        )
-        database.session.add(warehouse)
-        database.session.commit()
-        flash('Ajout avec succès', 'success')
-        return redirect(url_for("admin_bp.add_warehouse"))
-    return render_template("admin/new_warehouse.html", form = form)
-
-
 @admin_bp.get('/warehouses')
+@admin_bp.post('/warehouses')
 @login_required
 def warehouses():
     session['endpoint']='warehouses'
@@ -182,7 +162,21 @@ def warehouses():
             indexe += 1
             liste.append(_dict)
     # _warehouses = [obj.repr() for obj in _warehouses] if _warehouses else None
-    return render_template('admin/warehouses.html', liste = liste)
+    form = WarehouseForm()
+    if form.validate_on_submit():
+        warehouse = Warehouse(
+            name=form.name.data,
+            address=form.address.data,
+            contact=form.contact.data,
+            fk_company_id=UserForCompany.query.filter_by(fk_user_id=current_user.id) \
+                .filter_by(role="manager").first().fk_company_id
+        )
+        db.session.add(warehouse)
+        db.session.commit()
+        flash('Ajout avec succès', 'success')
+        return redirect(url_for("admin_bp.warehouses"))
+
+    return render_template('admin/warehouses.html', form = form, liste = liste)
 
 
 @admin_bp.get('/warehouses/<int:warehouse_id>/edit')
@@ -202,8 +196,8 @@ def edit_warehouse(warehouse_id):
         warehouse.name = form.name.data
         warehouse.address = form.address.data
         warehouse.contact = form.contact.data
-        database.session.add(warehouse)
-        database.session.commit()
+        db.session.add(warehouse)
+        db.session.commit()
         flash('Modification avec succès', 'success')
         return redirect(url_for('admin_bp.warehouses'))
     return render_template("admin/new_warehouse.html", form = form)
@@ -221,8 +215,8 @@ def delete_warehouse(warehouse_id):
     if warehouse.stocks:
         flash('Impossible de supprimer le dépôt',"danger")
         return redirect(url_for("admin_bp.warehouses"))
-    database.session.delete(warehouse)
-    database.session.commit()
+    db.session.delete(warehouse)
+    db.session.commit()
     flash('Objet supprimé', 'success')
     return redirect(url_for("admin_bp.warehouses"))
 
@@ -277,8 +271,8 @@ def create_user():
             return render_template("admin/new_user.html", form=form)
         else:
             user.fk_store_id = request.form.get('location') if form.role.data == 1 else None
-            database.session.add(user)
-            database.session.commit()
+            db.session.add(user)
+            db.session.commit()
             user_for_company = UserForCompany()
             user_for_company.fk_company_id = company.id
             user_for_company.fk_warehouse_id = request.form.get('location') if form.role.data == 2 else None
@@ -287,8 +281,8 @@ def create_user():
                 user_for_company.role = "vendeur"
             else:
                 user_for_company.role = "magasiner"
-            database.session.add(user_for_company)
-            database.session.commit()
+            db.session.add(user_for_company)
+            db.session.commit()
             flash('Employé ajouté avec succès','success')
             return redirect(url_for("admin_bp.create_user"))
     return render_template("admin/new_user.html", form = form)
@@ -358,54 +352,54 @@ def edit_user(user_id):
                     for ID in [wh.fk_warehouse_id for wh in user_for_company.all()]:
                         if ID not in [wh.id for wh in form.warehouses.data]:
                             u_f_c = user_for_company.filter_by(fk_warehouse_id = int(ID)).first()
-                            database.session.delete(u_f_c)
-                            database.session.commit()
+                            db.session.delete(u_f_c)
+                            db.session.commit()
                 elif _w<f_w:
                     for ID in [wh.id for wh in form.warehouses.data]:
                         if ID not in [wh.fk_warehouse_id for wh in user_for_company.all()]:
                             u_f_c = UserForCompany(fk_user_id = user.id, fk_company_id = company.id,
                                                    fk_warehouse_id=ID, role="magasiner")
-                            database.session.add(u_f_c)
-                            database.session.commit()
+                            db.session.add(u_f_c)
+                            db.session.commit()
                 else:
-                    temp = [wh for wh in user_for_company.all()]
-                    IDs = [wh.id for wh in form.warehouses.data]
+                    # temps = [wh for wh in user_for_company.all()]
+                    ids = [wh.id for wh in form.warehouses.data]
                     counter = 0
                     for temp in [wh for wh in user_for_company.all()]:
                     # for ID in [wh.id for wh in form.warehouses.data]:
                         temp.start_from = datetime.datetime.utcnow()
-                        temp.fk_warehouse_id = IDs[counter]
-                        database.session.add(temp)
-                        database.session.commit()
+                        temp.fk_warehouse_id = ids[counter]
+                        db.session.add(temp)
+                        db.session.commit()
 
             else:
                 user.fk_store_id = None
-                database.session.add(user)
-                database.session.delete(user_for_company.first())
-                database.session.commit()
+                db.session.add(user)
+                db.session.delete(user_for_company.first())
+                db.session.commit()
         else:
             if not form.stores.data:
                 flash('Il faut séléctionner le magasin pour cet employé','danger')
                 return redirect(url_for('admin_bp.edit_user',user_id = user.id))
             user.fk_store_id = form.stores.data.id
-            database.session.add(user)
-            database.session.commit()
+            db.session.add(user)
+            db.session.commit()
             if user_for_company.first().role=='vendeur':
                 u_f_c = user_for_company.first()
                 u_f_c.start_from = datetime.datetime.utcnow()
-                database.session.add(u_f_c)
-                database.session.commit()
+                db.session.add(u_f_c)
+                db.session.commit()
             else:
                 user_warehouses = [wh for wh in user_for_company.all()]
                 for wh in user_warehouses:
-                    database.session.delete(wh)
-                    database.session.commit()
+                    db.session.delete(wh)
+                    db.session.commit()
                 u_f_c = UserForCompany(fk_user_id=user.id, fk_company_id=company.id,
                                        fk_warehouse_id=None, role="vendeur")
-                database.session.add(u_f_c)
-                database.session.commit()
-        # database.session.add(user)
-        # database.session.commit()
+                db.session.add(u_f_c)
+                db.session.commit()
+        # db.session.add(user)
+        # db.session.commit()
         flash('Mise à jour avec succès','success')
         return redirect(url_for('admin_bp.users'))
     return render_template('admin/edit_user.html',
@@ -435,9 +429,9 @@ def disable_user(user_id):
                 if user_for_company:
                     user.fk_store_id = None
                     user.fk_warehouse_id = None
-                    database.session.add(user)
-                    database.session.delete(user_for_company)
-                    database.session.commit()
+                    db.session.add(user)
+                    db.session.delete(user_for_company)
+                    db.session.commit()
                     flash('Opération se termine avec succès',"success")
                     return redirect(url_for("admin_bp.users"))
     return render_template('errors/404.html', blueprint="admin_bp")
@@ -477,16 +471,8 @@ def stocks():
     """
                             à revoir
     """
-    user_companies = UserForCompany.query.filter_by(fk_user_id = current_user.id).all()
-    if not user_companies or len(user_companies) == 0:
-        return render_template('errors/404.html', blueprint="admin_bp")
-    liste = None
-    for company in user_companies:
-        if company.warehouses:
-            for warehouse in company.warehouses:
-                liste = liste + warehouse.stocks
-    _liste = [obj.repr() for obj in liste]
-    return render_template('admin/stocks.html', liste = _liste)
+    
+    return render_template('admin/stocks.html', liste = None)
 
 
 @admin_bp.get('/stock/<int:stock_id>/detach')
@@ -505,8 +491,8 @@ def detach_stock(stock_id):
         return render_template('errors/404.html', blueprint="admin_bp")
 
     stock.fk_warehouse_id = None
-    database.session.add(stock)
-    database.session.commit()
+    db.session.add(stock)
+    db.session.commit()
     flash('Opération terminé avec succès', "success")
     return redirect(url_for("admin_bp.stocks"))
 
@@ -529,7 +515,7 @@ def attach_stock(stock_id):
                 .filter_by(fk_user_id=current_user.id).filter_by(fk_company_id=company.id).first() is None:
             return render_template('errors/404.html', blueprint="admin_bp")
         if stock.fk_warehouse_id is not None:
-            flash('Stock déjà attaché à un dépôt. Veuillez d\'abord détacher le puis réessayer.', "warning")
+            flash('Stock déjà attaché à un dépôt. Veuillez d\'abord détacher le puis réesseyer.', "warning")
             return redirect(url_for("admin_bp.stocks"))
         form.warehouse.query_factory = lambda: Warehouse.query.join(Company, Company.id == Warehouse.fk_company_id) \
             .join(UserForCompany, UserForCompany.fk_company_id == Company.id) \
@@ -543,13 +529,14 @@ def attach_stock(stock_id):
         if Warehouse.query.get(form.warehouse.data):
             return render_template('errors/404.html', blueprint="admin_bp")
         stock.fk_warehouse_id=int(form.warehouse.data)
-        database.session.add(stock)
-        database.session.commit()
+        db.session.add(stock)
+        db.session.commit()
         flash('Opération terminée avec succès','success')
     return redirect(url_for('admin_bp.stocks'))
 
 
 @admin_bp.get('/products/formats')
+@admin_bp.post('/products/formats')
 @login_required
 def formats():
     session['endpoint'] = 'product'
@@ -563,15 +550,8 @@ def formats():
                 'label': obj.label
             } for obj in _formats
         ]
-    return render_template('admin/formats.html', liste = liste)
 
-@admin_bp.get('/products/format/add')
-@admin_bp.post('/products/format/add')
-@login_required
-def add_format():
-    session['endpoint'] = 'product'
     form = FormatForm()
-    c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if form.validate_on_submit():
         _format = Format()
         f = Format.query.filter_by(fk_company_id=c_id).filter(
@@ -581,11 +561,12 @@ def add_format():
         _format.label = form.label.data
         _format.created_by = current_user.id
         _format.fk_company_id = c_id
-        database.session.add(_format)
-        database.session.commit()
-        flash('Objet ajouté avec succès','success')
-        return redirect(url_for('admin_bp.add_format'))
-    return render_template('admin/add_format.html', form = form)
+        db.session.add(_format)
+        db.session.commit()
+        flash('Objet ajouté avec succès', 'success')
+        return redirect(url_for('admin_bp.formats'))
+
+    return render_template('admin/formats.html', form = form, liste = liste)
 
 
 @admin_bp.get('/products/formats/<int:format_id>/edit')
@@ -602,8 +583,8 @@ def edit_format(format_id):
         form.label.data = format_.label
     if form.validate_on_submit():
         format_.label = form.label.data
-        database.session.add(format_)
-        database.session.commit()
+        db.session.add(format_)
+        db.session.commit()
         flash('Objet modifie avec succès',"success")
         return redirect(url_for("admin_bp.formats"))
     return render_template("admin/add_format.html", form = form)
@@ -621,32 +602,11 @@ def delete_format(format_id):
     if item_brand_category:
         flash('impossible de supprimé cet objet', "danger")
         return redirect(url_for('admin_bp.formats'))
-    database.session.delete(_format)
-    database.session.commit()
+    db.session.delete(_format)
+    db.session.commit()
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.formats"))
 
-
-@admin_bp.get('/products/aspect/add')
-@admin_bp.post('/products/aspect/add')
-@login_required
-def add_aspect():
-    session['endpoint'] = 'product'
-    form = AspectForm()
-    c_id= UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
-    if form.validate_on_submit():
-        aspect = Aspect()
-        _aspect = Aspect.query.filter_by(fk_company_id = c_id).filter(func.lower(Aspect.label) == str.lower(form.label.data)).first()
-        if _aspect:
-            aspect = _aspect
-        aspect.label = form.label.data
-        aspect.created_by = current_user.id
-        aspect.fk_company_id = c_id
-        database.session.add(aspect)
-        database.session.commit()
-        flash('Objet ajouté avec succès','success')
-        return redirect(url_for('admin_bp.add_aspect'))
-    return render_template('admin/add_aspect.html', form = form)
 
 @admin_bp.get('/products/aspects/<int:aspect_id>/edit')
 @admin_bp.post('/products/aspects/<int:aspect_id>/edit')
@@ -663,8 +623,8 @@ def edit_aspect(aspect_id):
         form.label.data = aspect_.label
     if form.validate_on_submit():
         aspect_.label = form.label.data
-        database.session.add(aspect_)
-        database.session.commit()
+        db.session.add(aspect_)
+        db.session.commit()
         flash('Objet modifié avec succès',"success")
         return redirect(url_for("admin_bp.aspects"))
     return render_template("admin/add_aspect.html", form = form)
@@ -682,13 +642,14 @@ def delete_aspect(aspect_id):
     if item_brand_category:
         flash('impossible de supprimé cet objet', "danger")
         return redirect(url_for('admin_bp.aspects'))
-    database.session.delete(_aspect)
-    database.session.commit()
+    db.session.delete(_aspect)
+    db.session.commit()
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.aspects"))
 
 
 @admin_bp.get('/products/aspects')
+@admin_bp.post('/products/aspects')
 @login_required
 def aspects():
     session['endpoint'] = 'product'
@@ -699,7 +660,31 @@ def aspects():
         liste = [
             {'id':aspect.id, 'label':aspect.label} for aspect in _aspects
         ]
-    return render_template('admin/aspects.html', liste = liste)
+
+    form = AspectForm()
+
+
+    c_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+
+
+    if form.validate_on_submit():
+        aspect = Aspect()
+        _aspect = Aspect.query.filter_by(fk_company_id=c_id).filter(
+            func.lower(Aspect.label) == str.lower(form.label.data)).first()
+        if _aspect:
+            aspect = _aspect
+        aspect.label = form.label.data
+        aspect.created_by = current_user.id
+        aspect.fk_company_id = c_id
+        db.session.add(aspect)
+        db.session.commit()
+        flash('Objet ajouté avec succès', 'success')
+        return redirect(url_for('admin_bp.aspects'))
+
+
+    return render_template('admin/aspects.html',
+                           form = form,
+                           liste = liste)
 
 @admin_bp.get('/products')
 @login_required
@@ -737,7 +722,7 @@ def add_product():
         item.manufacturer = form.manufacturer.data if form.manufacturer.data else None
         item.unit = form.unit.data if form.unit.data else None
         if form.piece_per_unit.data and not item.unit:
-            flash('Veuillez sélectionner \'unité puis réesseyer','warning')
+            flash('Veuillez sélectionner l\'unité puis réesseyer','warning')
             return redirect(url_for('admin_bp.add_product'))
         else:
             item.piece_per_unit = float(form.piece_per_unit.data)
@@ -750,8 +735,8 @@ def add_product():
         item.created_by = current_user.id
         item.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().id
         item.expired_at = form.expired_at.data if form.expired_at.data else None
-        database.session.add(item)
-        database.session.commit()
+        db.session.add(item)
+        db.session.commit()
         flash('Objet ajouté avec succès',"success")
         return redirect(url_for('admin_bp.add_product'))
     return render_template("admin/new_item.html", form=form)
@@ -816,8 +801,8 @@ def edit_product(item_id):
         item.stock_sec = form.stock_sec.data
         item.utilisation = form.utilisation.data
         item.fk_item_id = item.id
-        database.session.add(item)
-        database.session.commit()
+        db.session.add(item)
+        db.session.commit()
         flash('Objet ajouté avec succès',"success")
     return render_template("admin/new_item.html", form=form)
 
@@ -831,42 +816,35 @@ def get_item(item_id):
         return render_template('errors/404.html', blueprint="admin_bp")
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if item.fk_company_id != company:
-        return render_template('errors/404.html')
-    return render_template('admin/item_info.html', item = item.repr())
+        return render_template('errors/404.html', blueprint="admin_bp")
+    entries = [entry.repr() for entry in Entry.query.filter_by(fk_item_id = item_id).all()]
+
+    return render_template('admin/item_info.html', item = item.repr(), entries = entries)
 
 
 @admin_bp.get('/stores')
+@admin_bp.post('/stores')
 @login_required
 def stores():
+    session['endpoint']='stores'
     _stores = Store.query \
         .filter_by(fk_company_id=UserForCompany.query.filter_by(role="manager") \
                    .filter_by(fk_user_id=current_user.id).first().fk_company_id)
 
     _stores = [obj.repr() for obj in _stores] if _stores else None
-    return render_template('admin/stores.html', liste=_stores)
-
-
-@admin_bp.get('/stores/add')
-@admin_bp.post('/stores/add')
-@login_required
-def add_store():
     form = StoreForm()
-    # if request.method == "GET":
-    #     form.seller.query_factory = lambda: Company.query.get(UserForCompany.query. \
-    #                                                       filter_by(role="manager") \
-    #                                                       .filter_by(fk_user_id=current_user.id) \
-    #                                                       .first().fk_company_id).users
     if form.validate_on_submit():
-        store= Store()
+        store = Store()
         store.name = form.name.data
         store.address = form.address.data
         store.contact = form.contact.data
-        store.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
-        database.session.add(store)
-        database.session.commit()
-        flash('Objet ajouté avec success','success')
-        return redirect(url_for('admin_bp.add_store'))
-    return render_template("admin/new_store.html", form = form)
+        store.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(
+            fk_user_id=current_user.id).first().fk_company_id
+        db.session.add(store)
+        db.session.commit()
+        flash('Objet ajouté avec success', 'success')
+        return redirect(url_for('admin_bp.stores'))
+    return render_template('admin/stores.html', form = form, liste=_stores)
 
 
 @admin_bp.get('/stores/<int:store_id>/block')
@@ -885,8 +863,8 @@ def block_store(store_id):
                                              UserForCompany.fk_company_id==store.fk_company_id)).first() is None:
         return render_template('errors/404.html', bluepint="admin_bp")
     store.is_disabled = True
-    database.session.add(store)
-    database.session.commit()
+    db.session.add(store)
+    db.session.commit()
     flash('Opération terminée avec succès', 'success')
     return redirect(url_for("admin_bp.stores"))
 
@@ -907,8 +885,8 @@ def unblock_store(store_id):
                          UserForCompany.fk_company_id == store.fk_company_id)).first() is None:
         return render_template('errors/404.html', bluepint="admin_bp")
     store.is_disabled = False
-    database.session.add(store)
-    database.session.commit()
+    db.session.add(store)
+    db.session.commit()
     flash('Opération terminée avec succès', 'success')
     return redirect(url_for("admin_bp.stores"))
 
@@ -934,17 +912,17 @@ def edit_store(store_id):
         form.name.data = store.name
         form.address.data = store.address
         form.contact.data = store.contact
-        form.seller.query_factory=lambda : Company.query.get(UserForCompany.query. \
-                                                             filter_by(role="manager")\
-                                                             .filter_by(fk_user_id=current_user.id)\
-                                                             .first().fk_company_id).users
+        # form.seller.query_factory=lambda : Company.query.get(UserForCompany.query. \
+        #                                                      filter_by(role="manager")\
+        #                                                      .filter_by(fk_user_id=current_user.id)\
+        #                                                      .first().fk_company_id).users
 
     if form.validate_on_submit():
         store.name = form.name.data
         store.address = form.address.data
         store.contact = form.contact.data
-        database.session.add(store)
-        database.session.commit()
+        db.session.add(store)
+        db.session.commit()
         flash('Objet ajouté avec success','success')
         return redirect(url_for('admin_bp.stores'))
     return render_template("admin/new_store.html", form = form)
@@ -962,10 +940,10 @@ def delete_store(store_id):
     if store.sellers:
         for seller in store.sellers:
             seller.fk_store_id = None
-            database.session.add(seller)
-        database.session.commit()
-    database.session.delete(store)
-    database.session.commit()
+            db.session.add(seller)
+        db.session.commit()
+    db.session.delete(store)
+    db.session.commit()
     flash('Objet supprimé','success')
     return redirect(url_for("admin_bp.stores"))
 
@@ -990,8 +968,8 @@ def change_password(user_id):
     form = ResetPasswordForm()
     if form.validate_on_submit():
         user.password_hash = generate_password_hash(form.new_password.data, "SHA256")
-        database.session.add(user)
-        database.session.commit()
+        db.session.add(user)
+        db.session.commit()
         flash('Opération terminée avec succès','success')
         return redirect(url_for('admin_bp.edit_user', user_id=user.id))
     return render_template('auth/reset_password.html', form = form)
@@ -1021,15 +999,15 @@ def get_client(client_id):
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if item.fk_company_id != company:
         return render_template('errors/404.html')
-    index = 1
+    indexe = 1
     liste = list()
     for order in item.repr(['orders'])['orders']:
         _dict = order
         _dict.update({
-            'index':index
+            'index':indexe
         })
         liste.append(_dict)
-        index += 1
+        indexe += 1
     return render_template('admin/client_info.html', item = item.repr(['id','nb_cmd','contact','category','full_name']), liste = liste)
 
 
@@ -1058,8 +1036,8 @@ def edit_client(client_id):
         contact.key = "téléphone"
         contact.value = form.contacts.data
         contact.fk_client_id = _client.id
-        database.session.add(contact)
-        database.session.commit()
+        db.session.add(contact)
+        db.session.commit()
         flash('Objet modifié avec succès','success')
         return redirect(url_for('admin_bp.clients'))
     return render_template('admin/add_client.html', form = form)
@@ -1077,14 +1055,14 @@ def add_client():
         _client.full_name = form.full_name.data
         _client.category = form.category.data
         _client.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
-        database.session.add(_client)
-        database.session.commit()
+        db.session.add(_client)
+        db.session.commit()
         contact = Contact()
         contact.key='téléphone'
         contact.value = form.contacts.data
         contact.fk_client_id = _client.id
-        database.session.add(contact)
-        database.session.commit()
+        db.session.add(contact)
+        db.session.commit()
         flash('Objet ajouté avec succès','success')
         return redirect(url_for('admin_bp.add_client'))
     return render_template('admin/add_client.html', form = form)
@@ -1098,13 +1076,13 @@ def delete_client(client_id):
     if not _client:
         return render_template('errors/404.html', blueprint="admin_bp")
     if not _client.orders and not _client.quotations and not _client.invoices:
-        database.session.delete(_client)
-        database.session.commit()
+        db.session.delete(_client)
+        db.session.commit()
         return redirect(url_for('admin_bp.clients'))
 
     _client.is_deleted = True
-    database.session.add(_client)
-    database.session.commit()
+    db.session.add(_client)
+    db.session.commit()
     flash('Objet supprimé avec succès','success')
     return redirect(url_for("admin_bp.clients"))
 
@@ -1148,8 +1126,8 @@ def edit_supplier(supplier_id):
         contact.key = "téléphone"
         contact.value = form.contacts.data
         contact.fk_supplier_id = supplier.id
-        database.session.add(contact)
-        database.session.commit()
+        db.session.add(contact)
+        db.session.commit()
         flash('Objet modifié avec succès','success')
         return redirect(url_for('admin_bp.suppliers'))
     return render_template('admin/add_supplier.html', form = form)
@@ -1167,14 +1145,14 @@ def add_supplier():
         supplier.full_name = form.full_name.data
         supplier.category = form.category.data
         supplier.fk_company_id = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
-        database.session.add(supplier)
-        database.session.commit()
+        db.session.add(supplier)
+        db.session.commit()
         _contact = Contact()
         _contact.key='téléphone'
         _contact.value = form.contacts.data
         _contact.fk_client_id = _contact.id
-        database.session.add(_contact)
-        database.session.commit()
+        db.session.add(_contact)
+        db.session.commit()
         flash('Objet ajouté avec succès','success')
         return redirect(url_for('admin_bp.add_supplier'))
     return render_template('admin/add_supplier.html', form = form)
@@ -1192,8 +1170,8 @@ def delete_supplier(supplier_id):
         flash('Impossible de supprimer ce fournisseur',"danger")
         return redirect(url_for('admin_bp.suppliers'))
 
-    database.session.delete(_supplier)
-    database.session.commit()
+    db.session.delete(_supplier)
+    db.session.commit()
     flash('Objet supprimé avec succès','success')
     return redirect(url_for("admin_bp.suppliers"))
 
@@ -1209,13 +1187,6 @@ def purchases_orders():
 @admin_bp.get('/purchase_invoices')
 @login_required
 def purchases_invoices():
-    session['endpoint']='purchase'
-    pass
-
-
-@admin_bp.get('/expenses')
-@login_required
-def expenses():
     session['endpoint']='purchase'
     pass
 
@@ -1253,29 +1224,29 @@ def delete_quotation(q_id):
         return render_template('errors/404.html', blueprint="admin_bp")
     for e in quotation.entries:
         if not e.fk_order_id and not e.fk_invoice_id and not e.fk_delivery_note_id:
-            database.session.delete(e)
-            database.session.commit()
+            db.session.delete(e)
+            db.session.commit()
     quotation.is_deleted = True
-    database.session.add(quotation)
-    database.session.commit()
+    db.session.add(quotation)
+    db.session.commit()
     flash('Objet Supprimé avec succès','success')
     return redirect(url_for('admin_bp.quotations'))
 
 
-@admin_bp.get('/quotations/<int:q_id>/get')
-@login_required
-def get_quotation(q_id):
-    session['endpoint'] = 'sales'
-    quotation = Quotation.query.get(q_id)
-
-    if not quotation:
-        return render_template('errors/404.html', bluebript="admin_bp")
-
-    user_for_company = UserForCompany.query.filter_by(fk_user_id=current_user.id).filter_by(role="manager").first()
-    if quotation.fk_company_id != user_for_company.fk_company_id:
-        return render_template('errors/404.html', blueprint="admin_bp")
-
-    return render_template("admin/quotation_info.html", quotation=quotation.repr())
+# @admin_bp.get('/quotations/<int:q_id>/get')
+# @login_required
+# def get_quotation(q_id):
+#     session['endpoint'] = 'sales'
+#     quotation = Quotation.query.get(q_id)
+#
+#     if not quotation:
+#         return render_template('errors/404.html', blueprint="admin_bp")
+#
+#     user_for_company = UserForCompany.query.filter_by(fk_user_id=current_user.id).filter_by(role="manager").first()
+#     if quotation.fk_company_id != user_for_company.fk_company_id:
+#         return render_template('errors/404.html', blueprint="admin_bp")
+#
+#     return render_template("admin/quotation_info.html", quotation=quotation.repr())
 
 
 from root.ventes.forms import QuotationForm, EntryField
@@ -1288,8 +1259,8 @@ def add_quotation():
     form = QuotationForm()
     company = UserForCompany.query.filter_by(role="manager") \
         .filter_by(fk_user_id=current_user.id).first().fk_company_id
-    clients = Client.query.filter_by(fk_company_id=company)
-    if not clients:
+    _clients = Client.query.filter_by(fk_company_id=company)
+    if not _clients:
         flash("Veuillez d'abord ajouter des clients",'warning')
 
     if form.validate_on_submit():
@@ -1308,6 +1279,7 @@ def add_quotation():
                                            somme = sum_amounts)
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
                 _.unit_price = entry.unit_price.data
                 _.quantity = entry.quantity.data
                 _.total_price = entry.amount.data
@@ -1353,16 +1325,16 @@ def add_quotation():
                 _q.intern_reference = "DEV-1/"+str(company)+"/"+str(datetime.datetime.now().date().year)
         else:
             _q.intern_reference = "DEV-1/"+str(company)+"/"+str(datetime.datetime.now().date().year)
-        database.session.add(_q)
-        database.session.commit()
+        db.session.add(_q)
+        db.session.commit()
         for e in entities:
             sum_amounts += e.total_price
             e.fk_quotation_id = _q.id
-            database.session.add(e)
-            database.session.commit()
+            db.session.add(e)
+            db.session.commit()
         _q.total = sum_amounts
-        database.session.add(_q)
-        database.session.commit()
+        db.session.add(_q)
+        db.session.commit()
         flash('Devis crée avec succès','success')
         # return redirect(url_for('sales_bp.add_quotation'))
         return render_template("sales/new_quotation.html", form=form,
@@ -1391,8 +1363,8 @@ def approve_quotation(q_id):
         return redirect(url_for('admin_bp.quotations'))
 
     quotation.is_approved=True
-    database.session.add(quotation)
-    database.session.commit()
+    db.session.add(quotation)
+    db.session.commit()
     flash(f'Devis {quotation.intern_reference} est approuvé','success')
     return redirect(url_for('admin_bp.quotations'))
 
@@ -1425,8 +1397,8 @@ def quotation_order(q_id):
     order.total = quotation.total
     order.fk_quotation_id = quotation.id
     order.created_by = current_user.id
-    database.session.add(order)
-    database.session.commit()
+    db.session.add(order)
+    db.session.commit()
     for entry in entities:
         # _ = Entry()
         entry.fk_order_id = order.id
@@ -1434,8 +1406,8 @@ def quotation_order(q_id):
         # _.quantity = entry.quantity
         # _.total_price = entry.total_price
         # _.unit_price = entry.unit_price
-        database.session.add(entry)
-        database.session.commit()
+        db.session.add(entry)
+        db.session.commit()
     flash(f'Commande {order.intern_reference} ajoutée', 'success')
     return redirect(url_for('admin_bp.quotations'))
 
@@ -1466,16 +1438,16 @@ def quotation_invoice(q_id):
     invoice.total = quotation.total
     invoice.fk_quotation_id = quotation.id
     invoice.created_by = current_user.id
-    database.session.add(invoice)
-    database.session.commit()
+    db.session.add(invoice)
+    db.session.commit()
     for entry in entities:
         entry.fk_invoice_id = invoice.id
         # entry.fk_item_id = entry.fk_item_id
         # entry.quantity = entry.quantity
         # entry.total_price = entry.total_price
         # entry.unit_price = entry.unit_price
-        database.session.add(entry)
-        database.session.commit()
+        db.session.add(entry)
+        db.session.commit()
     flash(f'Facture {invoice.intern_reference} ajoutée', 'success')
     return redirect(url_for('admin_bp.quotations'))
 
@@ -1538,24 +1510,25 @@ def create_inventory():
             stock = Stock()
             stock.fk_warehouse_id = form.warehouse.data.id
             stock.fk_item_id = form.item.data.id
-            database.session.add(stock)
-            database.session.commit()
+            db.session.add(stock)
+            db.session.commit()
         stock.stock_qte += float(form.quantity.data)
         stock.created_by = current_user.id
         stock.last_purchase = form.purchase_date.data
         stock.last_purchase_price = form.purchase_price.data
-        database.session.add(stock)
-        database.session.commit()
+        db.session.add(stock)
+        db.session.commit()
         item = Item.query.get(form.item.data.id)
-        item.stock_quantity += stock.stock_qte
-        database.session.add(item)
-        database.session.commit()
         entry = Entry()
+        entry.in_stock = item.stock_quantity
+        item.stock_quantity += stock.stock_qte
+        db.session.add(item)
+        db.session.commit()
         entry.quantity= stock.stock_qte
         entry.unit_price =stock.last_purchase_price
         entry.total_price= stock.stock_qte*stock.last_purchase_price
-        database.session.add(entry)
-        database.session.commit()
+        db.session.add(entry)
+        db.session.commit()
         flash('Objet crée avec succès','success')
         # return redirect(url_for('admin_bp.create_inventory'))
         return render_template('admin/new_inventory.html', form = form)
@@ -1570,3 +1543,95 @@ def get_unit():
     if not item:
         return '',404
     return jsonify(unit=item.unit),200
+
+
+@admin_bp.get('/expenses')
+@admin_bp.post('/expenses')
+@login_required
+def expenses():
+    session['endpoint']="purchase"
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+    _expenses = Expense.query.filter_by(fk_company_id = company.fk_company_id).all()
+    liste = list()
+    if _expenses:
+        indexe=  1
+        for expense in _expenses:
+            print(expense.repr())
+            _dict = expense.repr()
+            _dict.update(
+                {
+                    'indexe':indexe
+                }
+            )
+            liste.append(_dict)
+            indexe += 1
+    form = ExpenseForm()
+    if form.validate_on_submit():
+        expense = Expense()
+        expense.label = form.label.data
+        if form.description.data:
+            expense.description = form.description.data
+        expense.fk_category_id = form.expense_category.data.id
+        expense.amount = float(form.amount.data)
+        expense.fk_company_id = company.fk_company_id
+        expense.created_by = current_user.id
+        db.session.add(expense)
+        db.session.commit()
+        flash('Dépense ajoutée','success')
+        return redirect(url_for('admin_bp.expenses'))
+
+
+    return render_template('admin/expenses.html', liste = liste, form = form)
+
+
+
+@admin_bp.get('/expense_categories')
+@admin_bp.post('/expense_categories')
+@login_required
+def expense_categories():
+    session['endpoint']="purchase"
+    form = ExpenseCategoryForm()
+    liste = list()
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+    categories = ExpenseCategory.query.filter_by(is_deleted=False) \
+        .filter_by(fk_company_id = company.fk_company_id).all()
+    if categories:
+        indexe = 1
+        for category in categories:
+            _dict = category.repr()
+            _dict.update({
+                'index':indexe
+            })
+            liste.append(_dict)
+            indexe += 1
+
+    if form.validate_on_submit():
+        category = ExpenseCategory()
+        category.label = form.label.data
+        category.fk_company_id = company.fk_company_id
+        db.session.add(category)
+        db.session.commit()
+        flash('Objet Ajouté','success')
+        return redirect(url_for('admin_bp.expense_categories'))
+
+    return render_template('admin/expense_categories.html', form = form, liste = liste)
+
+
+@admin_bp.get('/expense_categories/<int:e_id>/delete')
+@login_required
+def delete_category(e_id):
+    category = ExpenseCategory.query.get(e_id)
+    if not category:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    if category.is_deleted:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+    if not company:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    if category.fk_company_id != company.fk_company_id:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    category.is_deleted = True
+    db.session.add(category)
+    db.session.commit()
+    flash(f'la catégorie "{category.label}" est supprimée', 'success')
+    return redirect(url_for('admin_bp.expense_categories'))

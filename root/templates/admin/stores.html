@@ -7,21 +7,9 @@
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');
-             $('button').click(function(){
-                var tax_id = $(this).data('id');
-                // AJAX request
-                $.ajax({
-                   url: '{{ url_for('admin_bp.get_tax') }}',
-                   type: 'post',
-                   data: {tax_id: tax_id},
-                   success: function(response){
-                       // Add response in Modal body
-                       $('.modal-body').html(response.message);
-                       // Display Modal
-                       $('#taxContent').modal('show');
-                   }
-                });
-           });
+            {% if form.errors %}
+                $('.modal').modal('show');
+            {% endif %}
         });
         new gridjs.Grid({
             autoWidth:true,
@@ -54,8 +42,8 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'id', name: 'Num' },
-                { id: 'name', name: 'Nom gu magasin' },
-                { id: 'address', name: "L'adresse" },
+                { id: 'name', name: 'Nom du magasin' },
+                { id: 'address', name: "Adresse" },
                 { id: 'contact', name: 'Contact(Téléphone)' },
                 { id:'actions', name:'Actions'}
             ],
@@ -121,12 +109,91 @@
         </div>
         <div class="row">
             <div class="col" style="position: relative; text-align: right">
-                <a role="button" class="btn btn-outline-success" href="{{ url_for('admin_bp.add_store') }}">
+                <a role="button" class="btn btn-outline-success rounded rounded-pill" data-bs-toggle="modal"
+                                                                                        data-bs-target="#NouveauMagasin">
                     <i class="fa fa-circle-plus"></i>
                        Ajouter
                 </a>
             </div>
             <div id="table"></div>
+            <div class="modal bg-m" id="NouveauMagasin" data-bs-backdrop="static" data-bs-keyboard="false"
+                                        tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Nouveau point de vente</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <form method="post">
+                                {{ form.hidden_tag() }}
+                                <div class="row mb-4">
+                                    <div class="form-group">
+                                        <div class="form-floating">
+                                            {% if form.name.errors %}
+                                                <div class="input-group has-validation">
+                                                    {{ form.name(class="form-control is-invalid") }}
+                                                    {% for error in form.name.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ form.name(class="form-control") }}
+                                            {% endif %}
+                                            {{ form.name.label }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-4">
+                                    <div class="form-group">
+                                        <div class="form-floating">
+                                            {% if form.address.errors %}
+                                                <div class="input-group has-validation">
+                                                    {{ form.address(class="form-control is-invalid") }}
+                                                    {% for error in form.address.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{error}}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ form.address(class="form-control") }}
+                                            {% endif %}
+                                            {{ form.address.label }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row mb-4">
+                                    <div class="form-group">
+                                        <div class="form-floating">
+                                            {% if form.contact.errors %}
+                                                <div class="input-group has-validation">
+                                                    {{ form.contact(class="form-control is-invalid") }}
+                                                    {% for error in form.contact.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{error}}
+                                                        </div>
+                                                    {% endfor %}
+                                                </div>
+                                            {% else %}
+                                                {{ form.contact(class="form-control") }}
+                                            {% endif %}
+                                            {{ form.contact.label }}
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="row g-1">
+                                    <div class="form-group" style="text-align: right;">
+                                        {{ form.submit(class="btn btn-outline-primary btn-md rounded rounded-pill") }}
+                                    </div>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
         </div>
 
 {% endblock %}

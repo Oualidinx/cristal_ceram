@@ -1,11 +1,11 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
 {% endblock %}
 
-{% block actual_title %}
-    Les aspects
-{% endblock actual_title %}
+
 {% block main_tag %}
     <div class="row mt-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
@@ -24,19 +24,19 @@
                 </div>
             {% endif %}
         {% endwith %}
+
         <div class="col" style="position: relative; text-align: right">
-            <a role="button" class="btn btn-outline-success rounded rounded-pill"
-                data-bs-toggle="modal" data-bs-target="#NouveauAspect">
+            <button role="button" class="btn btn-outline-success rounded rounded-pill" data-bs-toggle="modal" data-bs-target="#NouvelleDepense">
                 <i class="fa fa-circle-plus"></i>
                    Ajouter
-            </a>
+            </button>
             <div id="table"></div>
-            <div class="modal bg-m" id="NouveauAspect" data-bs-backdrop="static" data-bs-keyboard="false"
+            <div class="modal bg-m" id="NouvelleDepense" data-bs-backdrop="static" data-bs-keyboard="false"
                                         tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Nouveau aspect</h5>
+                            <h5 class="modal-title" id="exampleModalLabel">Nouvelle dépense</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -61,10 +61,60 @@
                                                 {% endif %}
                                             </div>
                                         </div>
+                                        <div class="col-md">
+                                            <div class="input-group has-validation p-3">
+                                                <div class="input-group-text"> {{ form.description.label }}</div>
+                                                {% if form.description.errors %}
+                                                    {{ form.description(class="form-control is-invalid") }}
+                                                    {% for error in form.description.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ form.description(class="form-control") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="row g-1 mb-3">
+                                        <div class="col-md">
+                                            <div class="input-group has-validation p-3">
+                                                <div class="input-group-text"> {{ form.expense_category.label }}</div>
+                                                {% if form.expense_category.errors %}
+                                                    {{ form.expense_category(class="form-select is-invalid") }}
+                                                    {% for error in form.expense_category.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ form.expense_category(class="form-select") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row mb-3 g-1">
+                                        <div class="col-md">
+                                            <div class="input-group has-validation p-3">
+                                                <div class="input-group-text"> {{ form.amount.label }}</div>
+                                                {% if form.amount.errors %}
+                                                    {{ form.amount(class="form-control is-invalid") }}
+                                                    {% for error in form.amount.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ form.amount(class="form-control") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
                                     </div>
                                     <div class="row g-1 mb-4 justify-content-lg-end">
                                         <div class="form-group">
-                                            {{ form.submit(class="btn btn-md btn-outline-primary rounded rounded-pill ") }}
+                                            {{ form.submit(class="btn btn-md btn-outline-primary rounded rounded-pill") }}
                                         </div>
                                     </div>
                                 </form>
@@ -77,15 +127,27 @@
     </div>
 
 {% endblock %}
+
+{% block actual_title %}
+    Les dépenses
+{% endblock %}
+
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
     <script>
         $(document).ready(function (){
             $('.toast').toast('show');
+            $("#expense_category").select2({
+                theme:'bootstrap-5',
+                dropdownParent: $('.modal'),
+                placeholder: $(this).data('placeholder'),
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+            });
             {% if form.errors %}
                 $('.modal').modal('show');
             {% endif %}
-        })
+        });
         new gridjs.Grid({
             autoWidth:true,
             fixedHeader:true,
@@ -116,34 +178,24 @@
                 noRecordsFound: 'Aucun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
-                { id: 'id', name: 'Num' },
-                { id: 'label', name: 'Nom de l\'aspect' },
-                { id:'actions', name:'Actions'}
+                { id: 'indexe', name: '' },
+                { id: 'label', name: 'Titre' },
+                { id: 'category', name: 'Catégorie de dépense' },
+                { id: 'date', name: 'Date' },
+                { id: 'amount', name: 'Montant' },
             ],
             data: ()=>{
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
                 {% if liste %}
-                    {% for aspect in liste %}
+                    {% for exp in liste %}
                         {
-                              id: '{{ aspect["id"] }}',
-                              label :'{{ aspect["label"] }}',
-                              actions: gridjs.html(`
-                              <div class="dropdown dropstart">
-                                  <div class="btn-group">
-                                        <a
-                                            role="button" class="btn btn-sm btn-outline-secondary"
-                                            href="{{ url_for('admin_bp.edit_aspect',aspect_id=aspect['id']) }}"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
-                                            <i class="fa-solid fa-file-pen"></i></a>
-                                        <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_aspect',aspect_id=aspect['id']) }}"
-                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                            <i class="fa-solid fa-trash-can"></i></a>
-                                  </div>
-                              </div>
-                              `
-                              )
+                              indexe: '{{ exp["indexe"] }}',
+                              label :'{{ exp["label"] }}',
+                              category :'{{ exp['category'] }}',
+                              date :'{{ exp['date'] }}',
+                              amount: '{{ exp['amount'] }} DZD'
                         },
                     {% endfor %}
                 {% endif %}
@@ -152,7 +204,7 @@
                 })
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

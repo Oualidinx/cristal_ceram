@@ -3,100 +3,92 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
 {% endblock %}
 
-
 {% block main_tag %}
-    <div class="row mt-lg-5">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="toast-container position-absolute top-0 end-0 p-3">
-                    {% for category, message in messages %}
-                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                            <div class="d-flex">
-                                <div class="toast-body text-black fw-light fs-6">
-                                    {{ message }}
-                                </div>
-                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                          </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-    </div>
-    <div class="row g-lg-4">
-        <div class="col-md-4">
-            <h4 class="h2 mb-5">Détails</h4>
+    {{ entries }}
+    <nav>
+        <div class="nav nav-tabs" id="nav-tab" role="tablist">
+            <button class="nav-link active  text-black" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
+                    type="button" role="tab" aria-controls="nav-home" aria-selected="true">INFORMATIONS</button>
+            <button class="nav-link text-black" id="nav-stock-tab" data-bs-toggle="tab" data-bs-target="#nav-stock"
+                    type="button" role="tab" aria-controls="nav-stock" aria-selected="false">ETAT DE STOCK</button>
+            <button class="nav-link text-black" id="nav-together-tab" data-bs-toggle="tab" data-bs-target="#nav-together"
+                    type="button" role="tab" aria-controls="nav-together" aria-selected="false">VUE D'ENSEMBLE DE DEPOT</button>
+        </div>
+    </nav>
+    <div class="tab-content" id="nav-tabContent">
+        <div class="tab-pane fade show active" id="nav-home" role="tabpanel" aria-labelledby="nav-home-tab">
+            <h4 class="h2 mt-5 mb-5">Détails</h4>
             <table class="table table-hover">
-                  <tbody>
-                        {% if item %}
-                            <tr>
-                              <th scope="row">ID</th>
-                              <td>{{ item['id'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Désignation</th>
-                              <td>{{ item['label'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Série</th>
-                              <td>{{ item['serie'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Référence interne</th>
-                              <td>{{ item['intern_reference'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Catégorie</th>
-                              <td>{{ item['used_for'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Date d'expiration</th>
-                              <td>{{ item['expired_at'][0] }}   <span class="badge rounded-pill text-dark"
-                                                       style="background-color: {{ item['expired_at'][1] }}">   {{ item['expired_at'][2] }}</span></td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Stock de sécurité</th>
-                              <td>{{ item['stock_sec'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Format</th>
-                              <td>{{ item['format'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Aspect</th>
-                              <td>{{ item['aspect'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Produit Par</th>
-                              <td>{{ item['manufacturer'] }}</td>
-                            </tr>
-                            <tr>
-                              <th scope="row">Pièces/poids par {{ item['unit'] }}</th>
-                              <td>{{ item['piece_per_unit'] }}</td>
-                            </tr>
+                <tbody>
+                    {% if item %}
+                        <tr>
+                            <th scope="row">ID</th>
+                            <td>{{ item['id'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Désignation</th>
+                            <td>{{ item['label'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Série</th>
+                            <td>{{ item['serie'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Référence interne</th>
+                            <td>{{ item['intern_reference'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Catégorie</th>
+                            <td>{{ item['used_for'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Date d'expiration</th>
+                            <td>{{ item['expired_at'][0] }}   <span class="badge rounded-pill text-dark"
+                                                   style="background-color: {{ item['expired_at'][1] }}">   {{ item['expired_at'][2] }}</span></td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Stock de sécurité</th>
+                            <td>{{ item['stock_sec'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Format</th>
+                            <td>{{ item['format'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Aspect</th>
+                            <td>{{ item['aspect'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Produit Par</th>
+                            <td>{{ item['manufacturer'] }}</td>
+                        </tr>
+                        <tr>
+                            <th scope="row">Pièces/poids par {{ item['unit'] }}</th>
+                            <td>{{ item['piece_per_unit'] }}</td>
+                        </tr>
 
-                        {% endif %}
-
-
-                  </tbody>
+                    {% endif %}
+                </tbody>
             </table>
         </div>
-        <div class="col-md-8">
-            <h4  class="h3 mb-5">Etat de(s) stock(s)</h4>
-            <div id="table"></div>
+        <div class="tab-pane fade" id="nav-together" role="tabpanel" aria-labelledby="nav-together-tab"></div>
+        <div class="tab-pane fade" id="nav-stock" role="tabpanel" aria-labelledby="nav-stock-tab">
+            <h4  class="h3 mt-5 mb-5">Etat de stock</h4>
             <div class="row w-50">
                 <table class="table table-hover">
                     <tbody>
                         <tr>
-                            <th scope="row">Quantité total</th>
-                            <td><h3 class="h2"> {{ item['stock_qte'] }} </h3></td>
+                            <th scope="row">En stock</th>
+                            <td><h3 class="h2"> {{ item['stock_qte'] }} {{ item['unit'] }}</h3></td>
                         </tr>
                     </tbody>
                 </table>
             </div>
+            <div id="table"></div>
+
+
         </div>
     </div>
-
 {% endblock %}
 
 {% block additional_scripts %}
@@ -141,7 +133,7 @@
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
-                            {% if item['stocks'] %}
+                            {% if item['entries'] %}
                                 {% for stock in item['stocks'] %}
                                     {
                                       warehouse: '{{ stock["warehouse"] }}',

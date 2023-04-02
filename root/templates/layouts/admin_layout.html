@@ -1,13 +1,12 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="fr">
     <head>
-        <meta charset="UTF-8">
+        <meta charset="utf-8">
         <title>Tableau de bord</title>
         <meta http-equiv="X-UA-Compatible" content="IE=edge" />
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="OUAREM Oualid" />
-
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
         <script src="{{ url_for('static', filename='js/all.js') }}"></script>
@@ -102,6 +101,17 @@
 {#                                        <a class="nav-link" href="#">Consulter le/les stock(s)</a>#}
                                     </nav>
                                 </div>
+                                <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseStore__" aria-expanded="false" aria-controls="collapseDepot">
+                                    <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
+                                    Les Points de vente
+                                    <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
+                                </a>
+                                <div class="collapse {% if session['endpoint']=='stores' %}show{% endif %}" id="collapseStore__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
+                                    <nav class="sb-sidenav-menu-nested nav ">
+                                        <a class="nav-link" href="{{url_for('admin_bp.stores')}}">Voir La liste de points de vente</a>
+{#                                        <a class="nav-link" href="#">Consulter le/les stock(s)</a>#}
+                                    </nav>
+                                </div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseSales__" aria-expanded="false" aria-controls="collapsePurchases">
                                     <div class="sb-nav-link-icon"><i class="fas fa-columns"></i></div>
                                     Les Ventes
@@ -129,6 +139,7 @@
 {#                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_receipt') }}">Les bon de réception</a>#}
 {#                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_invoices') }}">Les factures d'achat</a>#}
                                         <a class="nav-link" href="{{ url_for('admin_bp.expenses') }}">Dépenses</a>
+                                        <a class="nav-link" href="{{ url_for('admin_bp.expense_categories') }}">Catégories de dépenses</a>
                                         <a class="nav-link" href="{{ url_for('admin_bp.suppliers') }}">Les fournisseurs</a>
                                     </nav>
                                 </div>
@@ -154,7 +165,7 @@
                     </nav>
                 </div>
                 <div id="layoutSidenav_content">
-                    <main>s
+                    <main>
                         <div class="container-fluid px-4">
                             <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
 
@@ -164,7 +175,6 @@
                     </main>
                 </div>
             </div>
-
             <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
             <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
             <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
