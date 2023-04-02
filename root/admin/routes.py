@@ -695,7 +695,7 @@ def products():
     _products = Item.query.filter_by(fk_company_id=company.id).all()
     liste = None
     if _products:
-        liste = [product.repr(['id','label','format','aspect','serie','intern_reference','expired_at','stock_sec']) for product in _products]
+        liste = [product.repr(['id','label','format','aspect','serie','intern_reference','expired_at','stock_sec','stock_qte']) for product in _products]
     return render_template('admin/items.html', liste = liste)
 
 
@@ -806,10 +806,11 @@ def edit_product(item_id):
         flash('Objet ajouté avec succès',"success")
     return render_template("admin/new_item.html", form=form)
 
-
+from sqlalchemy.sql import or_
 @admin_bp.get('/products/<int:item_id>/get')
 @login_required
 def get_item(item_id):
+
     session['endpoint'] = 'product'
     item = Item.query.get(item_id)
     if not item:
@@ -817,7 +818,8 @@ def get_item(item_id):
     company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if item.fk_company_id != company:
         return render_template('errors/404.html', blueprint="admin_bp")
-    entries = [entry.repr() for entry in Entry.query.filter_by(fk_item_id = item_id).all()]
+    entries = [entry.repr(['date_reference','reference','type','date','in_stock','beneficiary','status'])
+               for entry in Entry.query.filter_by(fk_item_id = item_id).all()]
 
     return render_template('admin/item_info.html', item = item.repr(), entries = entries)
 
@@ -1501,6 +1503,7 @@ def delivery_notes():
 @admin_bp.post('/inventory')
 @login_required
 def create_inventory():
+    session['endpoint']="stocks"
     form = InventoryForm()
     if form.validate_on_submit():
         stock= Stock.query.filter_by(fk_item_id = form.item.data.id) \
@@ -1520,10 +1523,11 @@ def create_inventory():
         db.session.commit()
         item = Item.query.get(form.item.data.id)
         entry = Entry()
-        entry.in_stock = item.stock_quantity
-        item.stock_quantity += stock.stock_qte
+        entry.fk_item_id = item.id
+        item.stock_quantity += float(form.quantity.data)
         db.session.add(item)
         db.session.commit()
+        entry.in_stock = item.stock_quantity
         entry.quantity= stock.stock_qte
         entry.unit_price =stock.last_purchase_price
         entry.total_price= stock.stock_qte*stock.last_purchase_price

@@ -1,10 +1,10 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css') }}">
 {% endblock %}
 
 {% block main_tag %}
-    {{ entries }}
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
             <button class="nav-link active  text-black" id="nav-home-tab" data-bs-toggle="tab" data-bs-target="#nav-home"
@@ -124,30 +124,41 @@
                 noRecordsFound: 'Aucun enregistrements',
                 error: 'Erreur pendant le chargement des données'},
             columns: [
-                { id: 'warehouse', name: 'Dépôt' },
-                { id: 'stock_qts', name: 'Quantité en stock' },
-                { id: 'stock_value', name: 'Valeur de stock' },
-                { id: 'status', name: 'Etat' }
+                { id: 'date', name: "DATE"},
+                { id: 'reference', name: 'REFERENCE' },
+                { id: 'date_reference', name: 'DATE' },
+                { id: 'beneficiary', name: "COMMANDE DE/PAR" },
+                { id: 'status', name: 'Etat' },
+                { id:'type_e', name: 'ENTREE' },
+                { id:'type_s', name: "SORTIE" },
+                { id:'in_stock', name: 'EN STOCK' }
             ],
             data: ()=>{
                 return new Promise(resolve => {
                     setTimeout(()=>
                         resolve([
-                            {% if item['entries'] %}
-                                {% for stock in item['stocks'] %}
+                            {% if entries %}
+                                {% for entry in entries %}
                                     {
-                                      warehouse: '{{ stock["warehouse"] }}',
-                                      stock_qts :'{{ stock["quantity"] }}',
-                                      stock_value :'{{ stock["stock_value"] }} DZD',
-                                      status :gridjs.html(`<span class="badge rounded-pill" style="background-color:{{ stock['status'][1] }}">
-                                        {{ stock['status'][0] }}
-                                      </span>`)
+                                        date:"{{ entry['date'] }}",
+                                        reference:'{% if entry['reference'] %}{{ entry["reference"]}}{% else %} / {% endif %}',
+                                        date_reference:'{% if entry['date_reference'] %}{{ entry["date_reference"]}}{% else %} / {% endif %}',
+                                        type:'{{ entry["type_e"]}}',
+                                        beneficiary:'{% if entry['beneficiary'] %}{{ entry["beneficiary"]}}{% else %} / {% endif %}',
+                                        {% if not entry['beneficiary'] %}
+                                            status:gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: #0072B5;">Inventaire</span>`),
+                                        {% else %}
+                                           status:  gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: #0072B5;">{{ entry['status'] }}</span>`),
+                                        {% endif %}
+                                        in_stock:'{{ entry["in_stock"]}} {{ item['unit'] }}',
+                                        type_e:gridjs.html(`{% if entry['type'] and entry['type']==True %}<span style="text-color: #006B54; font-weight-bold;"> {{ entry['qs'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
+                                        type_s:gridjs.html(`{% if entry['type'] and entry['type'] == False %}<span style="text-color: #CD212A" > - {{ entry['qs'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
                                     },
                                 {% endfor %}
                             {% endif %}
                         ]),100
-                                )
-                            })
+                                );
+                            });
                         },
             search: {
               selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5].includes(cellIndex) ? cell : null,

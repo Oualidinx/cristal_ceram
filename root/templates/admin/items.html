@@ -96,6 +96,7 @@
                 { id: 'label', name: 'Désignation' },
                 { id: 'serie', name: 'Série' },
                 { id: 'stock_sec', name: 'Stock de sécurité' },
+                { id: 'stock_qte', name: 'Quantité en stock' },
                 { id: 'expired_at', name: "Date d'expiration" },
                 { id:'actions', name:'Actions'}
             ],
@@ -111,6 +112,7 @@
                               label :'{{ item['label'] }}, {{ item['format'] }}, {{ item['aspect'] }}',
                               serie :'{{ item['serie'] }}',
                               stock_sec :'{{ item['stock_sec'] }}',
+                              stock_qte :'{{ item['stock_qte'] }}',
                               {#_session : gridjs.html(`<span class="badge rounded-pill text-white"#}
                               {#                              style="background-color:{{ item['_session'][0]}};" }}>#}
                               {#                                  {{ item['_session'][1] }}#}

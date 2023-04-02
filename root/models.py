@@ -270,7 +270,7 @@ class Entry(db.Model):
     fk_exit_voucher_id = db.Column(db.Integer, db.ForeignKey('exit_voucher.id'))
     fk_delivery_note_id = db.Column(db.Integer, db.ForeignKey('delivery_note.id'))
 
-    def repr(self):
+    def repr(self, columns=None):
         item = Item.query.get(self.fk_item_id)
         credentials = item.repr(['intern_reference',"serie", 'label', 'format', 'aspect'])
         designation = "{serie}, {label}, {format}, {aspect}".format(**credentials)
@@ -280,7 +280,7 @@ class Entry(db.Model):
                                 else (Order.query.get(self.fk_order_id).created_at.date(),Order.query.get(self.fk_order_id).intern_reference) \
                                     if self.fk_exit_voucher_id and self.fk_order_id else None
         doc_reference = (PurchaseReceipt.query.get(self.fk_purchase_receipt_id).created_at.date(), 
-                         PurchaseReceipt.query.get(self.fk_purchase_receipt_id).intern_reference) if self.fk_order_id else doc_reference
+                         PurchaseReceipt.query.get(self.fk_purchase_receipt_id).intern_reference) if self.fk_purchase_receipt_id else doc_reference
         beneficiary = PurchaseReceipt.query.get(self.fk_purchase_receipt_id).fk_supplier_id if self.fk_purchase_receipt_id else None
         client_query = Client.query
         beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id)).fk_client_id,
@@ -292,21 +292,23 @@ class Entry(db.Model):
                                     else beneficiary
 
 
-        return {
+        _dict = {
             'intern_reference':credentials['intern_reference'],
+            'date':self.created_at.date(),
             'date_reference':doc_reference[0] if doc_reference else None,
             'reference':doc_reference[1] if doc_reference else None,
             'designation':designation,
             'beneficiary':beneficiary,
-
-            'type':'entré' if self.fk_purchase_receipt_id else 'sortie',
-            'status':('Livré',"#0072B5") if self.fk_exit_voucher_id else ("Reçus","#0072B5") if self.fk_purchase_receipt_id else None,
+            'in_stock': self.in_stock,
+            'type': False if self.fk_purchase_receipt_id else True if self.fk_exit_voucher_id else None,
+            'status':'Livré' if self.fk_exit_voucher_id else "Reçus" if self.fk_purchase_receipt_id else None,
             'qs': self.quantity,
             'qc':int(round(self.quantity/item.piece_per_unit, 2))+1 if (round(self.quantity/item.piece_per_unit, 2) - int(round(self.quantity/item.piece_per_unit, 2))) > 0 else round(self.quantity/item.piece_per_unit, 2),
             'unit':item.unit,
             'unit_price': '{:,.2f}'.format(self.unit_price),
             'amount': '{:,.2f}'.format(self.total_price)
         }
+        return {key:_dict[key] for key in columns } if columns else _dict
 
 
 class Fund(db.Model):
@@ -446,7 +448,7 @@ class Item(db.Model):
             'stock_sec':self.stock_sec,
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
-            'stock_qte':sum([stock.stock_qte for stock in self.stocks])
+            'stock_qte':self.stock_quantity
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
