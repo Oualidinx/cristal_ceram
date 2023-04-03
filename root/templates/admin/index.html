@@ -1,0 +1,320 @@
+{% extends "layouts/admin_layout.html" %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Sharp:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />    
+    <link rel="stylesheet" href='{{url_for("static", filename="css/colors.css")}}'>
+    <style>
+        .material-symbols-sharp {
+            font-variation-settings:
+            'FILL' 0,
+            'wght' 500,
+            'GRAD' 0,
+            'opsz' 48
+        }
+    </style>
+{% endblock %} 
+{% block main_tag %}
+    <div class="container">
+        <div class="d-flex mt-5 row">
+            <h1 class="h1">
+                Tabeau de bord
+            </h1>
+            <div class="text-color-sales fw-bold" style="color: .5em;">
+                [Date]
+            </div>
+        </div>
+        <div class="row g-3 mb-4 mt-4">
+            <div class="col-md">
+                <div class="card border-left-supplier">
+                    <div class="card-body">
+                        <div class="row p-1 align-items-center justify-content-between">
+                            <div class="col-md">
+                                <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                    fournisseurs
+
+                                </div>
+                                <div class="h5 text-color-valiant fw-bold">
+                                    [Valeur]
+                                </div>
+                            </div>
+                            <div class="col-auto mr-4">
+                                <span class="h1 text-color-grey">
+                                    <i class="fa-solid fa-people-group"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-left-client">
+                    <div class="card-body">
+                        <div class="row p-1 align-items-center justify-content-between">
+                            <div class="col-md">
+                                <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                    Clients
+                                </div>
+                                <div class="h5 text-color-arcadia fw-bold">
+                                    [Valeur]
+                                </div>
+                            </div>
+                            <div class="col-auto mr-4">
+                                <span class="h1 text-color-grey">
+                                    <i class="fa-solid fa-people-group"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md">
+                <div class="card border-left-produit">
+                    <div class="card-body">
+                        <div class="row p-1 align-items-center justify-content-between">
+                            <div class="col-md">
+                                <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                    produits
+                                </div>
+                                <div class="h5 text-color-mint fw-bold">
+                                    [Valeur]
+                                </div>
+                            </div>
+                            <div class="col-auto mr-4">
+                                <span class="h2 text-color-grey">
+                                    <i class="fa-solid fa-boxes-stacked"></i>
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </div>
+
+        <!--VENTES-->
+        <div class="row mb-4 g-1">
+            <div class="col ">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center mb-4 ">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">revenue</h5>
+                                <p class="card-text text-color-sales fw-bold">Aujourd'hui</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-arcadia fw-bold">
+                                    [Valeur] DZD
+                                </div>
+
+                            </div>
+                        </div>
+                        <hr class="hr"/>
+                        <div class="row align-items-center justify-content-between ">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">revenue</h5>
+                                <p class="card-text text-color-sales fw-bold">Semaine</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-arcadia fw-bold">
+                                    [Valeur] DZD
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center mb-4 ">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">revenue</h5>
+                                <p class="card-text text-color-sales fw-bold">Mois</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-arcadia fw-bold">
+                                    [Valeur] DZD
+                                </div>
+
+                            </div>
+                        </div>
+                        <hr class="hr"/>
+                        <div class="row align-items-center justify-content-between ">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">revenue</h5>
+                                <p class="card-text text-color-sales fw-bold">Année</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-arcadia fw-bold">
+                                    [Valeur] DZD
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!--DEPENSE-->
+        <div class="row mb-4 g-1">
+            <div class="col">
+                <div class="card">
+                <div class="card-body p-4">
+                    <div class="row align-items-center mb-4 ">
+                        <div class="col-md ">
+                            <h5 class="card-title text-color text-upper-case">Dépenses</h5>
+                            <p class="card-text text-color-sales fw-bold">Aujourd'hui</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="h5 text-color-valiant fw-bold">
+                                [Valeur] DZD
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="hr"/>
+                    <div class="row align-items-center justify-content-between ">
+                        <div class="col-md ">
+                            <h5 class="card-title text-color text-upper-case">Dépenses</h5>
+                            <p class="card-text text-color-sales fw-bold">Semaine</p>
+                        </div>
+                        <div class="col-auto">
+                            <div class="h5 text-color-valiant fw-bold">
+                                [Valeur] DZD
+                            </div>
+
+                        </div>
+                    </div>
+              </div>
+              </div>
+            </div>
+            <div class="col">
+                <div class="card">
+                    <div class="card-body p-4">
+                        <div class="row align-items-center mb-4">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">Dépenses</h5>
+                                <p class="card-text text-color-sales fw-bold">Mois</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-valiant fw-bold">
+                                    [Valeur] DZD
+                                </div>
+
+                            </div>
+                        </div>
+                        <hr class="hr"/>
+                        <div class="row align-items-center justify-content-between ">
+                            <div class="col-md ">
+                                <h5 class="card-title text-color text-upper-case">Dépenses</h5>
+                                <p class="card-text text-color-sales fw-bold">Année</p>
+                            </div>
+                            <div class="col-auto">
+                                <div class="h5 text-color-valiant fw-bold">
+                                    [Valeur] DZD
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3 ">
+            <div class="col-md">
+                <div class="card">
+                    <div class="card-body">
+                        <div class="card-title text-upper-case text-color fw-bold">
+                            <h5 class="h5">
+                               Ventes par produit
+                            </h5>
+                        </div>
+                        [Liste de produits]
+                        <div style="max-height: 200px; overflow-y: auto; padding-left: 20px" >
+                            <table id="example" class="table table-striped" >
+                                <thead>
+                                    <tr>
+                                      <th scope="col">#</th>
+                                      <th scope="col">First</th>
+                                      <th scope="col">Last</th>
+                                      <th scope="col">Handle</th>
+                                    </tr>
+                                  </thead>
+                                  <tbody>
+                                    <tr>
+                                      <th scope="row">1</th>
+                                      <td>Mark</td>
+                                      <td>Otto</td>
+                                      <td>@mdo</td>
+                                    </tr>
+                                    <tr>
+                                      <th scope="row">2</th>
+                                      <td>Jacob</td>
+                                      <td>Thornton</td>
+                                      <td>@fat</td>
+                                    </tr>
+                                    <tr>
+                                      <th scope="row">3</th>
+                                      <td>Larry</td>
+                                      <td> the Bird</td>
+                                      <td>@twitter</td>
+                                    </tr>
+                                  </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mb-3">
+            <div class="col-md">
+                <div class="card ">
+                    <div class="card-body">
+                        <div class="card-title text-upper-case text-color fw-bold">
+                            <h5 class="h5">
+                                Journal d'activité
+                            </h5>
+                        </div>
+                        <!-- Fade In Animation -->
+                        <div class="timeline timeline-sm mt-4" style="max-height: 400px; overflow-y: auto;">
+                            <div class="timeline-item">
+                                <div class="timeline-item-marker">
+                                    <div class="timeline-item-marker-text" style="color: #34568B;">[Date] </div>
+                                    <div class="timeline-item-marker-indicator">
+                                       
+                                        <span class="material-symbols-sharp text-primary">
+                                            done
+                                            </span>
+                                    </div>
+                                </div>
+                                <div class="timeline-item-content pt-0">
+                                    <div class="card shadow-sm">
+                                        <div class="card-body">
+                                            <h5 class="text-primary text-upper-case">[Title]</h5>
+                                            <p style="color: #34568B;">This is the content for the first timeline item. In this styled example, we're styling the timeline marker with background and typography utility classes. We've also shown that you can use the card component within the timeline item content.</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>    
+                </div>
+            </div>
+            
+        </div>
+    </div>
+    <footer>
+
+    </footer>
+{% endblock %}
+{% block additional_scripts %}
+    <script !src="">
+        $(document).ready(function(){
+            $('.toast').toast('show');
+          
+            $('#example').DataTable();
+
+        });
+    </script>
+{% endblock %}

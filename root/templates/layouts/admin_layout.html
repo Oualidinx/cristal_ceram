@@ -7,6 +7,8 @@
         <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
         <meta name="description" content="" />
         <meta name="author" content="OUAREM Oualid" />
+        <meta name="email" content="oualid.ouarem[at     ]g mail.com" />
+        <meta name="phone" content="+213---673--- 66---- 93---- 97" />
         <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
         <link rel="stylesheet" href="{{ url_for('static', filename='css/all.css') }}">
         <script src="{{ url_for('static', filename='js/all.js') }}"></script>
@@ -21,9 +23,7 @@
                 color: white;
             }
             .nav-link:hover,
-            a:hover{
-                color: #77BBD9;
-            }
+            a:hover,
             a:active{
                 color: #77BBD9;
             }
@@ -51,6 +51,8 @@
                         <a class="nav-link dropdown-toggle" id="navbarDropdown" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false"><i  class="fas fa-user fa-fw text-white"></i></a>
                         <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="navbarDropdown">
                             <li><a class="dropdown-item" href="{{ url_for('auth_bp.logout') }}">Se déconnecter</a></li>
+                            <hr class="hr" />
+                            <li><a class="dropdown-item" href="{{ url_for('auth_bp.settings') }}">Paramètres</a></li>
                         </ul>
                     </li>
                 </ul>
@@ -68,7 +70,7 @@
                                 <div class="sb-sidenav-menu-heading">Gestion</div>
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseLayouts" aria-expanded="false" aria-controls="collapseLayouts">
                                     <div class="sb-nav-link-icon"><i class="fa-solid fa-boxes-stacked fa-sm"></i></div>
-                                    Produits
+                                    Articles
                                     <div class="sb-sidenav-collapse-arrow"><i class="fas fa-angle-down"></i></div>
                                 </a>
                                 <div class="collapse {% if session['endpoint'] == 'product' %}show{% endif %}" id="collapseLayouts" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
@@ -88,7 +90,6 @@
                                          <a class="nav-link" href="{{ url_for('admin_bp.users') }}">Voir La liste des Employés</a>
                                     </nav>
                                 </div>
-
 
                                 <a class="nav-link collapsed" href="#" data-bs-toggle="collapse" data-bs-target="#collapseDepot__" aria-expanded="false" aria-controls="collapseDepot">
                                     <div class="sb-nav-link-icon"><i class="fa-solid fa-warehouse"></i></div>
@@ -173,12 +174,32 @@
                             {% endblock main_tag %}
                         </div>
                     </main>
+                    <footer class="py-4 bg-light mt-auto">
+                    <!-- <footer class="py-4 bg-light mt-auto position-fixed bottom-0 w-100"></footer> -->
+                        <div class="container px-4">
+                            <div class="d-flex align-items-center justify-content-between small">
+                                <div class="text-muted">Développé par OUAREM Oualid</div>
+                                {# <div>
+                                    <a href="#">Privacy Policy</a>
+                                    
+                                    <a href="#">Terms &amp; Conditions</a>
+                                </div> #}
+                                <div>
+                                    <span class="text-muted">Contact: 0673 66 93 97</span>
+                                    &middot;
+                                    <span class="text-muted">Email: oualid.ouarem@gmail.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
                 </div>
             </div>
+            
             <script src="{{ url_for('static', filename='js/bootstrap.bundle.js') }}"></script>
             <script src="{{ url_for('static', filename='js/jquery.min.js') }}"></script>
             <script src="{{ url_for('static', filename='js/scripts.js') }}"></script>
             {% block additional_scripts %}
             {% endblock additional_scripts %}
+            
     </body>
 </html>

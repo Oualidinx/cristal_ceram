@@ -39,8 +39,8 @@ class Company(db.Model):
             'id':self.id,
             'name':self.name,
             'site':self.site,
-            'contacts' : [contact.repr() for contact in self.contacts if not User.query.get(contact.fk_user_id).is_disabled] if self.contacts else [],
-            'addresses': [adr.repr() for adr in self.addresses] if self.addresses else []
+            'contacts' : [contact.value for contact in self.contacts] if self.contacts else [],
+            'addresses': [adr.label for adr in self.addresses] if self.addresses else []
         }
         return {key:_dict[key] for key in columns} if columns else _dict
 
@@ -495,8 +495,9 @@ class Quotation(db.Model):
     is_approved = db.Column(db.Boolean, default = False)
     entries = db.relationship('Entry', backref="quotation_entries", lazy="subquery")
 
-    def repr(self):
+    def repr(self, columns=None):
         indexe = 1
+        company = Company.query.get(self.fk_company_id)
         entries = list()
         for entry in self.entries:
             d = entry.repr()
@@ -504,16 +505,40 @@ class Quotation(db.Model):
                 'indexe': indexe
             })
             entries.append(d)
-        return {
-            'id':self.id,
-            'intern_reference':self.intern_reference,
-            'total':"{:,.2f}".format(self.total),
-            'status': ("#ce3500", "En attente")  if self.is_approved==False else ('#004D33', "Approuvé"),
-            'client':Client.query.get(self.fk_client_id).full_name,
-            'client_contacts':[contact for contact in Client.query.get(self.fk_client_id).contacts],
-            'created_at':self.created_at.date(),
-            'entries':entries
+        # return {
+        #     'id':self.id,
+        #     'intern_reference':self.intern_reference,
+        #     'total':"{:,.2f}".format(self.total),
+        #     'status': ("#ce3500", "En attente")  if self.is_approved==False else ('#004D33', "Approuvé"),
+        #     'client':Client.query.get(self.fk_client_id).full_name,
+        #     'client_contacts':[contact for contact in Client.query.get(self.fk_client_id).contacts],
+        #     'created_at':self.created_at.date(),
+        #     'entries':entries
+        # }
+        _dict = {
+            'id': self.id,
+            'company_address': company.addresses[0] if company.addresses else "/",
+            'intern_reference': self.intern_reference,
+            'client': Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
+            'client_contacts': Contact.query.filter_by(
+                fk_client_id=self.fk_client_id).all() if self.fk_client_id else [],
+            'beneficiary': Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
+            'beneficiary_contact': Contact.query.filter_by(
+                fk_client_id=self.fk_client_id).all() if self.fk_client_id else [],
+            # 'delivery_date': ("#f8a300", self.delivery_date.date()) if self.is_delivered is None else (
+            # '#007256', self.delivery_date.date()),
+            'created_at': self.created_at.date(),
+            'created_by': User.query.get(self.created_by).full_name,
+            'total': '{:,.2f} DZD'.format(self.total),
+            # 'quotation': Quotation.query.get(self.fk_quotation_id).intern_reference if self.fk_quotation_id else '/',
+            # 'is_delivered': (
+            # 'pas reçus', "#d33723") if self.is_delivered is not None and self.is_delivered == False else (
+            # 'reçu', '#007256') if self.is_delivered is not None and self.is_delivered == True else None,
+            # 'is_canceled': ('Annulée', "#d33723") if self.is_canceled is not None and self.is_canceled == True else (
+            # 'Acceptée', '#007256') if self.is_canceled is not None and self.is_canceled == False else None,
+            'entries': entries,
         }
+        return {key:_dict[key] for key in columns} if columns else _dict
 
 
 

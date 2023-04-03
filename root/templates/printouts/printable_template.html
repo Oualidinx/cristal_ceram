@@ -101,7 +101,12 @@
             <td><span>DATE:</span> {{ object['created_at'] }}</td>
             <td></td>
             <td><span>TELEPHONE: </span>{{ object['beneficiary_contact'][0].value }}</td></tr>
-        <tr><td><span>Fournisseur:</span> {{ object['beneficiary'] }}</td></tr>
+        <tr><td>
+            {% if titre=="Facture d'achat" or titre=="Bon de réception" %}
+                <span>Fournisseur:</span>
+            {% else %}
+                <span>Client:</span>
+            {% endif %}{{ object['beneficiary'] }}</td></tr>
     </table>
     <table class="bordered">
         <tr style="text-align: center;">

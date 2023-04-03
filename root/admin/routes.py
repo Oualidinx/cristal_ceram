@@ -18,7 +18,7 @@ def admin_before_request():
 def index():
     if 'endpoint' in session:
         del session['endpoint']
-    return render_template("admin/master_dashboard.html")
+    return render_template("admin/index.html")
 
 
 @admin_bp.get("/taxes/new")
@@ -1639,3 +1639,5 @@ def delete_category(e_id):
     db.session.commit()
     flash(f'la catégorie "{category.label}" est supprimée', 'success')
     return redirect(url_for('admin_bp.expense_categories'))
+
+

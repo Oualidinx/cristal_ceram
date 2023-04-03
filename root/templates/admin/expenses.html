@@ -1,5 +1,6 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
+    <link rel="stylesheet" href='{{url_for("static", filename="css/colors.css")}}'>
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
@@ -7,6 +8,75 @@
 
 
 {% block main_tag %}
+    <div class="row g-3 mb-4 mt-4">
+        <div class="col-md">
+            <div class="card"  style="border-left: 0.25em solid #34568B;">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                total
+
+                            </div>
+                            <div class="h5 text-color-classic-blue fw-bold">
+                                [Valeur]
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-people-group"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-produit">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                réglées
+                            </div>
+                            <div class="h5 text-color-arcadia fw-bold">
+                                [Valeur]
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-people-group"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-supplier">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                à régler
+                            </div>
+                            <div class="h5 text-color-valiant fw-bold">
+                                [Valeur]
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h2 text-color-grey">
+                                <i class="fa-solid fa-boxes-stacked"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
     <div class="row mt-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}

@@ -1,11 +1,8 @@
 from flask_wtf import FlaskForm
-from wtforms.fields import StringField, PasswordField, SubmitField, FloatField
-from wtforms.validators import DataRequired, ValidationError, EqualTo
-from wtforms.fields import EmailField, DateField
-from root.models import User, UserForCompany, Item, Warehouse
-from wtforms_sqlalchemy.fields import QuerySelectField
-from flask_login import current_user
-
+from wtforms.fields import StringField, PasswordField, SubmitField
+from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
+from wtforms.fields import EmailField
+from root.models import User
 
 class LoginForm(FlaskForm):
     username = StringField('Nom d\'utilisateur: ', validators=[DataRequired()])
@@ -20,8 +17,11 @@ class LoginForm(FlaskForm):
 
 
 class ResetPasswordForm(FlaskForm):
-    new_password = PasswordField('Nouveau mot de passe:', validators=[DataRequired()], render_kw={'placeholder':'Nouveau mot de passe'})
-    confirm_password = PasswordField('Confirmer le mot de passe:', render_kw={'placeholder':'Confirmer le mot de passe'},validators=[DataRequired(), EqualTo('new_password', "Vérifier le mot de passe")])
+    new_password = PasswordField('Nouveau mot de passe:', validators=[Optional()],
+                                 render_kw={'placeholder':'Nouveau mot de passe'})
+    confirm_password = PasswordField('Confirmer le mot de passe:',
+                                     render_kw={'placeholder':'Confirmer le mot de passe'},
+                                     validators=[EqualTo('new_password', "Vérifier le mot de passe")])
     submit = SubmitField('MAJ')
 
 
@@ -35,4 +35,10 @@ class RequestToken(FlaskForm):
             raise ValidationError('Email invalide')
 
 
+class UpdateUserForm(FlaskForm):
+    username = StringField('Nom d\'utilisateur', validators=[DataRequired('Champs obligatoire')])
+    company_name = StringField('Raison social', validators=[DataRequired('Champs obligatoire')])
+    address = StringField('Adresse', validators=[DataRequired('Champs obligatoire')])
+    contact = StringField('Contact', validators=[DataRequired('Champs obligatoire')])
 
+    submit = SubmitField('Valider')

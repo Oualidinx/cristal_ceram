@@ -1,0 +1,142 @@
+{% extends "layouts/admin_layout.html" %}
+{% block actual_title %}
+    Profile de l'organisme
+{% endblock %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename="css/colors.css") }}">
+{% endblock %}
+{% block main_tag %}
+    <div class="container">
+
+        <div class="row mt-5 justify-content-center">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+                            <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-black fw-light fs-6">
+                                        {{ message }}
+                                    </div>
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <div class="col align-content-center" style="max-width: 900px;">
+                <div class="card">
+                    <div class="card-header">
+                        <div class="row justify-content-between">
+                            <div class="col">
+                                 <div class="fs-5 text-primary fw-bold text-color-classic-blue p-2 text-upper-case">Information du compte</div>
+                            </div>
+                            <div class="col-auto">
+                                <div class="dropdown">
+                                  <button class="btn btn-outline-secondary rounded rounded-pill"
+                                          type="button" id="dropdownMenuButton1" data-bs-toggle="dropdown" aria-expanded="false">
+                                    <i class="fa-solid fa-ellipsis-vertical"></i>
+                                  </button>
+                                  <ul class="dropdown-menu" aria-labelledby="dropdownMenuButton1">
+                                    <li><a class="dropdown-item" href="{{ url_for('auth_bp.update_manager_password') }}">Modifier le mot de passe</a></li>
+                                  </ul>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="card-body">
+    {#                    {{ url_for('auth_bp.update_account') }}#}
+                        <div class="p-3">
+                            <form action="" method="post">
+                                {{ edit.hidden_tag() }}
+                            <div class="form-group mb-3">
+                                 <div class="form-floating">
+                                    {% if edit.username.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ edit.username(class="form-control is-invalid") }}
+                                            {% for error in edit.username.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ edit.username(class="form-control") }}
+                                    {% endif %}
+                                    {{ edit.username.label }}
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                 <div class="form-floating">
+                                    {% if edit.company_name.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ edit.company_name(class="form-control is-invalid") }}
+                                            {% for error in edit.company_name.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ edit.company_name(class="form-control") }}
+                                    {% endif %}
+                                    {{ edit.company_name.label }}
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                 <div class="form-floating">
+                                    {% if edit.address.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ edit.address(class="form-control is-invalid") }}
+                                            {% for error in edit.address.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ edit.address(class="form-control") }}
+                                    {% endif %}
+                                    {{ edit.address.label }}
+                                </div>
+                            </div>
+                            <div class="form-group mb-3">
+                                 <div class="form-floating">
+                                    {% if edit.contact.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ edit.contact(class="form-control is-invalid") }}
+                                            {% for error in edit.contact.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ edit.contact(class="form-control") }}
+                                    {% endif %}
+                                    {{ edit.contact.label }}
+                                </div>
+                            </div>
+                            <div class="row  justify-content-lg-end">
+                                <div class="form-group">
+                                    {{ edit.submit(class='btn btn-outline-primary rounded rounded-pill')}}
+                                </div>
+                            </div>
+
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+
+{% block additional_scripts %}
+    <script !src="">
+        $(document).ready(function(){
+            $('.toast').toast('show');
+        });
+    </script>
+{% endblock %}

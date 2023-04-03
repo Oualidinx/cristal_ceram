@@ -97,14 +97,32 @@
                     </nav>
                 </div>
                 <div id="layoutSidenav_content">
-                <main>
-                    <div class="container-fluid px-4">
-                        <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
+                    <main>
+                        <div class="container-fluid px-4">
+                            <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
 
-                        {% block main_tag %}
-                        {% endblock main_tag %}
-                    </div>
-                </main>
+                            {% block main_tag %}
+                            {% endblock main_tag %}
+                        </div>
+                    </main>
+                    <footer class="py-4 bg-light mt-auto">
+                    <!-- <footer class="py-4 bg-light mt-auto position-fixed bottom-0 w-100"></footer> -->
+                        <div class="container px-4">
+                            <div class="d-flex align-items-center justify-content-between small">
+                                <div class="text-muted">Développé par OUAREM Oualid</div>
+                                {# <div>
+                                    <a href="#">Privacy Policy</a>
+                                    
+                                    <a href="#">Terms &amp; Conditions</a>
+                                </div> #}
+                                <div>
+                                    <span class="text-muted">Contact: 0673 66 93 97</span>
+                                    &middot;
+                                    <span class="text-muted">Email: oualid.ouarem@gmail.com</span>
+                                </div>
+                            </div>
+                        </div>
+                    </footer>
             </div>
             </div>
 

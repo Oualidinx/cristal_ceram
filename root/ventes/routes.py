@@ -73,20 +73,51 @@ def delete_quotation(q_id):
     return redirect(url_for('sales_bp.quotations'))
 
 
-@sales_bp.get('/quotations/<int:q_id>/get')
+
+
+# @sales_bp.get('/quotations/<int:q_id>/get')
+# @login_required
+# def get_quotation(q_id):
+#     session['endpoint'] = 'sales'
+#     quotation = Quotation.query.get(q_id)
+#
+#     if not quotation:
+#         return render_template('errors/404.html', bluebript="sales_bp")
+#
+#     user_for_company = UserForCompany.query.filter_by(fk_user_id=current_user.id).filter_by(role="vendeur").first()
+#     if quotation.fk_company_id != user_for_company.fk_company_id:
+#         return render_template('errors/404.html', blueprint="sales_bp")
+#
+#     return render_template("sales/quotation_info.html", quotation=quotation.repr())
+
+
+
+@sales_bp.get('/quotations/<int:q_id>/print')
 @login_required
 def get_quotation(q_id):
-    session['endpoint'] = 'sales'
-    quotation = Quotation.query.get(q_id)
+    quote = Quotation.query.filter_by(id=q_id).first()
+    if not quote:
+        return render_template('errors/404.html', blueprint='sales_bp')
+    company = UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if quote.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(quote.total, lang='fr') + " dinars algérien"
+    virgule = quote.total - float(int(quote.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                           company=company.repr(),
+                           object=quote.repr(),
+                           titre="Devis",
+                           total_letters=str.upper(total_letters))
 
-    if not quotation:
-        return render_template('errors/404.html', bluebript="sales_bp")
-
-    user_for_company = UserForCompany.query.filter_by(fk_user_id=current_user.id).filter_by(role="vendeur").first()
-    if quotation.fk_company_id != user_for_company.fk_company_id:
-        return render_template('errors/404.html', blueprint="sales_bp")
-
-    return render_template("sales/quotation_info.html", quotation=quotation.repr())
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'devis_{quote.intern_reference}.pdf',
+                      automatic_download=False)
 
 
 @sales_bp.get('/quotations/add')
