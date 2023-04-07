@@ -14,7 +14,6 @@ class EntryField(Form):
                                          .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
                              allow_blank=True, blank_text="Sélectionner le produit...",
                              render_kw={'data-placeholder':'Article ...'}, validators=[DataRequired('Champs obligatoire')])
-
     unit_price = DecimalField('Prix unitaire', validators=[DataRequired('Champs obligatoire')])
     unit = StringField('', render_kw={'disabled':True}, default="")
     quantity = DecimalField('Quantité',default=1, validators=[DataRequired('Champs obligatoire')])
@@ -29,7 +28,8 @@ class EntryField(Form):
         if float(unit_price.data) <= 0:
             raise ValidationError('Valeur de prix invalide')
 
-
+class SalesEntryForm(EntryField):
+    unit_price = DecimalField('Prix unitaire', render_kw={'readonly':True})
 class QuotationForm(FlaskForm):
     client = QuerySelectField('Client: ', query_factory=lambda : Client.query \
                                 .filter_by(is_deleted=False) \
@@ -38,7 +38,7 @@ class QuotationForm(FlaskForm):
                                 allow_blank =True, blank_text='Sélectionner Un client...',
                               validators=[DataRequired('Champ obligatoire')])
     quotation_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()], render_kw={'readonly':True} )
-    entities = FieldList(FormField(EntryField), min_entries=1)
+    entities = FieldList(FormField(SalesEntryForm), min_entries=1)
     # add = SubmitField('+', render_kw={'class':''})
     add = SubmitField('Ajouter produit')
     fin=SubmitField('Terminer')
@@ -57,7 +57,7 @@ class OrderForm(FlaskForm):
                               validators=[DataRequired('Champ obligatoire')])
     quotation_date = DateField('Date: ', default=datetime.utcnow().date(), render_kw={'readonly':True},
                                validators=[Optional()] )
-    entities = FieldList(FormField(EntryField), min_entries=1)
+    entities = FieldList(FormField(SalesEntryForm), min_entries=1)
     # add = SubmitField('+', render_kw={'class':''})
     add = SubmitField('Ajouter produit')
     fin=SubmitField('Terminer')
@@ -120,7 +120,7 @@ class PaiementForm(FlaskForm):
     #                                                    .first().fk_company_id).all(),
     #                     render_kw={'data-placeholder':'La catégorie de dépense pour le réglement de cette facture'}
     #                     )
-    amount = StringField('Montant', validators=[DataRequired('Champs obligatoire')])
+    amount = DecimalField('Montant', validators=[DataRequired('Champs obligatoire')])
     submit = SubmitField('Payer')
 
 class ClientForm(FlaskForm):

@@ -65,15 +65,18 @@
                     </div>
                     {#      Heading      #}
                     <div class="row g-5 mb-lg-3 text-center">
-                        <div class="col-md">
+                        <div class="col-sm">
                             {{ form.item.label }}
                         </div>
-                        <div class="col-md">
+                        <div class="col-sm">
                             {{ form.quantity.label }}
                         </div>
-                        <div class="col-md"></div>
-                        <div class="col-md">
+{#                        <div class="col-s"></div>#}
+                        <div class="col-sm">
                             {{ form.purchase_price.label }}
+                        </div>
+                        <div class="col-sm">
+                            {{ form.sale_price.label }}
                         </div>
                     </div>
                     <div class="row g-1 mb-sm-4">
@@ -120,6 +123,21 @@
 
                                 {% else %}
                                     {{ form.purchase_price(class="form-control form-control") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-sm">
+                            <div class="input-group has-validation">
+                                {% if form.sale_price.errors %}
+                                    {{ form.sale_price(class="form-control form-control is-invalid") }}
+                                    {% for error in form.sale_price.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+
+                                {% else %}
+                                    {{ form.sale_price(class="form-control form-control") }}
                                 {% endif %}
                             </div>
                         </div>

@@ -1,7 +1,10 @@
 from root import login_manager, database as db
 from datetime import datetime
+import sqlalchemy as sa
 from flask_login import UserMixin
 from sqlalchemy import and_
+
+from sqlalchemy_utils import aggregated
 from flask import abort
 @login_manager.user_loader
 def user_loader(user_id):
@@ -31,6 +34,39 @@ class Company(db.Model):
     addresses = db.relationship('Address', backref="company_addresses", lazy="subquery")
     contacts = db.relationship('Contact', backref="company_contacts", lazy="subquery")
 
+    @aggregated('expenses', db.Column(db.Float, default = 0))
+    def total(self):
+        return sa.func.sum(Expense.amount)
+    expenses = db.relationship('Expense', backref="company_expenses", lazy="subquery")
+
+    '''
+        FACTURES RÉGLÉES
+    '''
+    @aggregated('ad_purchase_invoices', db.Column(db.Float, default = 0))
+    def adjusted_invoices(self):
+        return db.func.sum(Invoice.total)
+
+    ad_purchase_invoices = db.relationship('Invoice', secondary="order",
+                                        primaryjoin="foreign(Invoice.fk_company_id) == Company.id",
+                                        secondaryjoin='and_('
+                                                      '   and_('
+                                                      '     and_(foreign(Order.fk_company_id) == Company.id,'
+                                                      '     foreign(Invoice.fk_order_id) == Order.id),'
+                                                      '   Order.category=="achat"), Invoice.rest_expenses == 0)    ')
+    """
+    MONTANT NON RÉGLÉES
+    """
+    @aggregated('not_ad_purchase_invoices', sa.Column(sa.Float, default=0))
+    def rest_to_adjust(self):
+        return db.func.sum(Invoice.rest_pays)
+
+    not_ad_purchase_invoices = db.relationship('Invoice', secondary="order",
+                                           primaryjoin="foreign(Invoice.fk_company_id) == Company.id",
+                                           secondaryjoin='and_('
+                                                         '   and_('
+                                                         '     and_(foreign(Order.fk_company_id) == Company.id,'
+                                                         '     foreign(Invoice.fk_order_id) == Order.id),'
+                                                         '   Order.category=="achat"), Invoice.rest_expenses > 0)    ')
     def __repr__(self):
         return f'<Company:{self.id}, {self.name}>'
 
@@ -40,7 +76,10 @@ class Company(db.Model):
             'name':self.name,
             'site':self.site,
             'contacts' : [contact.value for contact in self.contacts] if self.contacts else [],
-            'addresses': [adr.label for adr in self.addresses] if self.addresses else []
+            'addresses': [adr.label for adr in self.addresses] if self.addresses else [],
+            'adjusted_invoices':self.adjusted_invoices if self.adjusted_invoices else 0,
+            'rest_to_adjust':self.rest_to_adjust if self.rest_to_adjust else 0,
+            'total': self.total if self.total else 0
         }
         return {key:_dict[key] for key in columns} if columns else _dict
 
@@ -141,8 +180,32 @@ class Client(db.Model):
     contacts = db.relationship('Contact', backref="client_contacts", lazy ="subquery")
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     is_deleted = db.Column(db.Boolean, default=False)
+    @aggregated('orders', db.Column(db.Float, default = 0))
+    def total(self):
+        return db.func.sum(Order.total)
     orders = db.relationship('Order', backref="client_orders", lazy="subquery")
     quotations = db.relationship('Quotation', backref="client_quotations", lazy="subquery")
+
+    """
+        FACTURES RÉGLÉES
+    """
+    @aggregated('paid_invoices', db.Column(db.Float, default = 0))
+    def adjusted(self):
+        return db.func.sum(Invoice.total)
+    paid_invoices = db.relationship('Invoice',
+                                        primaryjoin='and_(Invoice.fk_client_id== Client.id, Invoice.rest_pays == 0)',
+                                        viewonly=True)
+    """
+    MONTANT NON RÉGLÉES
+    """
+    @aggregated('not_paid_invoices', db.Column(db.Float, default = 0))
+    def to_adjust(self):
+        return db.func.sum(Invoice.rest_pays)
+
+    not_paid_invoices = db.relationship('Invoice',
+                                        primaryjoin='and_(Invoice.fk_client_id== Client.id, Invoice.rest_pays > 0)',
+                                        viewonly=True)
+
     invoices = db.relationship('Invoice', backref="client_invoices", lazy="subquery")
 
     def __repr__(self):
@@ -156,7 +219,10 @@ class Client(db.Model):
             'contact':Contact.query.filter_by(fk_client_id=self.id).first(),
             'orders':[order.repr(['id','intern_reference','total','delivery_date','is_delivered']) for order in self.orders],
             'contacts':self.contacts if self.contacts else None ,
-            'nb_cmd':len(self.orders)
+            'nb_cmd':len(self.orders),
+            'total':self.total if self.total else 0,
+            'to_adjust':self.to_adjust if self.to_adjust else 0,
+            'adjusted':self.adjusted if self.adjusted else 0
         }
         return {key:_dict[key] for key in columns} if columns else _dict
 
@@ -258,6 +324,7 @@ class Entry(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     quantity = db.Column(db.Float, default = 0)
     in_stock = db.Column(db.Float, default = 0)
+    delivered_quantity=db.Column(db.Float, default = 0)
     tva = db.Column(db.Integer, db.ForeignKey('tva.id'))
     unit_price = db.Column(db.Float, default=0)
     total_price = db.Column(db.Float, default=0)
@@ -310,15 +377,6 @@ class Entry(db.Model):
         }
         return {key:_dict[key] for key in columns } if columns else _dict
 
-
-class Fund(db.Model):
-    __tablename__="fund"
-    id = db.Column(db.Integer, primary_key=True)
-    label = db.Column(db.String(100))
-    total = db.Column(db.Float, default=0)
-    company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
-
-
 class Invoice(db.Model):
     __tablename__="invoice"
     id = db.Column(db.Integer, primary_key=True)
@@ -341,7 +399,17 @@ class Invoice(db.Model):
                             secondaryjoin="Tax.id == foreign(InvoiceTax.fk_tax_id)",
                             viewonly=True)
     entries = db.relationship('Entry', backref="invoice_entries", lazy="subquery")
+
+    @aggregated('payments', db.Column(db.Float, default = 0))
+    def rest_pays(self):
+        return self.total - db.func.sum(Pay.amount)
     payments = db.relationship("Pay", backref="invoice_payments", lazy="subquery")
+
+    @aggregated('expenses', db.Column(db.Float, default=0))
+    def rest_expenses(self):
+        return self.total - db.func.sum(Expense.amount)
+
+    expenses = db.relationship("Expense", backref="invoice_expenses", lazy="subquery")
 
     def repr(self, columns=None):
         payment_amounts = sum([t.amount for t in self.payments]) if self.payments else sum([t.amount for t in Expense.query.filter_by(fk_invoice_id = self.id).all()])
@@ -405,9 +473,9 @@ class Item(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     serie = db.Column(db.String(100), nullable=True)
     intern_reference = db.Column(db.String(1500))
-
     label = db.Column(db.String(1500))
     unit_price = db.Column(db.Float, default = 0)
+    sale_price = db.Column(db.Float, default = 0)
     purchase_price = db.Column(db.Float, default = 0)
     stock_quantity = db.Column(db.Float, default = 0)
     stock_sec = db.Column(db.Float, default=0)
@@ -423,8 +491,19 @@ class Item(db.Model):
     fk_format_id = db.Column(db.Integer, db.ForeignKey('format.id'))
     fk_aspect_id = db.Column(db.Integer, db.ForeignKey('aspect.id'))
     stocks = db.relationship('Stock', backref="item_stocks", lazy="subquery")
-    entries = db.relationship('Entry', backref="item_entries", lazy="subquery")
 
+    @aggregated('entries', db.Column(db.Float, default = 0))
+    def delivered_quantity(self):
+        return db.func.sum(Entry.delivered_quantity)
+
+    @aggregated('stock_values', db.Column(db.Float, default = 0))
+    def stock_value(self):
+        return db.func.sum(Entry.total_price)
+    entries = db.relationship('Entry', backref="item_entries", lazy="subquery")
+    stock_values = db.relationship('Entry',
+                                  primaryjoin='and_(Entry.fk_item_id == Item.id, '
+                                              'or_(Entry.fk_order_id == None, Entry.fk_purchase_receipt_id is not None))',
+                                                viewonly=True)
     def __repr__(self):
         return f'{self.label}, {Format.query.get(self.fk_format_id).label}, {Aspect.query.get(self.fk_aspect_id).label}'
 
@@ -448,7 +527,9 @@ class Item(db.Model):
             'stock_sec':self.stock_sec,
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
-            'stock_qte':self.stock_quantity
+            'stock_qte':self.stock_quantity,
+            'delivered_quantity':self.delivered_quantity, #+' '+self.unit
+            'stock_value':self.stock_value
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 
@@ -529,7 +610,8 @@ class Quotation(db.Model):
             # '#007256', self.delivery_date.date()),
             'created_at': self.created_at.date(),
             'created_by': User.query.get(self.created_by).full_name,
-            'total': '{:,.2f} DZD'.format(self.total),
+            'total': '{:,.2f}'.format(self.total),
+            'status': ("#ce3500", "En attente")  if self.is_approved==False else ('#004D33', "Approuvé"),
             # 'quotation': Quotation.query.get(self.fk_quotation_id).intern_reference if self.fk_quotation_id else '/',
             # 'is_delivered': (
             # 'pas reçus', "#d33723") if self.is_delivered is not None and self.is_delivered == False else (
@@ -809,7 +891,7 @@ class Expense(db.Model):
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_category_id = db.Column(db.Integer, db.ForeignKey('expense_category.id'))
     def __repr__(self):
-        return f'{self.id}, {self.label}, {self.amount}'
+        return f'{self.id}, {self.label}, {self.amount}, date = {self.created_at.date()} \n'
 
     def repr(self, columns=None):
         _dict = {

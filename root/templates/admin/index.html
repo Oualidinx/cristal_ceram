@@ -14,12 +14,13 @@
 {% endblock %} 
 {% block main_tag %}
     <div class="container">
+{#        {{ products }}#}
         <div class="d-flex mt-5 row">
             <h1 class="h1">
                 Tabeau de bord
             </h1>
             <div class="text-color-sales fw-bold" style="color: .5em;">
-                [Date]
+                {{ date }}
             </div>
         </div>
         <div class="row g-3 mb-4 mt-4">
@@ -32,8 +33,8 @@
                                     fournisseurs
 
                                 </div>
-                                <div class="h5 text-color-valiant fw-bold">
-                                    [Valeur]
+                                <div class="h3 text-color-valiant fw-bold">
+                                    {{info['suppliers']}}
                                 </div>
                             </div>
                             <div class="col-auto mr-4">
@@ -54,8 +55,8 @@
                                 <div class="text-small text-color text-upper-case fw-bold mb-2">
                                     Clients
                                 </div>
-                                <div class="h5 text-color-arcadia fw-bold">
-                                    [Valeur]
+                                <div class="h3 text-color-arcadia fw-bold">
+                                    {{ info['clients'] }}
                                 </div>
                             </div>
                             <div class="col-auto mr-4">
@@ -76,8 +77,8 @@
                                 <div class="text-small text-color text-upper-case fw-bold mb-2">
                                     produits
                                 </div>
-                                <div class="h5 text-color-mint fw-bold">
-                                    [Valeur]
+                                <div class="h3 text-color-mint fw-bold">
+                                    {{ info['items'] }}
                                 </div>
                             </div>
                             <div class="col-auto mr-4">
@@ -92,7 +93,7 @@
 
         </div>
 
-        <!--VENTES-->
+        <!--REVENUE-->
         <div class="row mb-4 g-1">
             <div class="col ">
                 <div class="card">
@@ -103,8 +104,8 @@
                                 <p class="card-text text-color-sales fw-bold">Aujourd'hui</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-arcadia fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-arcadia fw-bold">
+                                    {{ '{:,.2f}'.format(revenue['today']) }} DZD
                                 </div>
 
                             </div>
@@ -116,15 +117,15 @@
                                 <p class="card-text text-color-sales fw-bold">Semaine</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-arcadia fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-arcadia fw-bold">
+                                    {{ '{:,.2f}'.format(revenue['week']) }} DZD
                                 </div>
-
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+            
             <div class="col">
                 <div class="card">
                     <div class="card-body p-4">
@@ -134,8 +135,8 @@
                                 <p class="card-text text-color-sales fw-bold">Mois</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-arcadia fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-arcadia fw-bold">
+                                    {{ '{:,.2f}'.format(revenue['month']) }} DZD
                                 </div>
 
                             </div>
@@ -147,10 +148,9 @@
                                 <p class="card-text text-color-sales fw-bold">Année</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-arcadia fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-arcadia fw-bold">
+                                    {{ '{:,.2f}'.format(revenue['year']) }} DZD
                                 </div>
-
                             </div>
                         </div>
                     </div>
@@ -158,7 +158,7 @@
             </div>
         </div>
 
-        <!--DEPENSE-->
+        <!--DÉPENSES-->
         <div class="row mb-4 g-1">
             <div class="col">
                 <div class="card">
@@ -169,8 +169,8 @@
                             <p class="card-text text-color-sales fw-bold">Aujourd'hui</p>
                         </div>
                         <div class="col-auto">
-                            <div class="h5 text-color-valiant fw-bold">
-                                [Valeur] DZD
+                            <div class="h3 text-color-valiant fw-bold">
+                                {{ '{:,.2f}'.format(expense['today'])}} DZD
                             </div>
                         </div>
                     </div>
@@ -181,8 +181,8 @@
                             <p class="card-text text-color-sales fw-bold">Semaine</p>
                         </div>
                         <div class="col-auto">
-                            <div class="h5 text-color-valiant fw-bold">
-                                [Valeur] DZD
+                            <div class="h3 text-color-valiant fw-bold">
+                                {{ '{:,.2f}'.format(expense['week'])}} DZD
                             </div>
 
                         </div>
@@ -199,8 +199,8 @@
                                 <p class="card-text text-color-sales fw-bold">Mois</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-valiant fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-valiant fw-bold">
+                                    {{ '{:,.2f}'.format(expense['month'])}} DZD
                                 </div>
 
                             </div>
@@ -212,8 +212,8 @@
                                 <p class="card-text text-color-sales fw-bold">Année</p>
                             </div>
                             <div class="col-auto">
-                                <div class="h5 text-color-valiant fw-bold">
-                                    [Valeur] DZD
+                                <div class="h3 text-color-valiant fw-bold">
+                                    {{ '{:,.2f}'.format(expense['year'])}} DZD
                                 </div>
                             </div>
                         </div>
@@ -221,6 +221,7 @@
                 </div>
             </div>
         </div>
+        <!--VENTE PAR PRODUIT-->
         <div class="row mb-3 ">
             <div class="col-md">
                 <div class="card">
@@ -230,44 +231,46 @@
                                Ventes par produit
                             </h5>
                         </div>
-                        [Liste de produits]
+                        <!--Liste de produits-->
                         <div style="max-height: 200px; overflow-y: auto; padding-left: 20px" >
                             <table id="example" class="table table-striped" >
                                 <thead>
                                     <tr>
-                                      <th scope="col">#</th>
-                                      <th scope="col">First</th>
-                                      <th scope="col">Last</th>
-                                      <th scope="col">Handle</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color">#</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color">Code</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color">Désignation</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color text-color-arcadia">Quantité en stock</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color-valiant">Valeur de stock</th>
+                                        <th scope="col" class="text-uppercase fw-bold text-color text-color-classic-blue">Quantité vendu</th>
                                     </tr>
-                                  </thead>
-                                  <tbody>
-                                    <tr>
-                                      <th scope="row">1</th>
-                                      <td>Mark</td>
-                                      <td>Otto</td>
-                                      <td>@mdo</td>
-                                    </tr>
-                                    <tr>
-                                      <th scope="row">2</th>
-                                      <td>Jacob</td>
-                                      <td>Thornton</td>
-                                      <td>@fat</td>
-                                    </tr>
-                                    <tr>
-                                      <th scope="row">3</th>
-                                      <td>Larry</td>
-                                      <td> the Bird</td>
-                                      <td>@twitter</td>
-                                    </tr>
-                                  </tbody>
+                                </thead>
+                                <tbody>
+                                    {% if products %}
+                                        {% for product in products %}
+                                            <tr>
+                                                <th scope="row">{{ product['id'] }}</th>
+                                                <td>{{ product['intern_reference'] }}</td>
+                                                <td>{{ product['label'] }}</td>
+                                                <td class="text-uppercase fw-bold text-color text-color-arcadia">{{ product['stock_qte'] }}</td>
+                                                <td class="text-uppercase fw-bold text-color-valiant">{{ '{:,.2f}'.format(product['stock_value'])  }} DZD</td>
+                                                <td class="text-uppercase fw-bold text-color text-color-classic-blue">{{ product['delivered_quantity'] }}</td>
+                                            </tr>
+                                        {% endfor %}
+                                    {% else %}
+                                        <tr class="text-center">
+                                            <td colspan="6">Pas encore de ventes</td>
+                                        </tr>
+                                    {% endif %}
+                                </tbody>
                             </table>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        <div class="row mb-3">
+
+        <!--TIMELINE-->
+        {# <div class="row mb-3">
             <div class="col-md">
                 <div class="card ">
                     <div class="card-body">
@@ -282,10 +285,9 @@
                                 <div class="timeline-item-marker">
                                     <div class="timeline-item-marker-text" style="color: #34568B;">[Date] </div>
                                     <div class="timeline-item-marker-indicator">
-                                       
                                         <span class="material-symbols-sharp text-primary">
                                             done
-                                            </span>
+                                        </span>
                                     </div>
                                 </div>
                                 <div class="timeline-item-content pt-0">
@@ -302,7 +304,7 @@
                 </div>
             </div>
             
-        </div>
+        </div> #}
     </div>
     <footer>
 

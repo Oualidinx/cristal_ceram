@@ -1,150 +1,164 @@
 {% extends "layouts/purchases_layout.html" %}
 {% block main_tag %}
-    <div class="row mt-5">
-        {% with messages = get_flashed_messages(with_categories=true) %}
-            {% if messages %}
-                <div class="toast-container position-absolute top-0 end-0 p-3">
-                    {% for category, message in messages %}
-                        <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                            <div class="d-flex">
-                                <div class="toast-body text-black fw-light fs-6">
-                                    {{ message }}
-                                </div>
-                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                          </div>
-                        </div>
-                    {% endfor %}
-                </div>
-            {% endif %}
-        {% endwith %}
-        <div class="card">
-            <div class="card-body">
-                <form id="form" method="POST">
-                    {{form.hidden_tag()}}
-                    <div class="row g-1 justify-content-end p-3">
-                        <div class="col-md-1">
-                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
-                        </div>
-                    {% if new_command and new_command==true %}
-                        <div class="col-md-2">
-                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('sales_bp.add_exit_voucher') }}">
-                                <i class="fa fa-plus"></i>
-                                   Nouvelle sortie
-                            </a>
-                        </div>
-                    {% endif %}
-{#                    {% if to_print and to_print==True %}#}
-{#                        <div class="col-md-1">#}
-{#                            <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer#}
-{#                            </a>#}
-{#                        </div>#}
-{#                    {% endif %}#}
-                    </div>
-                    <div class="row g-1 mb-4">
-                        <div class="col-md">
-                            <div class="input-group has-validation p-3">
-                                <div class="input-group-text"> {{ form.motif.label }}</div>
-                                {% if form.motif.errors %}
-                                    {{ form.motif(class="form-select is-invalid") }}
-                                    {% for error in form.motif.errors %}
-                                        <div class="invalid-feedback">
-                                            {{ error }}
-                                        </div>
-                                    {% endfor %}
-
-                                {% else %}
-                                    {{ form.motif(class="form-select") }}
-                                {% endif %}
-                            </div>
-                        </div>
-                        <div class="col-md">
-                            <div class="input-group has-validation p-3">
-                                <div class="input-group-text"> {{ form.exit_date.label }}</div>
-                                {% if form.exit_date.errors %}
-                                    {{ form.exit_date(class="form-select is-invalid") }}
-                                    {% for error in form.exit_date.errors %}
-                                        <div class="invalid-feedback">
-                                            {{ error }}
-                                        </div>
-                                    {% endfor %}
-                                {% else %}
-                                    {{ form.exit_date(class="form-select") }}
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
-                    {#      Table Heading      #}
-
-                <div class="container">
-                    <div class="row text-center justify-content-center">
-                        <div class="col-md-6">
-                            {{ nested.item.label }}
-                        </div>
-                        <div class="col-md-4">
-                            {{ nested.quantity.label }}
-                        </div>
-                        <div class="col-md-2">
-                            Actions
-                        </div>
-                    </div>
-                    {#      Table Rows      #}
-                    {% for entry in form.entities %}
-                        <div class="row g-4 mb-sm-4 text-center justify-content-center">
-                            <div class="col-sm-6">
-                                {% if entry.item.errors %}
-                                    <div class="input-group has-validation">
-                                        {{ entry.item(class="select-item form-select-sm is-invalid") }}
-                                        {% for error in entry.item.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
+    <div class="container">
+        <div class="row mt-5">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    <div class="toast-container position-absolute top-0 end-0 p-3">
+                        {% for category, message in messages %}
+                            <div class="flash-toasts toast align-items-center bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                                <div class="d-flex">
+                                    <div class="toast-body text-white fw-light fs-6">
+                                        {{ message }}
                                     </div>
-                                {% else %}
-                                    {{ entry.item(class="select-item form-select-sm") }}
-                                {% endif %}
+                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                              </div>
                             </div>
-                            <div class="col-sm-4">
-                                <div class="input-group input-group-sm has-validation">
-                                    {% if entry.quantity.errors %}
-                                        {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
-                                        {% for error in entry.quantity.errors %}
+                        {% endfor %}
+                    </div>
+                {% endif %}
+            {% endwith %}
+            <div class="card">
+                <div class="card-body">
+                    <form id="form" method="POST">
+                        {{form.hidden_tag()}}
+                        <div class="row g-1 justify-content-end p-3">
+                            <div class="col-md-1">
+                                {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                            </div>
+                        {% if new_command and new_command==true %}
+                            <div class="col-md-2">
+                                <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('sales_bp.add_exit_voucher') }}">
+                                    <i class="fa fa-plus"></i>
+                                       Nouvelle sortie
+                                </a>
+                            </div>
+                        {% endif %}
+    {#                    {% if to_print and to_print==True %}#}
+    {#                        <div class="col-md-1">#}
+    {#                            <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer#}
+    {#                            </a>#}
+    {#                        </div>#}
+    {#                    {% endif %}#}
+                        </div>
+                        <div class="row g-1 mb-4">
+                            <div class="col-md">
+                                <div class="input-group has-validation p-3">
+                                    <div class="input-group-text"> {{ form.motif.label }}</div>
+                                    {% if form.motif.errors %}
+                                        {{ form.motif(class="form-select is-invalid") }}
+                                        {% for error in form.motif.errors %}
                                             <div class="invalid-feedback">
                                                 {{ error }}
                                             </div>
                                         {% endfor %}
 
                                     {% else %}
-                                        {{ entry.quantity(class="form-control form-control-sm") }}
+                                        {{ form.motif(class="form-select") }}
                                     {% endif %}
-                                    <div class="input-group-text" id="unit"></div>
                                 </div>
                             </div>
-                            <div class="col-sm-2">
-                                {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                            <div class="col-md">
+                                <div class="input-group has-validation p-3">
+                                    <div class="input-group-text"> {{ form.exit_date.label }}</div>
+                                    {% if form.exit_date.errors %}
+                                        {{ form.exit_date(class="form-select is-invalid") }}
+                                        {% for error in form.exit_date.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.exit_date(class="form-select") }}
+                                    {% endif %}
+                                </div>
+                                <div class="input-group has-validation p-3">
+                                    <div class="input-group-text"> {{ form.warehouse.label }}</div>
+                                    {% if form.warehouse.errors %}
+                                        {{ form.warehouse(class="form-select is-invalid") }}
+                                        {% for error in form.warehouse.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ form.warehouse(class="form-select") }}
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
-                    {% endfor %}
-                    <div class="row mb-4" >
-                        <div class="col-sm">
-                            {{ form.add(class='btn btn-sm btn-outline-secondary rounded-pill') }}
+                        {#      Table Heading      #}
+
+                    <div class="container">
+                        <div class="row text-center justify-content-center">
+                            <div class="col-md-6">
+                                {{ nested.item.label }}
+                            </div>
+                            <div class="col-md-4">
+                                {{ nested.quantity.label }}
+                            </div>
+                            <div class="col-md-2">
+                                Actions
+                            </div>
+                        </div>
+                        {#      Table Rows      #}
+                        {% for entry in form.entities %}
+                            <div class="row g-4 mb-sm-4 text-center justify-content-center">
+                                <div class="col-sm-6">
+                                    {% if entry.item.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ entry.item(class="select-item form-select-sm is-invalid") }}
+                                            {% for error in entry.item.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ entry.item(class="select-item form-select-sm") }}
+                                    {% endif %}
+                                </div>
+                                <div class="col-sm-4">
+                                    <div class="input-group input-group-sm has-validation">
+                                        {% if entry.quantity.errors %}
+                                            {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
+                                            {% for error in entry.quantity.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+
+                                        {% else %}
+                                            {{ entry.quantity(class="form-control form-control-sm") }}
+                                        {% endif %}
+                                        {{ entry.available_stock(class="form-control form-control-sm") }}
+                                    </div>
+                                </div>
+                                <div class="col-sm-2">
+                                    {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                                </div>
+                            </div>
+                        {% endfor %}
+                        <div class="row mb-4" >
+                            <div class="col-sm">
+                                {{ form.add(class='btn btn-sm btn-secondary rounded-pill') }}
+                            </div>
                         </div>
                     </div>
-                </div>
-                </form>
+                    </form>
 
-                <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
-                    <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="error-toast-body toast-body"></div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                    <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
+                        <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="error-toast-body toast-body"></div>
+                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
     </div>
-
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
@@ -152,7 +166,7 @@
 {% endblock %}
 
 {% block actual_title %}
-    Bon de réception
+    Nouvelle sortie de stock
 {% endblock %}
 
 {% block additional_scripts %}
@@ -179,7 +193,6 @@
                         return query;
                     },
                     processResults: function(data, params) {
-                        console.table(data.items);
                         params.page = params.page || 1;
                         return {
                             results: data.items,
@@ -191,70 +204,48 @@
                     cache: true
                 },
                 minimumInputLength: 1,
-                templateResult: formatRepo,
+                templateResult: formatMotif,
             });
             $('.select-item').select2({
                 theme: "bootstrap-5",
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
                 selectionCssClass: 'select2--small',
                 dropdownCssClass: 'select2--small',
-            });
-            $('#item').on('change', function(){
-
-                const onlyInputs = $(this).parent().parent().find('input');
-                $.ajax({
-                    url:'{{ url_for('sales_bp.get_purchase_price') }}',
-                    type:'POST',
-                    data:JSON.stringify({
-                        cmd_id: $("#motif").val(),
-                        product: $(this).val(),
-                        sum:0
-                    }),
-                    contentType:"application/json",
-                    statusCode:{
-                        404: function (response){
-                            /**
-                            * Toast to show the error message: Object not found
-                            * */
-                            let data = JSON.parse(response.responseText)
-                            $('.error-toast-body').text(data.text);
-                            $('#liveToast').toast('show');
-                        },
-                        200: function (data){
-                            /**
-                             * Success message: Object found
-                             * Then set the value of the unit_price according the item's price in the order
-                             */
-                            if (data){
-                                document.getElementById(onlyInputs[0].id).setAttribute('value',data.quantity);
-                            }
-                        },
-                        400: function(response){
-                            /**
-                             * Toast to show the request error: Bad request
-                             */
-                            let data = JSON.parse(response.responseText)
-                            $('.error-toast-body').text(data.text);
-                            $('#liveToast').toast('show');
-                        }
+                ajax: {
+                    url: "{{ url_for('purchases_bp.doc_items') }}",
+                    dataType: 'json',
+                    delay: 250,
+                    data:function(params){
+                        let query = {
+                            search:params.term,
+                            cmd_id:$('#motif').val(),
+                            w_id:$('#warehouse').val(),
+                        };
+                        return query;
                     },
-                });
-                $.ajax({
-                    url:"{{ url_for('purchases_bp.get_unit') }}",
-                    type:'POST',
-                    data:JSON.stringify({
-                        item_id:$(this).val()
-                    }),
-                    contentType:'application/json',
-                    statusCode:{
-                        200:function (data){
-                            $('#unit').html('<span>'+data.unit+'</span>');
-                        }
-                    }
-                })
+                    processResults: function(data, params) {
+                        params.page = params.page || 1;
+                        return {
+                            results: data.items,
+                            pagination: {
+                                more: (params.page * 30) < data.total_count
+                            }
+                        };
+                    },
+                    cache: true
+                },
+                minimumInputLength: 1,
+                templateResult: formatItem,
+            });
+
+            $('#warehouse').select2({
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                selectionCssClass: 'select2--small',
+                dropdownCssClass: 'select2--small',
             });
         });
-        function formatRepo (repo) {
+        function formatMotif (motif) {
             var $container = $(
                 "<div class='select2-result-repository'>" +
                     "<div class='select2-result-repository__meta'>" +
@@ -265,10 +256,34 @@
                     "</div>" +
                 "</div>");
 
-            $container.find(".select2-result-title").html('<span class="fw-bold">'+repo.title+'</span>');
-            $container.find(".select2-result-client").html('<span class="fw-bold">Client: </span><span>'+repo.client+'</span>');
-            $container.find(".select2-result-code").html('<span class="fw-bold">Code: </span><span>'+repo.code+'</span>');
-            $container.find(".select2-result-date").html('<span class="fw-bold">Date: </span><span>'+repo.date+' </span>');
+            $container.find(".select2-result-title").html('<span class="fw-bold">'+motif.title+'</span>');
+            $container.find(".select2-result-client").html('<span class="fw-bold">Client: </span><span>'+motif.client+'</span>');
+            $container.find(".select2-result-code").html('<span class="fw-bold">Code: </span><span>'+motif.code+'</span>');
+            $container.find(".select2-result-date").html('<span class="fw-bold">Date: </span><span>'+motif.date+' </span>');
+            return $container;
+        }
+
+        function formatItem(item){
+            var $container = $(
+                "<div class='select2-result-repository'>" +
+                    "<div class='select2-result-repository__meta'>" +
+                        "<div class='select2-result-label'></div>" +
+                        "<div class='select2-result-unit'></div>" +
+                        "<div class='select2-result-available-qte'></div>" +
+                        "<div class='select2-result-cmd-qte'></div>" +
+                        "<div class='select2-result-dl-qte'></div>" +
+                        "<div class='select2-result-rest-qte'></div>" +
+                    "</div>" +
+                "</div>");
+            console.log(item)
+            $container.find(".select2-result-label").html('<span class="fw-bold">'+item.label+'</span>');
+            $container.find(".select2-result-unit").html('<span class="fw-bold">Unité: </span>'+item.label);
+
+            $container.find(".select2-result-available-qte").html('<span class="fw-bold">Stock dispo. : </span><span>'+item.av_qte+'</span>');
+            $container.find(".select2-result-cmd-qte").html('<span class="fw-bold">QC : </span><span>'+item.quantity+'</span>');
+            $container.find(".select2-result-dl-qte").html('<span class="fw-bold">Quantité livrée : </span><span>'+item.d_quantity+'</span>');
+            $container.find(".select2-result-rest-qte").html('<span class="fw-bold">Le reste : </span><span>'+item.rest+'</span>');
+
             return $container;
         }
     </script>
@@ -304,3 +319,76 @@
 {#        function formatRepoSelection (repo) {#}
 {#          return repo.full_name || repo.text;#}
 {#        }#}
+
+
+
+
+
+{#
+            $('.select-item').change(function(){
+                const onlyInputs = $(this).parent().parent().find('input');
+                console.table(onlyInputs)
+                $.ajax({
+                    url:'{{ url_for('purchases_bp.get_purchase_price') }}',
+                    type:'POST',
+                    data:JSON.stringify({
+                        cmd_id: $("#motif").val(),
+                        product: $(this).val(),
+                        sum:0
+                    }),
+                    contentType:"application/json",
+                    statusCode:{
+                        404: function (response){
+                            /**
+                            * Toast to show the error message: Object not found
+                            * */
+                            let data = JSON.parse(response.responseText)
+                            $('.error-toast-body').text(data.text);
+                            $('#liveToast').toast('show');
+                        },
+                        200: function (data){
+                            /**
+                             * Success message: Object found
+                             * Then set the value of the unit_price according the item's price in the order
+                             */
+                            if (data){
+                                document.getElementById(onlyInputs[0].id).setAttribute('value',data.quantity);
+                                $.ajax({
+                                    url:"{{ url_for('purchases_bp.doc_items') }}",
+                                    type:'POST',
+                                    data:JSON.stringify({
+                                        item_id:$(this).val(),
+                                        cmd_id : $('#motif').val(),
+                                        w_id: $('#warehouse').val()
+                                    }),
+                                    contentType:'application/json',
+                                    statusCode:{
+                                        200:function (data){
+                                            console.log(onlyInputs[1]);
+                                            onlyInputs[1].setAttribute('value',data.text+' '+data.unit);
+                                        },
+                                        400:function(response){
+                                             /**
+                                             * Toast to show the request error: Bad request
+                                             */
+                                            let data = JSON.parse(response.responseText)
+                                            $('.error-toast-body').text(data.text);
+                                            $('#liveToast').toast('show');
+                                        }
+                                    }
+                                });
+                            }
+                        },
+                        400: function(response){
+                            /**
+                             * Toast to show the request error: Bad request
+                             */
+                            let data = JSON.parse(response.responseText)
+                            $('.error-toast-body').text(data.text);
+                            $('#liveToast').toast('show');
+                        }
+                    },
+                });
+
+            });
+        #}

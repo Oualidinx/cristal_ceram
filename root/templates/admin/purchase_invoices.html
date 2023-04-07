@@ -1,0 +1,243 @@
+{% extends "layouts/admin_layout.html" %}
+{% block additional_styles %}
+    <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
+{% endblock %}
+{% block main_tag %}
+    <div class="row mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute top-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="flash-toasts toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="col" style="position: relative; text-align: right">
+            <div id="table"></div>
+            <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
+                <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="error-toast-body toast-body"></div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                    </div>
+                </div>
+            </div>
+            <div class="modal fade bg-m" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+                <div class="modal-dialog modal-dialog-centered modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div class="row">
+                                <form id="form" method="post">
+                                    {{ form.hidden_tag() }}
+                                    <div class="info-row row g-1 justify-content-center">
+                                    </div>
+                                    <div class="row g-1 mb-4">
+                                        <div class="col-md">
+                                            <div class="input-group has-validation p-3">
+                                                <div class="input-group-text"> {{ form.amount.label }}</div>
+                                                {% if form.amount.errors %}
+                                                    {{ form.amount(class="form-control is-invalid") }}
+                                                    {% for error in form.amount.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ form.amount(class="form-control") }}
+                                                {% endif %}
+                                            </div>
+
+                                            <div class="input-group has-validation p-3">
+                                                <div class="input-group-text"> {{ form.expense_category.label }}</div>
+                                                {% if form.expense_category.errors %}
+                                                    {{ form.expense_category(class="form-select is-invalid") }}
+                                                    {% for error in form.expense_category.errors %}
+                                                        <div class="invalid-feedback">
+                                                            {{ error }}
+                                                        </div>
+                                                    {% endfor %}
+                                                {% else %}
+                                                    {{ form.expense_category(class="form-select") }}
+                                                {% endif %}
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="row g-1 mb-4 justify-content-lg-end">
+                                        {{ form.submit(class="btn btn-md btn-primary") }}
+                                    </div>
+                                </form>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}
+{% block actual_title %}
+    Factures fournisseur
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
+    <script>
+        function get(event){
+            let dataset = event.dataset;
+            $.ajax({
+                url:"{{url_for('admin_bp.get_info')}}",
+                data:JSON.stringify({
+                    invoice_id:dataset['code']
+                }),
+                type:"post",
+                contentType:"application/json",
+                statusCode: {
+                    200:function(data){
+                        if (data){
+                            $('.info-row').html('<input type="hidden" name="code" value="'+data.code+'">' +
+                                '<div style="text-align: left;" class="col-md">' +
+                                    '<span>Paiement: </<span><br>' +
+                                    '<span style="font-weight: bold;">'+data.code+'</<span>' +
+                                '</div>' +
+                                '<div style="text-align: left;" class="col-md">' +
+                                    '<span>MONTANT </span><br>' +
+                                    '<span style="font-weight: bold;color: #09568d;">'+data.montant+' DZD </span>' +
+                                '</div>'+
+                                '<div style="text-align: lefts;" class="col-md">' +
+                                    '<span>RESTE À PAYER </span><br>'+
+                                    '<span style="font-weight: bold; color: #ce3500;">'+data.reste+' DZD</span>'+
+                                '</div>');
+                            $('.modal').modal('show');
+
+                        }
+                    },
+                    400:function(){
+                        $('.error-toast-body').text('Bad request');
+                        $('#liveToast').toast('show');
+                    },
+                    404:function(){
+                        $('.error-toast-body').text('not found');
+                        $('#liveToast').toast('show');
+                    }
+
+                }
+            })
+        }
+        $(document).ready(function (){
+            $('.flash-toasts').toast('show');
+            $("#expense_category").select2({
+                theme:'bootstrap-5',
+                dropdownParent: $('.modal'),
+                placeholder: $(this).data('placeholder'),
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+            });
+
+        });
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                    { id: 'index',              name: '' },
+                    { id: 'intern_reference',   name: 'Code' },
+                    { id: 'supplier',             name: 'Fournisseur' },
+                    { id: 'supplier_contact',     name: 'Contact' },
+                    { id: 'created_at',         name: 'Date' },
+                    { id: 'total',              name: 'Montant' },
+                    { id: 'status',             name: 'État' },
+                    { id: "actions",            name:'Actions'}
+            ],
+            data: () => {
+             return new Promise(resolve => {
+                 setTimeout(()=>
+                    resolve(
+                        [
+                        {% if liste %}
+                            {% for order in liste %}
+                                {
+                                    index: '{{ order["index"] }}',
+                                    intern_reference: '{{ order["intern_reference"] }}',
+                                    supplier: '{{ order['beneficiary'] }}',
+                                    supplier_contact: '{{ order['beneficiary_contact'][0] }}',
+                                    created_at: '{{ order["created_at"] }}',
+                                    total: '{{ order["total"] }}',
+                                    status: gridjs.html(`<span class="badge rounded-pill"
+                                                            style="background-color: {{ order['is_paid'][1] }};">
+                                                            {{ order['is_paid'][0]}}
+                                                        </span>
+                                        <span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}}">
+                                        {{ order['is_delivered'][0]}}</span>
+                                        <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}}">
+                                        {{ order['is_canceled'][0]}}</span>`),
+                                    {#delivery_date: "{{ order['delivery_date'] }}",#}
+                                    actions: gridjs.html (`
+                                                <div class="btn-group">
+                                                    <div class="btn-group dropstart" >
+                                                        <button class="dropdown-item btn btn-lg"
+                                                            id="btn"
+                                                            onclick="get(this)"
+                                                            data-code="{{ order['intern_reference'] }}"
+                                                            {#data-bs-toggle="modal"#}
+                                                            {#data-bs-target="#exampleModal"#}
+                                                            ><i class="fa-regular fa-money-bill-1"></i>
+                                                         </button>
+                                                        <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('admin_bp.print_purchase_invoice', i_id=order['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                        <i class="fa-solid fa-eye"></i></a>
+                                                    </div>
+                                                </div>`)},
+                            {% endfor %}
+                        {% endif %}
+                    ]
+                    ),1000
+                 );
+                });
+            },
+            search: {
+                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+        }).render(document.getElementById('table'));
+    </script>
+
+{% endblock %}

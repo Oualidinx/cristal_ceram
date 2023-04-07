@@ -1,14 +1,15 @@
 from flask import abort, render_template, session, flash, redirect, url_for, request, jsonify
-
+import calendar
 from root.admin import admin_bp
 from root import database as db
 from flask_login import login_required
 from root.admin.forms import *
 from root.auth.forms import ResetPasswordForm
-from root.models import Supplier, Tax, User, InvoiceTax, OrderTax, Warehouse,  Store
-from root.models import Format, Aspect, Stock, Client, Contact, Quotation, Expense
+from root.models import Supplier, Tax, PurchaseReceipt, InvoiceTax, OrderTax, Warehouse,  Store
+from root.models import Format, Aspect, Stock, Client, Contact, Quotation, Expense, Pay
 from werkzeug.security import generate_password_hash
-
+from sqlalchemy import func
+from datetime import timedelta as td, datetime as dt
 @admin_bp.before_request
 def admin_before_request():
     session['role'] = "Manager"
@@ -16,9 +17,140 @@ def admin_before_request():
 @admin_bp.get('/')
 @login_required
 def index():
+    calendar.setfirstweekday(6)
     if 'endpoint' in session:
         del session['endpoint']
-    return render_template("admin/index.html")
+    
+    _dict = dict()
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+    _dict['suppliers'] = len(Supplier.query.filter_by(fk_company_id = company.fk_company_id).filter_by(is_deleted=False).all())
+    _dict['clients'] = len(Client.query.filter_by(fk_company_id = company.fk_company_id).filter_by(is_deleted = False).all())
+    _dict['items'] = len(Item.query.filter_by(fk_company_id = company.fk_company_id).filter_by(is_disabled = False).all())
+    _products = Item.query.join(Entry, Entry.fk_item_id == Item.id) \
+                    .join(Order, Order.id == Entry.fk_order_id) \
+                        .filter(and_(Order.fk_company_id == company.fk_company_id, Item.fk_company_id == company.fk_company_id)) \
+                            .filter(and_(Order.category == "vente", Order.is_delivered == True)).group_by(Item.id)
+    
+    revenue, _expenses = dict(), dict()
+    query_pay = Pay.query.filter(Pay.fk_company_id == company.fk_company_id)
+    query_expense = Expense.query.filter(Expense.fk_company_id == company.fk_company_id)
+    revenue['today']=sum([pay.ammount for pay in query_pay.filter(func.date(Pay.payment_date) == func.date(dt.utcnow().date())).all()])
+    
+    _expenses['today']=sum([exp.amount for exp in query_expense.filter(func.date(Expense.created_at) == func.date(dt.utcnow().date())).all()])
+    day = dt.now().date()
+    weekday = calendar.weekday(day.year, day.month, day.day)
+    l = list()
+    revenue['week'], revenue['month'], revenue['year']=0, 0, 0
+
+        # ================================
+        # % CALCUL DE TOUS LES REVENUS %
+        # ================================
+    
+    if query_pay.all():
+        while weekday!=4:
+            pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day))
+            if pay.all():
+                revenue['week'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+            weekday = dt.weekday(day)
+        
+        # if weekday == 4:
+        #     pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day)).all()
+        #     if pay:
+        #         expenses['week'] += sum([_pay.amount for _pay in pay])
+
+        day = dt.now().date()
+        day_in_month = day.day
+        
+        while day_in_month!=1:
+            pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day))
+            if pay.all():
+                revenue['month'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+            day_in_month = day.day
+
+        if day_in_month == 1:
+            pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day))
+            if pay.all():
+                revenue['month'] += sum([_pay.amount for _pay in pay])
+        
+        day = dt.now().date()
+        day_in_month = day.day
+        month_in_year = day.month
+        while (month_in_year != 1) or (day_in_month != 1):
+            pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day))
+            if pay.all():
+                revenue['year'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+
+            day_in_month = day.day
+            month_in_year = day.month
+        if (month_in_year == 1) and (day_in_month == 1):
+            pay = query_pay.filter(func.date(Pay.payment_date) == func.date(day))
+            if pay.all():
+                revenue['year'] += sum([_pay.amount for _pay in pay])
+
+        # =================================
+        # % CALCUL DE TOUTES LES DÉPENSES % 
+        # =================================
+
+    day = dt.now().date()
+    _expenses['week'], _expenses['month'], _expenses['year']=0, 0, 0
+    query_expense = query_expense.filter(func.date(Expense.created_at) <= func.date(day))
+    # print(query_expense.all())
+    weekday = dt.weekday(day)
+    if query_expense.all():
+        while weekday!=4:
+            pay = query_expense.filter(func.date(Expense.created_at) == func.date(day))
+            if pay.all():
+                print(f"expense at {day}, {pay.all()}")
+                _expenses['week'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+            weekday = dt.weekday(day)
+        
+        # if weekday == 4:
+        #     pay = query_expense.filter(func.date(Expense.created_at) == func.date(day)).all()
+        #     if pay:
+        #         expenses['week'] += sum([_pay.amount for _pay in pay])
+
+        day = dt.now().date()
+        day_in_month = day.day
+        
+        while day_in_month!=1:
+            pay = query_expense.filter(func.date(Expense.created_at) == func.date(day))
+            if pay.all():
+                _expenses['month'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+            day_in_month = day.day
+
+        if day_in_month == 1:
+            pay = query_expense.filter(func.date(Expense.created_at) == func.date(day))
+            if pay.all():
+                _expenses['month'] += sum([_pay.amount for _pay in pay])
+        
+        day = dt.now().date()
+        day_in_month = day.day
+        month_in_year = day.month
+        while (month_in_year != 1) or (day_in_month != 1):
+            pay = query_expense.filter(func.date(Expense.created_at) == func.date(day))
+            if pay.all():
+                _expenses['year'] += sum([_pay.amount for _pay in pay])
+            day -= td(days=1)
+
+            day_in_month = day.day
+            month_in_year = day.month
+            if (month_in_year == 1) and (day_in_month == 1):
+                pay = query_expense.filter(func.date(Expense.created_at) == func.date(day))
+                if pay.all():
+                    _expenses['year'] += sum([_pay.amount for _pay in pay])
+    return render_template("admin/index.html",
+                           info = _dict,
+                           date = dt.utcnow().date(),
+                           products = [item.repr(['id','intern_reference','label','stock_qte','delivered_quantity',
+                                        'stock_value']) for item in _products.all()[:10]],
+                           revenue = revenue,
+                           expense = _expenses
+                )
 
 
 @admin_bp.get("/taxes/new")
@@ -367,7 +499,7 @@ def edit_user(user_id):
                     counter = 0
                     for temp in [wh for wh in user_for_company.all()]:
                     # for ID in [wh.id for wh in form.warehouses.data]:
-                        temp.start_from = datetime.datetime.utcnow()
+                        temp.start_from = dt.utcnow()
                         temp.fk_warehouse_id = ids[counter]
                         db.session.add(temp)
                         db.session.commit()
@@ -386,7 +518,7 @@ def edit_user(user_id):
             db.session.commit()
             if user_for_company.first().role=='vendeur':
                 u_f_c = user_for_company.first()
-                u_f_c.start_from = datetime.datetime.utcnow()
+                u_f_c.start_from = dt.utcnow()
                 db.session.add(u_f_c)
                 db.session.commit()
             else:
@@ -726,6 +858,8 @@ def add_product():
             return redirect(url_for('admin_bp.add_product'))
         else:
             item.piece_per_unit = float(form.piece_per_unit.data)
+        # if form.sale_price.data:
+        #     item.sale_price = float(form.sale_price.data)
         item.stock_sec = form.stock_sec.data
         item.use_for = form.utilisation.data if form.utilisation.data else None
         item.intern_reference = form.intern_reference.data if form.intern_reference.data else None
@@ -1010,7 +1144,9 @@ def get_client(client_id):
         })
         liste.append(_dict)
         indexe += 1
-    return render_template('admin/client_info.html', item = item.repr(['id','nb_cmd','contact','category','full_name']), liste = liste)
+    return render_template('admin/client_info.html',
+                    item = item.repr(['id','nb_cmd','contact','category','full_name','total','adjusted','to_adjust']),
+                    liste = liste)
 
 
 @admin_bp.get('/clients/<int:client_id>/edit')
@@ -1179,18 +1315,128 @@ def delete_supplier(supplier_id):
 
 
 
-@admin_bp.get('/purchases_orders')
+@admin_bp.get('/purchase/orders')
 @login_required
 def purchases_orders():
-    session['endpoint']='purchase'
-    pass
+    session['endpoint']="purchase"
+    _orders = Order.query.filter_by(category="achat").filter_by(fk_company_id = UserForCompany.query.filter_by(role="manager") \
+                        .filter_by(fk_user_id = current_user.id) \
+                        .first().fk_company_id
+            ).filter(Order.is_deleted==False).all()
+    liste = list()
+    if _orders:
+        indexe = 1
+        for order in _orders:
+            _dict = order.repr()
+            _dict.update({'index':indexe})
+            indexe += 1
+            liste.append(_dict)
+    return render_template('admin/purchases_orders.html', liste = liste)
 
 
-@admin_bp.get('/purchase_invoices')
+
+@admin_bp.get("/orders/add")
+@admin_bp.post('/orders/add')
 @login_required
-def purchases_invoices():
-    session['endpoint']='purchase'
-    pass
+def new_order():
+    session['endpoint'] = 'purchase'
+    form = PurchaseOrderForm()
+    company = UserForCompany.query.filter_by(role="manager") \
+        .filter_by(fk_user_id=current_user.id).first().fk_company_id
+    _suppliers = Supplier.query.filter_by(fk_company_id=company)
+    if not _suppliers:
+        flash("Veuillez d'abord ajouter des fournisseurs",'warning')
+
+    if form.validate_on_submit():
+        entities = list()
+        _q = Order()
+        _q.category="achat"
+        sum_amounts=0
+        if enumerate(form.entities):
+            sum_amounts = 0
+            for _index, entry in enumerate(form.entities):
+                sum_amounts += entry.amount.data
+                if entry.quantity.data:
+                    entry.amount.data = entry.unit_price.data * entry.quantity.data
+                if entry.delete_entry.data:
+                    sum_amounts -= entry.amount.data
+                    del form.entities.entries[_index]
+                    return render_template("admin/new_order.html",
+                                           form = form, nested=EntryField(),
+                                           somme = sum_amounts)
+                _ = Entry()
+                _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
+                _.unit_price = entry.unit_price.data
+                _.quantity = entry.quantity.data
+                _.total_price = entry.amount.data
+                entities.append(_)
+        if form.add.data:
+            if enumerate(form.entities):
+                sum_amounts = 0
+                for _index, entry in enumerate(form.entities):
+                    if entry.quantity.data:
+                        entry.amount.data = entry.unit_price.data * entry.quantity.data
+                    sum_amounts += entry.amount.data
+            form.entities.append_entry({
+                'label': Item.query.filter_by(is_disabled=False) \
+                    .filter_by(fk_company_id=UserForCompany.query.filter_by(role="manager") \
+                               .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
+                'unit_price': 0,
+                'quantity': 1,
+                'amount': 0
+            })
+            return render_template('admin/new_order.html',
+                                   form=form,
+                                   nested=EntryField(),
+                                   somme=sum_amounts)
+        if form.fin.data:
+            if enumerate(form.entities):
+                sum_amounts = 0
+                for _index, entry in enumerate(form.entities):
+                    if entry.quantity.data:
+                        entry.amount.data = entry.unit_price.data * entry.quantity.data
+                    sum_amounts += entry.amount.data
+            return render_template('admin/new_order.html',
+                                   form=form,
+                                   nested=EntryField(),
+                                   somme=sum_amounts)
+        if form.order_date.data:
+            _q.created_at = form.order_date.data
+        _q.created_by = current_user.id
+        _q.fk_company_id = company
+        _q.fk_supplier_id= form.fournisseur.data.id
+        _q.fk_client_id = None
+        _q.total = sum_amounts
+        last_q = Order.query.filter_by(category="achat").filter_by(fk_company_id = company).order_by(Order.created_at.desc()).first()
+        _q.intern_reference = "BC-1/" + str(datetime.datetime.now().date().year)
+        if last_q:
+            last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
+            year = int(last_q.intern_reference.split('-')[1].split('/')[1])
+            if year == datetime.datetime.now().date().year :
+                _q.intern_reference = "BC-"+str(last_intern_ref+1)+"/"+str(datetime.datetime.now().date().year)
+
+        db.session.add(_q)
+        db.session.commit()
+        sum_amounts = 0
+        for e in entities:
+            sum_amounts += e.total_price
+            e.fk_order_id = _q.id
+            e.fk_quotation_id, e.fk_exit_voucher_id=None, None
+            e.fk_invoice_id, e.fk_delivery_note_id = None, None
+            db.session.add(e)
+            db.session.commit()
+        _q.total = sum_amounts
+        db.session.add(_q)
+        db.session.commit()
+        flash(f'Commande {_q.intern_reference} crée avec succès','success')
+        # return redirect(url_for('purchases_bp.new_order'))
+        return render_template("admin/new_order.html", form=form,
+                                somme = _q.total,
+                               new_command=True,
+                               nested=EntryField(),
+                               to_print=True)
+    return render_template("admin/new_order.html", form = form, nested=EntryField(), somme = 0)
 
 
 @admin_bp.get('/quotations')
@@ -1321,12 +1567,12 @@ def add_quotation():
         if last_q:
             last_intern_ref = last_q.intern_reference.split('-')[1].split('/')[0]
             year = last_q.intern_reference.split('-')[1].split('/')[2]
-            if year == datetime.datetime.now().date().year :
-                _q.intern_reference = "DEV-"+(last_intern_ref+1)+"/"+str(company)+"/"+str(datetime.datetime.now().date().year)
+            if year == dt.now().date().year :
+                _q.intern_reference = "DEV-"+(last_intern_ref+1)+"/"+str(company)+"/"+str(dt.now().date().year)
             else:
-                _q.intern_reference = "DEV-1/"+str(company)+"/"+str(datetime.datetime.now().date().year)
+                _q.intern_reference = "DEV-1/"+str(company)+"/"+str(dt.now().date().year)
         else:
-            _q.intern_reference = "DEV-1/"+str(company)+"/"+str(datetime.datetime.now().date().year)
+            _q.intern_reference = "DEV-1/"+str(company)+"/"+str(dt.now().date().year)
         db.session.add(_q)
         db.session.commit()
         for e in entities:
@@ -1388,12 +1634,12 @@ def quotation_order(q_id):
     entities = quotation.entries
     order = Order()
     last_o = Order.query.filter_by(fk_company_id=company).order_by(Order.created_at.desc()).first()
-    if last_o and last_o.intern_reference.split('/')[1] == str(datetime.datetime.now().date().year):
+    if last_o and last_o.intern_reference.split('/')[1] == str(dt.now().date().year):
         last_intern_ref = last_o.intern_reference.split('-').split('/')[0]
         order.intern_reference = "BC-" + (last_intern_ref + 1) + "/" + str(company) + "/" + str(
-            datetime.datetime.now().date().year)
+            dt.now().date().year)
     else:
-        order.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        order.intern_reference = "BC-1/" + str(company) + "/" + str(dt.now().date().year)
     order.fk_client_id = quotation.fk_client_id
     order.category="vente"
     order.total = quotation.total
@@ -1430,12 +1676,12 @@ def quotation_invoice(q_id):
     entities = quotation.entries
     invoice = Invoice()
     last_o = Order.query.filter_by(fk_company_id=company).order_by(Order.created_at.desc()).first()
-    if last_o and last_o.intern_reference.split('/')[1] == str(datetime.datetime.now().date().year):
+    if last_o and last_o.intern_reference.split('/')[1] == str(dt.now().date().year):
         last_intern_ref = last_o.intern_reference.split('-').split('/')[0]
         invoice.intern_reference = "BL-" + (last_intern_ref + 1) + "/" + str(company) + "/" + str(
-            datetime.datetime.now().date().year)
+            dt.now().date().year)
     else:
-        invoice.intern_reference = "BL-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        invoice.intern_reference = "BL-1/" + str(company) + "/" + str(dt.now().date().year)
     invoice.fk_client_id = quotation.fk_client_id
     invoice.total = quotation.total
     invoice.fk_quotation_id = quotation.id
@@ -1474,15 +1720,21 @@ def orders():
 
 
 
+from root.models import User
+from root.admin.forms import PaiementForm
 @admin_bp.get('/invoices')
+@admin_bp.post('/invoices')
 @login_required
 def invoices():
     session['endpoint']='sales'
     user_for_company = UserForCompany.query.filter(UserForCompany.fk_user_id == current_user.id) \
         .filter(UserForCompany.role=="manager").first()
-    _orders = Order.query.filter_by(fk_company_id =user_for_company.fk_company_id) \
-                                    .order_by(Order.created_at.desc()).all()
+    """\.filter_by(is_deleted=False)"""
+    _orders = Invoice.query.filter_by(inv_type="vente").filter_by(fk_company_id =user_for_company.fk_company_id) \
+                                    .filter_by(created_by=current_user.id) \
+                                    .order_by(Invoice.id.desc()).all()
     liste = list()
+    form = PaiementForm()
     if _orders:
         indexe = 1
         for quotation in _orders:
@@ -1490,7 +1742,58 @@ def invoices():
             _dict.update({'index':indexe})
             liste.append(_dict)
             indexe += 1
-    return render_template("admin/invoices.html", liste = liste)
+    if form.validate_on_submit():
+        code = request.form.get('code')
+        invoice = Invoice.query.filter_by(intern_reference=code).first()
+        if not invoice:
+            flash('Facture introuvable', 'danger')
+            return redirect(url_for('admin_bp.invoices'))
+        pay = Pay()
+        pay.fk_company_id = user_for_company.fk_company_id
+        pay.fk_invoice_id = invoice.id
+        pay.created_by = current_user.id
+        pay.amount = float(form.amount.data)
+        pay.is_in_cash = True
+        pay.label = f"paiement de la facture  {invoice.intern_reference}"
+        pay.pay_information=f"Paiement d'une facture d'où de code = {invoice.intern_reference} générée par {User.query.get(invoice.created_by).full_name} avec total de {invoice.total}, le {invoice.created_at.date()}"
+        db.session.add(pay)
+        db.session.commit()
+
+        flash(f'{form.data.get("code")} a été payée','success')
+        return redirect(url_for('admin_bp.invoices'))
+    return render_template("admin/invoices.html", form = form, liste = liste)
+
+from num2words import  num2words
+from flask_weasyprint import HTML, render_pdf
+@admin_bp.get('/invoices/<int:i_id>/print')
+@login_required
+def print_invoice(i_id):
+    invoice = Invoice.query.filter_by(inv_type='vente').filter_by(id=i_id).first()
+    if not invoice:
+        return render_template('errors/404.html', blueprint='admin_bp')
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if invoice.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(invoice.total, lang='fr') + " dinars algérien"
+    virgule = invoice.total - float(int(invoice.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                           company=company.repr(),
+                           object=invoice.repr(),
+                           titre="Facture de vente",
+                           total_letters=str.upper(total_letters))
+
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'facture_{invoice.intern_reference}.pdf',
+                      automatic_download=False)
+
+
+
 
 
 @admin_bp.get('/sales/delivery')
@@ -1533,6 +1836,11 @@ def create_inventory():
         entry.total_price= stock.stock_qte*stock.last_purchase_price
         db.session.add(entry)
         db.session.commit()
+        item = Item.query.get(form.item.data.id)
+        item.purchase_price = float(form.purchase_price.data)
+        item.sale_price = float(form.sale_price.data)
+        db.session.add(item)
+        db.session.commit()
         flash('Objet crée avec succès','success')
         # return redirect(url_for('admin_bp.create_inventory'))
         return render_template('admin/new_inventory.html', form = form)
@@ -1560,7 +1868,6 @@ def expenses():
     if _expenses:
         indexe=  1
         for expense in _expenses:
-            print(expense.repr())
             _dict = expense.repr()
             _dict.update(
                 {
@@ -1584,8 +1891,11 @@ def expenses():
         flash('Dépense ajoutée','success')
         return redirect(url_for('admin_bp.expenses'))
 
-
-    return render_template('admin/expenses.html', liste = liste, form = form)
+    _company = Company.query.get(company.fk_company_id)
+    print(_company.expenses)
+    return render_template('admin/expenses.html',
+                           item = _company.repr(['adjusted_invoices','total','rest_to_adjust']),
+                           liste = liste, form = form)
 
 
 
@@ -1641,3 +1951,558 @@ def delete_category(e_id):
     return redirect(url_for('admin_bp.expense_categories'))
 
 
+@admin_bp.get('/receipts')
+@login_required
+def purchase_receipts():
+    session['endpoint']="purchase"
+    _receipts = PurchaseReceipt.query.filter_by(is_deleted=False) \
+        .filter_by(fk_company_id=UserForCompany.query.filter_by(role="manager") \
+                   .filter_by(fk_user_id=current_user.id) \
+                   .first().fk_company_id
+                   ).all()
+    liste = list()
+    if _receipts:
+        indexe = 1
+        for receipt in _receipts:
+            _dict = receipt.repr_()
+            _dict.update({'index': indexe})
+            indexe += 1
+            liste.append(_dict)
+    return render_template("admin/purchases_receipts.html", liste = liste)
+
+
+@admin_bp.get('/receipts/add')
+@admin_bp.post('/receipts/add')
+@login_required
+def new_purchase_receipt():
+    session['endpoint'] = 'orders'
+    company = UserForCompany.query.filter_by(role="manager") \
+        .filter_by(fk_user_id=current_user.id).first().fk_company_id
+    _suppliers = Supplier.query.filter_by(fk_company_id=company)
+    if not _suppliers:
+        flash("Veuillez d'abord ajouter des fournisseurs", 'warning')
+    form = PurchaseReceiptForm()
+
+    if form.validate_on_submit():
+        entities = list()
+        _q = PurchaseReceipt()
+        sum_amounts = 0
+        document = Order.query.get(form.command_reference.data.id)
+        if enumerate(form.entities):
+            sum_amounts = 0
+            for _index, entry in enumerate(form.entities):
+                sum_amounts += entry.amount.data
+                if entry.quantity.data:
+                    entry.amount.data = entry.unit_price.data * entry.quantity.data
+                if entry.delete_entry.data:
+                    sum_amounts -= entry.amount.data
+                    del form.entities.entries[_index]
+                    return render_template("admin/new_receipt.html",
+                                           form=form, nested=PurchaseField())
+
+                _ = Entry.query.filter_by(fk_order_id=form.command_reference.data.id).first()
+                if _:
+                    if (_.quantity - _.delivered_quantity) > entry.quantity.data:
+                        flash(
+                            f"La quantity du {Item.query.get(entry.fk_item_id).label} est suppérieur à la quantity commandée",
+                            "warning")
+                        return render_template("admin/new_receipt.html",
+                                               form=form, nested=PurchaseField(),
+                                               somme=sum_amounts)
+                # _ = Entry()
+                _.fk_item_id = entry.item.data.id
+                # _.in_stock = entry.item.data.stock_quantity
+                _.unit_price = entry.unit_price.data
+                _.delivered_quantity += entry.quantity.data
+                _.quantity = entry.quantity.data
+                _.total_price = entry.amount.data
+                entities.append(_)
+
+        if form.add.data:
+            if enumerate(form.entities):
+                sum_amounts = 0
+                for _index, entry in enumerate(form.entities):
+                    if entry.quantity.data:
+                        entry.amount.data = entry.unit_price.data * entry.quantity.data
+                    sum_amounts += entry.amount.data
+
+            if form.command_reference.data:
+                form.entities.append_entry({
+                    'item': Item.query.join(Entry, Entry.fk_item_id == Item.id) \
+                        .filter(Item.fk_company_id == company) \
+                        .filter(Item.is_disabled == False) \
+                        .filter(Entry.fk_order_id == form.command_reference.data.id).all(),
+                    'unit_price': 0,
+                    'quantity': 1,
+                    'amount': 0
+                })
+                return render_template('admin/new_receipt.html',
+                                       form=form,
+                                       somme=sum_amounts,
+                                       nested=PurchaseField())
+            else:
+                form.entities.append_entry({
+                    'item': Item.query.filter_by(is_disabled=False) \
+                        .filter_by(fk_company_id=UserForCompany.query.filter_by(role="manager") \
+                                   .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
+                    'unit_price': 0,
+                    'quantity': 1,
+                    'amount': 0
+                })
+                return render_template('admin/new_receipt.html',
+                                       form=form,
+                                       somme=sum_amounts,
+                                       nested=PurchaseField())
+        if form.fin.data:
+            if enumerate(form.entities):
+                sum_amounts = 0
+                for _index, entry in enumerate(form.entities):
+                    if entry.quantity.data:
+                        entry.amount.data = entry.unit_price.data * entry.quantity.data
+                    sum_amounts += entry.amount.data
+            return render_template('admin/new_receipt.html',
+                                   form=form,
+                                   somme=sum_amounts,
+                                   nested=PurchaseField())
+        if form.order_date.data:
+            _q.created_at = form.order_date.data
+        _q.created_by = current_user.id
+        _q.fk_company_id = company
+
+        if form.command_reference.data.fk_supplier_id:
+            _q.fk_supplier_id = form.command_reference.data.fk_supplier_id
+            _q.fk_client_id = None
+        else:
+            _q.fk_client_id = form.command_reference.data.fk_client_id
+            _q.fk_supplier_id = None
+
+        _q.total = sum_amounts
+        last_q = Order.query.filter_by(category="achat").filter_by(fk_company_id=company).order_by(
+            Order.created_at.desc()).first()
+        _q.intern_reference = "BR-1/" + "/" + str(datetime.now().date().year)
+        if last_q:
+            last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
+            year = int(last_q.intern_reference.split('-')[1].split('/')[1])
+            if year == datetime.now().date().year:
+                _q.intern_reference = "BR-" + str(last_intern_ref + 1) + "/" + str(datetime.now().date().year)
+
+        sum_amounts = 0
+        for e in entities:
+            sum_amounts = e.total_price
+            e.fk_order_id = None
+            e.fk_quotation_id, e.fk_exit_voucher_id = None, None
+            e.fk_invoice_id, e.fk_delivery_note_id = None, None
+            # _warehouses = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id) \
+            #                             .filter_by(fk_user_id = current_user.id)
+            stock = Stock.query.filter_by(fk_item_id=e.fk_item_id).first()
+            if not stock:
+                db.session.rollback()
+                flash(f"Article {Item.query.get(e.fk_item_id).label} n'a pas de stock", 'warning')
+                return render_template("admin/new_receipt.html",
+                                       form=form, nested=PurchaseField(),
+                                       somme=sum_amounts)
+            stock.stock_qte += e.quantity
+            item = Item.query.get(e.fk_item_id).first()
+            e.in_stock = item.stock_quantity
+            db.session.add(e)
+            db.session.commit()
+            item.stock_quantity += e.quantity
+            item.purchase_price = e.unit_price
+            db.session.add(item)
+            db.session.commit()
+            stock.last_purchase_price = e.unit_price
+            db.session.add(stock)
+            db.session.commit()
+        to_valid = True
+        for _e in document.entries:
+            if _e.quantity != _e.delivered_quantity:
+                to_valid = False
+        if to_valid:
+            document.is_delivered = True
+            db.session.add(document)
+            db.session.commit()
+        _q.total = sum_amounts
+        db.session.add(_q)
+        db.session.commit()
+        flash(f'Bon {_q.intern_reference} crée avec succès', 'success')
+        return render_template("admin/new_receipt.html", form=form,
+                               somme=_q.total,
+                               new_command=True,
+                               nested=EntryField(),
+                               to_print=True)
+
+    return render_template("admin/new_receipt.html", form=form, nested=PurchaseField(), somme=0)
+
+
+@admin_bp.post('/price')
+@login_required
+def get_purchase_price():
+    data = request.json
+    if not data:
+        return jsonify(
+            message='Demande annulé'
+        ), 400
+    if 'cmd_id' not in data or 'product' not in data:
+        return jsonify(
+            text="Demande annulé"
+        ), 400
+    if data['cmd_id']=='__None':
+        return jsonify(
+            text="Demande annulé: vous devez fournir une référence commande"
+        ), 400
+    order = Order.query.get(data['cmd_id'])
+    if not order:
+        return jsonify(
+            text="Commande introuvable"
+        ), 404
+    if order.is_canceled or order.is_deleted:
+        return jsonify(
+            text="Commande annulé ou supprimée"
+        ),404
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first().fk_company_id
+    if order.fk_company_id != company:
+        return jsonify(
+            text="Erreur inattendue"
+        ), 404
+    for entry in order.entries:
+        if entry.fk_item_id == int(data['product']):
+            return jsonify(
+                price=entry.unit_price,
+                quantity = entry.quantity,
+                amount=entry.unit_price*entry.quantity,
+                sum=float(data['sum'])+float(entry.quantity * entry.unit_price)
+            ), 200
+    return jsonify(text=f"Article ne se trouve pas dans la commande {Order.query.get(data['cmd_id']).intern_reference}"),404
+
+
+
+@admin_bp.get('/commands')
+@login_required
+def get_commands():
+    company = UserForCompany.query.filter_by(role="manager") \
+                                    .filter_by(fk_user_id=current_user.id).first().fk_company_id
+    commands = Order.query.filter(Order.is_deleted == False).filter_by(fk_company_id = company)
+    if 'type' in request.args:
+        commands = commands.filter_by(category=request.args.get('type'))
+    if "search" in request.args:
+        commands = commands.filter(Order.is_canceled == None) \
+            .filter(Order.intern_reference.like(func.lower(f'%{request.args["search"]}%')))
+    data = list()
+    if commands.all():
+        for command in commands.all():
+            b = Client.query.get(command.fk_client_id) if command.fk_client_id else None
+            if b:
+                data.append({
+                    'id': command.id,
+                    'text': str.upper(Client.query.get(command.fk_client_id).full_name)+","+command.intern_reference
+                            +' ,Le '+str(command.created_at.date())
+                })
+            else:
+                data.append({
+                    'id': command.id,
+                    'text': str.upper(Supplier.query.get(
+                        command.fk_supplier_id).full_name) + ", " + command.intern_reference + ' ,Le ' + str(
+                        command.created_at.date())
+                })
+        return jsonify(total_count=len(data),
+                       items = data), 200
+    return jsonify(total_count=0,
+                   items = []), 404
+
+
+
+@admin_bp.route('/purchase_invoices',methods=['GET','POST'])
+@login_required
+def purchase_invoices():
+    session['endpoint']="purchase"
+    form = ExpenseForm()
+    company = UserForCompany.query.filter_by(role="manager") \
+                                    .filter_by(fk_user_id=current_user.id) \
+                                    .first().fk_company_id
+    _invoices = Invoice.query.filter_by(fk_company_id=company).all()
+    liste = list()
+    if _invoices:
+        indexe = 1
+        for receipt in _invoices:
+            _dict = receipt.repr()
+            _dict.update({'index': indexe})
+            indexe += 1
+            liste.append(_dict)
+
+    if form.validate_on_submit():
+        code = request.form.get('code')
+        invoice = Invoice.query.filter_by(intern_reference=code).first()
+        if not invoice:
+            flash('Facture introuvable', 'danger')
+            return redirect(url_for('admin_bp.purchase_invoices'))
+        expense = Expense()
+        expense.fk_company_id = company
+        expense.fk_category_id = form.expense_category.data.id
+        expense.created_by = current_user.id
+        expense.amount = float(form.amount.data)
+        expense.label = f"paiement de la facture  {invoice.intern_reference}"
+        expense.fk_invoice_id = invoice.id
+        expense.description=f"Paiement d'une facture d'où de code = {invoice.intern_reference} générée par {User.query.get(invoice.created_by).full_name} avec total de {invoice.total}, le {invoice.created_at.date()}"
+        db.session.add(expense)
+        db.session.commit()
+        flash(f'{form.data.get("code")} a été payée','success')
+        return redirect(url_for('admin_bp.purchase_invoices'))
+
+    return render_template("admin/purchase_invoices.html", liste = liste, form=form)
+
+
+@admin_bp.post('/info')
+@login_required
+def get_info():
+    data = request.json
+    if 'invoice_id' not in data:
+        return '', 400
+
+    if len(data) != 1:
+        return '', 400
+
+    invoice = Invoice.query.filter_by(intern_reference = data['invoice_id']).first()
+    if not invoice:
+        return '', 404
+    total=Expense.query.filter_by(fk_invoice_id = invoice.id).all()
+    total = sum([t.amount for t in total])
+    return jsonify(
+                code=invoice.intern_reference,
+                montant='{:,.2f}'.format(invoice.total),
+                reste='{:,.2f}'.format(invoice.total - total)),200
+
+
+@admin_bp.get('/purchase/invoices/<int:i_id>/print')
+@login_required
+def print_purchase_invoice(i_id):
+    invoice = Invoice.query.filter_by(inv_type='achat').filter_by(id=i_id).first()
+    if not invoice:
+        return render_template('errors/404.html', blueprint='admin_bp')
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if invoice.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(invoice.total, lang='fr') + " dinars algérien"
+    virgule = invoice.total - float(int(invoice.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                           company=company.repr(),
+                           object=invoice.repr(),
+                           titre="Facture d'achat",
+                           total_letters=str.upper(total_letters))
+
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'facture d\'achat_{invoice.intern_reference}.pdf',
+                      automatic_download=False)
+
+
+@admin_bp.get('/purchase/order/<int:o_id>/print')
+@login_required
+def print_purchase_order(o_id):
+    session['endpoint']="purchase"
+    order = Order.query.filter_by(category='achat').filter_by(id=o_id).first()
+    if not order:
+        return render_template('errors/404.html', blueprint='admin_bp')
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if order.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(order.total, lang='fr') + " dinars algérien"
+    virgule = order.total - float(int(order.total))
+    if virgule > 0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                    company = company.repr(),
+                    titre="Bon d'achat",
+                    object=order.repr(),
+                    total_letters=str.upper(total_letters))
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'bon de achat_{order.intern_reference}.pdf',
+                      automatic_download=False)
+
+
+
+
+@admin_bp.get('/purchase/orders/<int:o_id>/delete')
+@login_required
+def delete_purchase_order(o_id):
+    session['endpoint'] = 'purchase'
+    order = Order.query.filter_by(category="achat").filter_by(id = o_id).first()
+
+    if not order:
+        return render_template('errors/404.html', blueprint="admib_bp")
+
+    user_for_company = UserForCompany.query.filter_by(fk_user_id=current_user.id) \
+                                            .filter_by(role="manager").first()
+
+    if order.fk_company_id != user_for_company.fk_company_id:
+        return render_template('errors/404.html', blueprint="admin_bp")
+
+    for e in order.entries:
+        db.session.delete(e)
+        db.session.commit()
+    order.is_deleted = True
+    db.session.add(order)
+    db.session.commit()
+    flash('Objet Supprimé avec succès', 'success')
+    return redirect(url_for('admin_bp.purchases_orders'))
+
+
+@admin_bp.get('/purchases/orders/<int:o_id>/receipt')
+@login_required
+def order_receipt(o_id):
+    session['endpoint']="purchase"
+    order = Order.query.get(o_id)
+    if not order:
+        return render_template("errors/404.html", blueprint="admin_bp")
+
+    if order.category != "achat":
+        return render_template('errors/404.html', blueprint="admin_bp")
+
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
+    if order.fk_company_id != company:
+        return render_template('errors/404.html',
+                               blueprint="admin_bp")
+
+    if order.is_canceled:
+        flash('Impossible de créer un bon réception pour une commande annulé','danger')
+        return redirect(url_for('admin_bp.purchases_orders'))
+    order.is_delivered = True
+    db.session.add(order)
+    db.session.commit()
+    p_receipt = PurchaseReceipt()
+    last_q = PurchaseReceipt.query.filter_by(fk_company_id=company).order_by(
+        PurchaseReceipt.created_at.desc()).first()
+    p_receipt.intern_reference = "BR-1/" + str(datetime.now().date().year)
+    if last_q:
+        last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
+        year = int( last_q.intern_reference.split('-')[1].split('/')[1])
+        if year == datetime.now().date().year:
+            p_receipt.intern_reference = "BR-" + str(last_intern_ref + 1) + "/" + str(datetime.now().date().year)
+    p_receipt.fk_supplier_id = order.fk_supplier_id
+    p_receipt.created_by = current_user.id
+    p_receipt.total = order.total
+    p_receipt.fk_company_id = order.fk_company_id
+    p_receipt.fk_order_id = order.id
+    db.session.add(p_receipt)
+    db.session.commit()
+    for e in order.entries:
+        e.fk_purchase_receipt_id = p_receipt.id
+        stock = Stock.query.filter_by(fk_item_id = e.fk_item_id).first()
+        if stock:
+            stock.stock_qte += e.quantity
+            stock.last_purchase_price = e.unit_price
+            db.session.add(stock)
+            db.session.commit()
+        # else:
+            # flash(f'Veuillez rajouter des stock pour le produit {Item.query.get(e.fk_item_id)}','warning')
+            # return redirect(url_for('purchases_bp.purchases_receipts'))
+        db.session.add(e)
+        db.session.commit()
+    flash(f'Entrée {p_receipt.intern_reference} sauvegardée','success')
+    print('''
+    générer un PDF à télécharger par le manager et le magasiner
+    ''')
+    return redirect(url_for('admin_bp.purchases_orders'))
+
+
+
+@admin_bp.get('/purchase/receipt/<int:r_id>/print')
+@login_required
+def print_receipt(r_id):
+    receipt = PurchaseReceipt.query.filter_by(id=r_id).first()
+    if not receipt:
+        return render_template('errors/404.html', blueprint='admin_bp')
+    company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id=current_user.id).first()
+    if not company:
+        return render_template('errors/401.html')
+    if receipt.fk_company_id != company.fk_company_id:
+        return render_template('errors/401.html')
+    company = Company.query.get(company.fk_company_id)
+    total_letters = num2words(receipt.total, lang='fr')+" dinars algérien"
+    virgule = receipt.total - float(int(receipt.total))
+    if virgule>0:
+        total_letters += f' et {int(round(virgule, 2))} centimes'
+    html = render_template('printouts/printable_template.html',
+                    company = company.repr(),
+                    object=receipt.repr_(),
+                    titre="Bon de réception",
+                    total_letters=str.upper(total_letters))
+
+    response = HTML(string=html)
+    return render_pdf(response,
+                      download_filename=f'bon de réception_{receipt.intern_reference}.pdf',
+                      automatic_download=False)
+
+
+
+@admin_bp.get('/purchase/receipt/<int:r_id>/invoice')
+@admin_bp.post('/purchase/receipt/<int:r_id>/invoice')
+@login_required
+def receipt_invoice(r_id):
+    receipt=PurchaseReceipt.query.get(r_id)
+    if not receipt:
+        return render_template('errors/404.html', blueprint="admin_bp")
+    company =  UserForCompany.query.filter_by(role="magasiner") \
+                                    .filter_by(fk_user_id=current_user.id) \
+                                        .first().fk_company_id
+    if receipt.fk_company_id != company:
+        return render_template('errors/404.html', blueprint="admin_bp")
+
+    invoice = Invoice.query.filter_by(fk_receipt_id=receipt.id).first()
+    if invoice:
+        flash('Bon déjà facturé','warning')
+        return redirect(url_for('admin_bp.purchase_receipts'))
+    form = InvoiceForm()
+    sum_amounts = 0
+    if request.method=="GET":
+        form.recipient.data = Supplier.query.get(receipt.fk_supplier_id)
+        form.order_date.data = receipt.created_at.date()
+        for entry in receipt.entries:
+            sum_amounts += entry.quantity*entry.unit_price
+            form.entities.append_entry({
+                    'item': Item.query.get(entry.fk_item_id),
+                    'unit_price': entry.unit_price,
+                    'quantity': entry.quantity,
+                    'amount': entry.quantity*entry.unit_price
+                })
+
+    if form.validate_on_submit():
+        invoice = Invoice()
+        invoice.fk_company_id = company
+        invoice.fk_supplier_id = form.recipient.data.id
+        invoice.total = receipt.total
+        invoice.created_by=current_user.id
+        invoice.fk_receipt_id = receipt.id
+        invoice.is_valid = True
+        invoice.inv_type = "achat"
+        invoice.reference_supplier_invoice = None
+        if form.reference_supplier_invoice.data:
+            invoice.reference_supplier_invoice = form.reference_supplier_invoice.data
+        last_q = Invoice.query.filter_by(inv_type="achat").filter_by(fk_company_id=company).order_by(
+            Invoice.created_at.desc()).first()
+        invoice.intern_reference = "FAC-1/" + str(datetime.now().date().year)
+        if last_q:
+            last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
+            year =int(last_q.intern_reference.split('-')[1].split('/')[1])
+            if year == datetime.now().date().year:
+                invoice.intern_reference = "FAC-" + str(last_intern_ref + 1)  + "/" + str(datetime.now().date().year)
+
+        invoice.fk_order_id = PurchaseReceipt.query.get(invoice.fk_receipt_id).fk_order_id
+        db.session.add(invoice)
+        db.session.commit()
+        for entry in receipt.entries:
+            entry.fk_invoice_id = invoice.id
+            db.session.add(entry)
+            db.session.commit()
+        flash('Document sauvegardée','success')
+        return redirect(url_for("admin_bp.purchase_receipts"))
+    return render_template('purchases/new_invoice.html',somme=sum_amounts,
+                           nested=InvoiceEntryField(), form=form)

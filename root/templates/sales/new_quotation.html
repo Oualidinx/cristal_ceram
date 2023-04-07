@@ -194,7 +194,6 @@
         $(document).ready(function() {
             $('.select-item').change(function(){
                 const onlyInputs = $(this).parent().parent().find('input');
-                console.log(onlyInputs[1]);
                 $.ajax({
                     url:"{{ url_for('sales_bp.get_unit') }}",
                     type:'POST',
@@ -205,9 +204,10 @@
                     statusCode:{
                         200:function (data){
                             onlyInputs[1].setAttribute('value',data.unit);
+                            onlyInputs[2].setAttribute('value',data.price);
                         }
                     }
-                })
+                });
             });
             $('.toast').toast('show');
             $('.select-client').select2({

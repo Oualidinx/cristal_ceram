@@ -2,9 +2,13 @@
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}" />
+    <link rel="stylesheet" href="{{ url_for('static',filename='css/colors.css') }}" />
 {% endblock %}
 
 {% block main_tag %}
+    <div class="container">
+
+
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -24,7 +28,7 @@
                 {% endif %}
             {% endwith %}
         </div>
-        <div class="row mt-5 w-75">
+        <div class="row mt-5">
             <div class="card">
                 <div class="card-body">
                     <form method="post">
@@ -204,34 +208,51 @@
                                 {{ form.unit.label }}
                             </div>
                         </div>
-                        <div class="col-md">
-                            <div class="form-floating">
-                                {% if form.piece_per_unit.errors %}
-                                    <div class="input-group has-validation">
-                                        {{ form.piece_per_unit(class="form-control is-invalid") }}
-                                        {% for error in form.piece_per_unit.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    {{ form.piece_per_unit(class="form-control") }}
-                                {% endif %}
-                                {{ form.piece_per_unit.label }}
+                            <div class="col-md">
+                                <div class="form-floating">
+                                    {% if form.piece_per_unit.errors %}
+                                        <div class="input-group has-validation">
+                                            {{ form.piece_per_unit(class="form-control is-invalid") }}
+                                            {% for error in form.piece_per_unit.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        </div>
+                                    {% else %}
+                                        {{ form.piece_per_unit(class="form-control") }}
+                                    {% endif %}
+                                    {{ form.piece_per_unit.label }}
+                                </div>
                             </div>
-                        </div>
+{#                            <div class="col-md">#}
+{#                                <div class="form-floating">#}
+{#                                    {% if form.sale_price.errors %}#}
+{#                                        <div class="input-group has-validation">#}
+{#                                            {{ form.sale_price(class="form-control is-invalid") }}#}
+{#                                            {% for error in form.sale_price.errors %}#}
+{#                                                <div class="invalid-feedback">#}
+{#                                                    {{ error }}#}
+{#                                                </div>#}
+{#                                            {% endfor %}#}
+{#                                        </div>#}
+{#                                    {% else %}#}
+{#                                        {{ form.sale_price(class="form-control") }}#}
+{#                                    {% endif %}#}
+{#                                    {{ form.sale_price.label }}#}
+{#                                </div>#}
+{#                            </div>#}
                         </div>
                         <div class="row mb-4">
                             <div class="col-sm">
-                                {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
+                                {{ form.submit(class="btn btn-outline-primary rounded rounded-pill") }}
                             </div>
                         </div>
                     </form>
                 </div>
             </div>
         </div>
-
+    </div>
 {% endblock %}
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
@@ -254,5 +275,5 @@
     </script>
 {% endblock %}
 {% block actual_title %}
-    <h5 class="h5">Ajouter un article</h5>
+    <span class="text-color-classic-blue fw-bold">Ajouter un article</span>
 {% endblock %}

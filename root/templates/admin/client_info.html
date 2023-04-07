@@ -1,11 +1,85 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
+    <link rel="stylesheet" href='{{url_for("static", filename="css/colors.css")}}'>
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
 {% endblock %}
 
-
 {% block main_tag %}
-    <div class="row mt-lg-5">
+    <div class="row">
+        <div class="col-auto">
+            <h1 class="text-color text-upper-case fw-bold">Détails revenus par client</h1>
+        </div>
+    </div>
+
+    <div class="row mb-4 mt-5 " style="column-gap: 5px;">
+        <div class="col-md">
+            <div class="card"  style="border-left: 0.25em solid #34568B;">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                total
+                            </div>
+                            <div class="h4 text-color-classic-blue fw-bold">
+                                {{ '{:,.2f}'.format(item['total']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-produit">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                réglées
+                            </div>
+                            <div class="h4 text-color-arcadia fw-bold">
+                                {{ '{:,.2f}'.format(item['adjusted']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-supplier">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                à régler
+                            </div>
+                            <div class="h4 text-color-valiant fw-bold">
+                                {{ '{:,.2f}'.format(item['to_adjust']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="toast-container position-absolute top-0 end-0 p-3">
@@ -23,9 +97,10 @@
             {% endif %}
         {% endwith %}
     </div>
+    <hr class="hr" style="border: 0.09em solid ; margin: 1em; margin-bottom: 2em;"/>
     <div class="row g-lg-4">
         <div class="col-md">
-            <h4 class="h2 mb-4">Détails</h4>
+            <h4 class="h4 mb-4 text-color text-upper-case fw-bold">Informations client</h4>
             <table class="table table-hover">
                   <tbody>
                         {% if item %}
@@ -51,8 +126,9 @@
                   </tbody>
             </table>
         </div>
+        
         <div class="col-md-8">
-            <h4  class="h3 mb-5">Etat des commandes</h4>
+            <h4  class="h4 mb-5 text-color text-upper-case fw-bold">État des commandes</h4>
             <div id="table"></div>
             <div class="row w-50">
                 <table class="table table-hover">

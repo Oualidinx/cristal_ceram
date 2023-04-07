@@ -9,75 +9,6 @@
 
 {% block main_tag %}
     <div class="row g-3 mb-4 mt-4">
-        <div class="col-md">
-            <div class="card"  style="border-left: 0.25em solid #34568B;">
-                <div class="card-body">
-                    <div class="row p-1 align-items-center justify-content-between">
-                        <div class="col-md">
-                            <div class="text-small text-color text-upper-case fw-bold mb-2">
-                                total
-
-                            </div>
-                            <div class="h5 text-color-classic-blue fw-bold">
-                                [Valeur]
-                            </div>
-                        </div>
-                        <div class="col-auto mr-4">
-                            <span class="h1 text-color-grey">
-                                <i class="fa-solid fa-people-group"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md">
-            <div class="card border-left-produit">
-                <div class="card-body">
-                    <div class="row p-1 align-items-center justify-content-between">
-                        <div class="col-md">
-                            <div class="text-small text-color text-upper-case fw-bold mb-2">
-                                réglées
-                            </div>
-                            <div class="h5 text-color-arcadia fw-bold">
-                                [Valeur]
-                            </div>
-                        </div>
-                        <div class="col-auto mr-4">
-                            <span class="h1 text-color-grey">
-                                <i class="fa-solid fa-people-group"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="col-md">
-            <div class="card border-left-supplier">
-                <div class="card-body">
-                    <div class="row p-1 align-items-center justify-content-between">
-                        <div class="col-md">
-                            <div class="text-small text-color text-upper-case fw-bold mb-2">
-                                à régler
-                            </div>
-                            <div class="h5 text-color-valiant fw-bold">
-                                [Valeur]
-                            </div>
-                        </div>
-                        <div class="col-auto mr-4">
-                            <span class="h2 text-color-grey">
-                                <i class="fa-solid fa-boxes-stacked"></i>
-                            </span>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-    </div>
-    <div class="row mt-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
                 <div class="toast-container position-absolute top-0 end-0 p-3">
@@ -94,7 +25,75 @@
                 </div>
             {% endif %}
         {% endwith %}
+        <div class="col-md">
+            <div class="card"  style="border-left: 0.25em solid #34568B;">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                total
 
+                            </div>
+                            <div class="h4 text-color-classic-blue fw-bold">
+                                {{ '{:,.2f}'.format(item['total']+item['rest_to_adjust']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-produit">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                réglées
+                            </div>
+                            <div class="h4 text-color-arcadia fw-bold">
+                                 {{ '{:,.2f}'.format(item['adjusted_invoices'] + item['total']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md">
+            <div class="card border-left-supplier">
+                <div class="card-body">
+                    <div class="row p-1 align-items-center justify-content-between">
+                        <div class="col-md">
+                            <div class="text-small text-color text-upper-case fw-bold mb-2">
+                                à régler
+                            </div>
+                            <div class="h4 text-color-valiant fw-bold">
+                                {{ '{:,.2f}'.format(item['rest_to_adjust']) }} DZD
+                            </div>
+                        </div>
+                        <div class="col-auto mr-4">
+                            <span class="h1 text-color-grey">
+                                <i class="fa-solid fa-coins"></i>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+    <div class="row mt-5">
         <div class="col" style="position: relative; text-align: right">
             <button role="button" class="btn btn-outline-success rounded rounded-pill" data-bs-toggle="modal" data-bs-target="#NouvelleDepense">
                 <i class="fa fa-circle-plus"></i>
@@ -274,7 +273,7 @@
                 })
             },
             search: {
-              selector: (cell, rowIndex, cellIndex) => [0, 1, 2].includes(cellIndex) ? cell : null,
+              selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

@@ -1,4 +1,4 @@
-{% extends "layouts/purchases_layout.html" %}
+{% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
     <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
 {% endblock %}
@@ -24,7 +24,7 @@
         {% endwith %}
         <div class="col" style="position: relative; text-align: right">
             <a role="button" class="btn btn-outline-success rounded-pill"
-               href="{{ url_for('purchases_bp.new_purchase_receipt') }}">
+               href="{{ url_for('admin_bp.new_purchase_receipt') }}">
                 <i class="fa fa-plus"></i>
                    Ajouter
             </a>
@@ -33,7 +33,7 @@
     </div>
 {% endblock %}
 {% block actual_title %}
-    Bons de retours
+    Bons de réception
 {% endblock %}
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
@@ -91,7 +91,7 @@
                                 {
                                     index: '{{ order["index"] }}',
                                     intern_reference: '{{ order["intern_reference"] }}',
-                                    order: gridjs.html(`<a class="link-info" href="{{ url_for('purchases_bp.print_order', o_id= order['order_id']) }}">{{ order['order'] }}</a>`),
+                                    order: gridjs.html(`<a class="link-info" href="{{ url_for('admin_bp.print_purchase_order', o_id= order['order_id']) }}">{{ order['order'] }}</a>`),
                                     supplier: '{{ order['beneficiary'] }}',
                                     supplier_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
@@ -112,7 +112,7 @@
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
                                                     <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('purchases_bp.print_receipt', r_id=order['id']) }}"
+                                                        href="{{ url_for('admin_bp.print_receipt', r_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
                                                     <div class="btn-group dropstart" >
@@ -121,7 +121,7 @@
                                                         </button>
                                                         {% if not order['invoice'] %}
                                                             <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
+                                                                <li><a class="dropdown-item" href="{{ url_for('admin_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
                                                             </ul>
                                                         {% endif %}
                                                     </div>

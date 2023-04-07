@@ -5,10 +5,10 @@ from root import database as db
 from flask_login import login_required, current_user
 from root.ventes import sales_bp
 from root.models import UserForCompany, Quotation, Entry, Item, Order, Invoice, Client, DeliveryNote
-from root.models import ExitVoucher, Stock, Company, Pay, Contact
+from root.models import ExitVoucher, Stock, Company, Pay, Contact, Supplier
 from root.ventes.forms import QuotationForm, EntryField, OrderForm, ExitVoucherEntryField, ExitVoucherForm
 from root.ventes.forms import PaiementForm, ClientForm
-from sqlalchemy import or_, func
+from sqlalchemy import or_, func, and_
 from flask_weasyprint import HTML, render_pdf
 from num2words import num2words
 
@@ -24,6 +24,7 @@ def sales_before_request():
 def index():
     if 'endpoint' in session:
         del session['endpoint']
+    
     return render_template('sales/index.html')
 
 
@@ -187,18 +188,14 @@ def add_quotation():
         _q.fk_company_id = company
         _q.fk_client_id= form.client.data.id
         _q.total = sum_amounts
-        _q.intern_reference = "DEV-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
-        # db.session.add(_q)
-        # db.session.commit()
-
-        # print(last_q.repr())
+        # _q.intern_reference = "DEV-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        _q.intern_reference = "DEV-1/" + str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
-            year = int(last_q.intern_reference.split('-')[1].split('/')[2])
+            year = int(last_q.intern_reference.split('-')[1].split('/')[1])
             if year == datetime.datetime.now().date().year :
-                _q.intern_reference = "DEV-"+str(last_intern_ref+1)+"/"+str(company)+"/"+str(datetime.datetime.now().date().year)
-
-
+                _q.intern_reference = "DEV-"+str(last_intern_ref+1)+"/"+str(datetime.datetime.now().date().year)
+                # _q.intern_reference = "DEV-"+str(last_intern_ref+1)+"/"+str(company)+"/"+str(datetime.datetime.now().date().year)
         db.session.add(_q)
         db.session.commit()
         for e in entities:
@@ -312,21 +309,21 @@ def quotation_order(q_id):
         flash(f'Devis {quotation.intern_reference} déjà approuver et convertie en commande','warning')
         return redirect(url_for('sales_bp.quotations'))
 
-    # for entry in quotation.entries:
-    #     item = Item.query.get(entry.fk_item_id)
-    #     if item.stock_quantity < entry.quantity:
-    #         flash(f'Le stock du produit {item.label} est insuffisant pour ce devis','danger')
-    #         return redirect(url_for('sales_bp.quotations'))
+    for entry in quotation.entries:
+        item = Item.query.get(entry.fk_item_id)
+        if item.stock_quantity < entry.quantity:
+            flash(f'Le stock du produit {item.label} est insuffisant pour ce devis','danger')
+            return redirect(url_for('sales_bp.quotations'))
 
     last_o = Order.query.filter_by(fk_company_id=company).order_by(Order.id.desc()).first()
     order = Order()
-    order.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+    # order.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+    order.intern_reference = "BC-1/" + str(datetime.datetime.now().date().year)
     if last_o:
         last_intern_ref = int(last_o.intern_reference.split('-')[1].split('/')[0])
-        year = int(last_o.intern_reference.split('-')[1].split('/')[2])
+        year = int(last_o.intern_reference.split('-')[1].split('/')[1])
         if year == datetime.datetime.now().date().year:
-            order.intern_reference = "BC-" + str(last_intern_ref + 1) + "/" + str(company) + "/" + str(
-                datetime.datetime.now().date().year)
+            order.intern_reference = "BC-" + str(last_intern_ref + 1) + "/" + str(datetime.datetime.now().date().year)
 
     order.fk_client_id = quotation.fk_client_id
     order.category="vente"
@@ -344,10 +341,6 @@ def quotation_order(q_id):
         item.stock_quantity -= entry.quantity
         db.session.add(item)
         db.session.commit()
-        # _.fk_item_id = entry.fk_item_id
-        # _.quantity = entry.quantity
-        # _.total_price = entry.total_price
-        # _.unit_price = entry.unit_price
         db.session.add(entry)
         db.session.commit()
     flash(f'Commande {order.intern_reference} ajoutée', 'success')
@@ -375,18 +368,27 @@ def order_invoice(o_id):
     if invoice:
         flash(f'Commande {order.intern_reference} déjà facturée','warning')
         return redirect(url_for('sales_bp.orders'))
+
+    # item = Item.query.get(entry.item.data.id)
+    # if item.stock_quantity < entry.quantity.data or entry.quantity.data >= item.stock_sec:
+    #     flash(f'Le stock du produit {item.label} est insuffisant pour ce devis', 'danger')
+    #     # return redirect(url_for('sales_bp.quotations'))
+    #     return render_template("sales/new_order.html",
+    #                            form=form, nested=EntryField(),
+    #                            somme=sum_amounts)
     entities = order.entries
     last_o = Invoice.query.filter_by(fk_company_id=company).order_by(Invoice.id.desc()).first()
     invoice = Invoice()
     invoice.inv_type="vente"
     invoice.fk_order_id = order.id
     invoice.fk_company_id = company
-    invoice.intern_reference = "FAC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+    invoice.intern_reference = "FAC-1/" + str(datetime.datetime.now().date().year)
+    # invoice.intern_reference = "FAC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
     if last_o:
         last_intern_ref = int(last_o.intern_reference.split('-').split('/')[0])
-        year = int(last_o.intern_reference.split('/')[2])
+        year = int(last_o.intern_reference.split('/')[1])
         if year == datetime.datetime.now().date().year:
-            invoice.intern_reference = "FAC-" + str(last_intern_ref + 1) + "/" + str(company) + "/" + str(
+            invoice.intern_reference = "FAC-" + str(last_intern_ref + 1) + "/" + str(
             datetime.datetime.now().date().year)
 
     invoice.fk_client_id = order.fk_client_id
@@ -483,6 +485,13 @@ def add_order():
                                            somme = sum_amounts)
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
+                item = Item.query.get(entry.item.data.id)
+                if item.stock_quantity < entry.quantity.data or entry.quantity.data >= item.stock_sec:
+                    flash(f'Le stock du produit {item.label} est insuffisant pour cette commande', 'danger')
+                    # return redirect(url_for('sales_bp.quotations'))
+                    return render_template("sales/new_order.html",
+                                           form=form, nested=EntryField(),
+                                           somme=sum_amounts)
                 _.in_stock = entry.item.data.stock_quantity
                 _.unit_price = entry.unit_price.data
                 _.quantity = entry.quantity.data
@@ -511,33 +520,30 @@ def add_order():
                     sum_amounts += entry.amount.data
             return render_template('sales/new_order.html', form=form, nested=EntryField(), somme=sum_amounts)
 
-        # if form.quotation_date.data:
-        #     _q.created_at = form.quotation_date.data
         _q.created_by = current_user.id
         _q.fk_company_id = company
         _q.fk_client_id= form.client.data.id
         _q.total = sum_amounts
-        # db.session.add(_q)
-        # db.session.commit()
-        _q.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        # _q.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        _q.intern_reference = "BC-1/" + str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
-            year = int(last_q.intern_reference.split('-')[1].split('/')[2])
+            year = int(last_q.intern_reference.split('-')[1].split('/')[1])
 
-            _q.intern_reference = "BC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+            _q.intern_reference = "BC-1/" + str(datetime.datetime.now().date().year)
             if year == datetime.datetime.now().date().year :
-                _q.intern_reference = "BC-"+str(last_intern_ref+1)+"/"+str(company)+"/"+str(datetime.datetime.now().date().year)
+                _q.intern_reference = "BC-"+str(last_intern_ref+1)+"/"+str(datetime.datetime.now().date().year)
         # db.session.add(_q)
         # db.session.commit()
         for e in entities:
             sum_amounts += e.total_price
             e.fk_order_id = _q.id
             
-            item = Item.query.get(entry.fk_item_id)
+            item = Item.query.get(e.fk_item_id)
             e.in_stock = item.stock_quantity
             db.session.add(e)
             db.session.commit()
-            item.stock_quantity -= entry.quantity
+            item.stock_quantity -= e.quantity
             db.session.add(item)
             db.session.commit()
         _q.total = sum_amounts
@@ -601,10 +607,10 @@ def invoices():
         pay.fk_company_id = user_for_company.fk_company_id
         pay.fk_invoice_id = invoice.id
         pay.created_by = current_user.id
-        pay.amount = invoice.total
+        pay.amount = float(form.amount.data)
         pay.is_in_cash = True
         pay.label = f"paiement de la facture  {invoice.intern_reference}"
-        pay.pay_information=f"Paiement d'une facture d'où de code = {invoice.intern_reference} générée par {User.query.get(current_user.id).full_name} avec total de {invoice.total}, le {invoice.created_at.date()}"
+        pay.pay_information=f"Paiement d'une facture d'où de code = {invoice.intern_reference} générée par {User.query.get(invoice.created_by).full_name} avec total de {invoice.total}, le {invoice.created_at.date()}"
         db.session.add(pay)
         db.session.commit()
         flash(f'{form.data.get("code")} a été payée','success')
@@ -717,7 +723,7 @@ def get_unit():
     item = Item.query.get(int(data['item_id']))
     if not item:
         return '',404
-    return jsonify(unit=item.unit),200
+    return jsonify(unit=item.unit, price = item.sale_price if item.sale_price else 0),200
 
 
 @sales_bp.post('/price')
@@ -811,60 +817,27 @@ def add_exit_voucher():#Créer un bon de livraison
                                            )
                 _ = Entry()
                 _.fk_item_id = entry.item.data.id
-                
-                # _.purchase_price = entry.purchase_price.data
+                _.in_stock = entry.item.data.stock_quantitys
                 _.quantity = entry.quantity.data
-                # _.total_price = entry.amount.data
                 entities.append(_)
         if form.add.data:
-            # if enumerate(form.entities):
-            #     for _index, entry in enumerate(form.entities):
-            #         if entry.quantity.data:
-            #             entry.amount.data = entry.purchase_price.data * entry.quantity.data
-            #         sum_amounts += entry.amount.data
             form.entities.append_entry({
                 'item': Item.query.filter_by(is_disabled=False) \
                     .filter_by(fk_company_id=UserForCompany.query.filter_by(role="vendeur") \
                                .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
-                # 'unit_price': 0,
                 'quantity': 1,
-                # 'amount': 0
             })
             return render_template('sales/add_exit_voucher.html', form=form, nested=ExitVoucherEntryField(),
-                                   # somme=sum_amounts
                                    )
-        # if form.fin.data:
-        #     if enumerate(form.entities):
-        #         for _index, entry in enumerate(form.entities):
-        #             if entry.quantity.data:
-        #                 entry.amount.data = entry.purchase_price.data * entry.quantity.data
-        #             sum_amounts += entry.amount.data
-            # return render_template('purchases/add_exit_voucher.html', form=form,
-            #                        nested=ExitVoucherEntryField(),
-            #                        somme=sum_amounts
-                                   # )
-
-        # if form.exit_date.data:
-        #     _q.created_at = form.exit_date.data
         _q.created_by = current_user.id
-        # _q.fk_company_id = company
-        # _q.fk_client_id = form.client.data.id
-        # _q.total = sum_amounts
-        # db.session.add(_q)
-        # db.session.commit()
-        _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+        _q.intern_reference = "BS-1/" + str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
-            year = int(last_q.intern_reference.split('-')[1].split('/')[2])
-            _q.intern_reference = "BS-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
+            year = int(last_q.intern_reference.split('-')[1].split('/')[1])
             if year == datetime.datetime.now().date().year:
-                _q.intern_reference = "BS-" + str(last_intern_ref + 1) + "/" + str(company) + "/" + str(
-                    datetime.datetime.now().date().year)
-        # db.session.add(_q)
-        # db.session.commit()
+                _q.intern_reference = "BS-" + str(last_intern_ref + 1) + "/" + str(datetime.datetime.now().date().year)
         for e in entities:
             e.fk_exit_voucher_id = _q.id
-            e.in_stock = entry.item.data.stock_quantity
             db.session.add(e)
             db.session.commit()
             item = Item.query.get(e.fk_item_id)

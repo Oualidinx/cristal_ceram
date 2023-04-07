@@ -1,66 +1,225 @@
 {% extends "layouts/admin_layout.html" %}
-{% block actual_title %}
-    <div class="mb-4">
-        Nouvelle langue
-    </div>
-{% endblock %}
 {% block main_tag %}
-    <div class="container">
+    <div class="row">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                {% for category , message in messages %}
-                    <div class="toast-container position-fixed bottom-0 end-0 p-3">
+                <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                    {% for category, message in messages %}
                         <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                          <div class="d-flex">
-                            <div class="toast-body">
-                            {{ message }}
-                           </div>
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
                             <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
                           </div>
                         </div>
-                    </div>
-                {% endfor %}
+                    {% endfor %}
+                </div>
             {% endif %}
         {% endwith %}
-        <div class="row">
-            <form method="post">
-                {{form.hidden_tag()}}
-                <div class="row">
-                    <div class="mb-4">
-                        <div class="col-md-6">
-                            {{ form.label.label(class="form-control-label") }}
+    </div>
+    <div class="row mt-5">
+        <div class="card">
+            <div class="card-body">
+                <form id="form" method="POST">
+                    {{form.hidden_tag()}}
+                    <div class="row g-1 justify-content-end p-3">
+                        <div class="col-md-1">
+                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                        </div>
+                    {% if new_command and new_command==true %}
+                        <div class="col-md-2">
+                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_order') }}">
+                                <i class="fa fa-plus"></i>
+                                   Nouvelle commande
+                            </a>
+                        </div>
+                    {% endif %}
+                        {% if to_print and to_print==True %}
+                            <div class="col-md-1">
+                                <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                </a>
+                            </div>
+                        {% endif %}
+
+                    </div>
+                    <div class="row g-1 mb-4">
+                        <div class="col-md">
                             <div class="input-group has-validation">
-                                {% if form.label.errors %}
-                                    {{ form.label(class="form-control form-control-md is-invalid") }}
-                                    {% for error in form.label.errors %}
+                                <div class="input-group-text"> {{ form.fournisseur.label }}</div>
+                                {% if form.fournisseur.errors %}
+                                    {{ form.fournisseur(class="select-fournisseur form-select is-invalid") }}
+                                    {% for error in form.fournisseur.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
+
+                                {% else %}
+                                    {{ form.fournisseur(class="select-fournisseur form-select") }}
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="col-md">
+                            <div class="input-group has-validation">
+                                <div class="input-group-text"> {{ form.order_date.label }}</div>
+                                {% if form.order_date.errors %}
+                                    {{ form.order_date(class="form-select is-invalid") }}
+                                    {% for error in form.order_date.errors %}
                                         <div class="invalid-feedback">
                                             {{ error }}
                                         </div>
                                     {% endfor %}
                                 {% else %}
-                                    {{ form.label(class="form-control form-control-md") }}
+                                    {{ form.order_date(class="form-select") }}
                                 {% endif %}
                             </div>
                         </div>
                     </div>
-                </div>
-                <div class="row" style="text-align: right;">
-                    <div class="col-md-6">
-                        <div class="mb-4">
-                            {{ form.submit(class="btn btn-md btn-primary") }}
+                    {#      Table Heading      #}
+                    <div class="row g-5 mb-lg-3 text-center">
+                        <div class="col-md-5">
+                            {{ nested.item.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.quantity.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.unit_price.label }}
+                        </div>
+                        <div class="col-md-2">
+                            {{ nested.amount.label }}
+                        </div>
+                        <div class="col-md-1">
+                            Actions
                         </div>
                     </div>
-                </div>
-            </form>
+                    {#      Table Rows      #}
+                    {% for entry in form.entities %}
+                        <div class="row g-1 mb-sm-4">
+                            <div class="col-sm-5">
+                                {% if entry.item.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ entry.item(class="select-item form-select-sm is-invalid") }}
+                                        {% for error in entry.item.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ entry.item(class="select-item form-select-sm") }}
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group input-group-sm has-validation">
+                                    {% if entry.quantity.errors %}
+                                        {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.quantity.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ entry.quantity(class="form-control form-control-sm") }}
+                                    {% endif %}
+                                    <div class="input-group-text" id="unit"></div>
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group has-validation">
+                                    {% if entry.unit_price.errors %}
+
+                                        {{ entry.unit_price(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.unit_price.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ entry.unit_price(class="form-control form-control-sm") }}
+                                    {% endif %}
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                <div class="input-group input-group-sm has-validation">
+                                    {% if entry.amount.errors %}
+                                        {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.amount.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    {% else %}
+                                        {{ entry.amount(value=entry.amount.data, class="form-control form-control-sm") }}
+                                    {% endif %}
+                                    <div class="input-group-text">DZD</div>
+                                </div>
+                            </div>
+                            <div class="col-sm-1 text-center">
+                                {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="row mb-4" >
+                        <div class="col-sm">
+                            {{ form.add(class='btn btn-sm rounded-pill') }}
+                            {{ form.fin(class='btn btn-sm btn-success rounded-pill') }}
+                        </div>
+                    </div>
+                    <div class="row  justify-content-end mb-4">
+                        <div class="col-md-5 p-5">
+                            <h2 class="h2"><span class="fw-bold">Total: </span>{{ "{:,.2f}".format(somme) }} DZD</h2>
+                        </div>
+                    </div>
+                </form>
+            </div>
         </div>
     </div>
+{% endblock %}
+{% block additional_styles %}
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
+{% endblock %}
 
+{% block actual_title %}
+    Commande fournisseur
 {% endblock %}
 
 {% block additional_scripts %}
+    <script src="{{ url_for('static', filename='js/select2.min.js') }}"></script>
     <script>
-        $(document).ready(function (){
+        $(document).ready(function() {
+            $('.select-item').change(function(){
+               const onlyInputs = $(this).parent().parent().find('input');
+                $.ajax({
+                    url:"{{ url_for('admin_bp.get_unit') }}",
+                    type:'POST',
+                    data:JSON.stringify({
+                        item_id:$(this).val()
+                    }),
+                    contentType:'application/json',
+                    statusCode:{
+                        200:function (data){
+                            onlyInputs[0].setAttribute('value',data.unit);
+                            onlyInputs[1].setAttribute('value',data.price);
+                        }
+                    }
+                })
+            });
             $('.toast').toast('show');
+            $('.select-fournisseur').select2({
+                theme: "bootstrap-5",
+                width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style'
+            });
+            $('.select-item').select2({
+                 theme: "bootstrap-5",
+                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
+                 selectionCssClass: 'select2--small',
+                 dropdownCssClass: 'select2--small',
+            });
         });
     </script>
 {% endblock %}

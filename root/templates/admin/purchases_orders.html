@@ -1,0 +1,146 @@
+{% extends "layouts/admin_layout.html" %}
+{% block additional_styles %}
+    <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+{% endblock %}
+{% block main_tag %}
+    <div class="row mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute top-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-black fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+        <div class="col" style="position: relative; text-align: right">
+            <a role="button" class="btn btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_order') }}">
+                <i class="fa fa-plus"></i>
+                   Ajouter
+            </a>
+            <div id="table"></div>
+        </div>
+    </div>
+{% endblock %}
+{% block actual_title %}
+    Commandes fournisseur
+{% endblock %}
+{% block additional_scripts %}
+    <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
+    <script>
+        $(document).ready(function (){
+            $('.toast').toast('show');
+        });
+        new gridjs.Grid({
+            autoWidth:true,
+            fixedHeader:true,
+            style:{
+                table:{
+                    'width':"100%"
+                }
+            },
+            language:{
+                search: {
+                  placeholder: 'Recherche...',
+                },
+                sort: {
+                  sortAsc: 'Ordre croissant',
+                  sortDesc: 'Ordre décroissant',
+                },
+                pagination: {
+                  previous: 'Précédent',
+                  next: 'Suivant',
+                  navigate: (page, pages) => `Page ${page} of ${pages}`,
+                  page: (page) => `Page ${page}`,
+                  showing: 'Affichage..',
+                  of: 'de',
+                  to: 'à',
+                  results: 'résultats',
+                },
+                loading: 'Chargement...',
+                noRecordsFound: 'Aucun enregistrements',
+                error: 'Erreur pendant le chargement des données'},
+            columns: [
+                    { id: 'index',              name: '' },
+                    { id: 'intern_reference',   name: 'Code' },
+                    { id: 'supplier',             name: 'Fournisseur' },
+                    { id: 'supplier_contact',     name: 'Contact' },
+                    { id: 'created_at',         name: 'Date' },
+                    { id: 'total',              name: 'Montant' },
+                    { id: 'status',             name: 'État' },
+                    {#{ id: 'delivery_date',      name: 'Date de livraison' },#}
+                    { id: "actions",            name:'Actions'}
+            ],
+            data: () => {
+             return new Promise(resolve => {
+                 setTimeout(()=>
+                    resolve(
+                        [
+                        {% if liste %}
+                            {% for order in liste %}
+                                {
+                                    index: '{{ order["index"] }}',
+                                    intern_reference: '{{ order["intern_reference"] }}',
+                                    supplier: '{{ order['beneficiary'] }}',
+                                    supplier_contact: '{{ order['beneficiary_contact'][0] }}',
+                                    created_at: '{{ order["created_at"] }}',
+                                    total: '{{ order["total"] }}',
+                                     {% if not order['is_delivered'] and not order['is_canceled'] %}
+                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">
+                                                            Non traité</span>`),
+
+                                            {% else %}
+                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}};">
+                                                                {{ order['is_delivered'][0]}}</span>
+                                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}};">
+                                                                {{ order['is_canceled'][0]}}</span>`),
+                                            {% endif %}
+                                    {#delivery_date: "{{ order['delivery_date'] }}",#}
+                                    actions: gridjs.html (`
+                                                <div class="btn-group">
+                                                    <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('admin_bp.print_purchase_order', o_id=order['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                        <i class="fa-solid fa-eye"></i></a>
+                                                    <a role="button" class="btn btn-sm"
+                                                        href="{{ url_for('admin_bp.delete_purchase_order', o_id=order['id']) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                                        <i class="fa-solid fa-trash"></i></a>
+                                                    <div class="btn-group dropstart" >
+                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+                                                            <i class="fa-solid fa-arrows-rotate"></i>
+                                                        </button>
+                                                        <ul class="dropdown-menu">
+                                                            {% if not order['is_delivered'] and not order['is_delivered'] == True %}
+                                                                <li><a class="dropdown-item "
+                                                                    href="{{ url_for('admin_bp.order_receipt', o_id=order['id']) }}">
+                                                                        Bon de réception</a></li>
+                                                            {% endif %}
+                                                            {#<li><a class="dropdown-item" href="#">Facture d'achat</a></li>#}
+                                                            {#<li><a class="dropdown-item" href="#">Approuver</a></li>#}
+                                                        </ul>
+                                                    </div>
+                                                </div>`)},
+                            {% endfor %}
+                        {% endif %}
+                    ]
+                    ),2000
+                 );
+                });
+            },
+            search: {
+                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
+            },
+            sort: true,
+            pagination: true
+        }).render(document.getElementById('table'));
+    </script>
+
+{% endblock %}

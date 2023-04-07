@@ -124,7 +124,7 @@
 {#                                        <a class="nav-link" href="{{ url_for('admin_bp.orders') }}">Les commandes clients</a>#}
 {#                                        <a class="nav-link" href="#">Bon de livraison</a>#}
 {#                                        <a class="nav-link" href="#">Bon de sortie</a>#}
-{#                                        <a class="nav-link" href="{{ url_for('admin_bp.invoices') }}">Les factures de ventes</a>#}
+                                        <a class="nav-link" href="{{ url_for('admin_bp.invoices') }}">Les factures de ventes</a>
                                         <a class="nav-link" href="{{ url_for('admin_bp.clients') }}">Les clients</a>
                                     </nav>
                                 </div>
@@ -136,9 +136,9 @@
                                 </a>
                                 <div class="collapse {% if session['endpoint']=='purchase' %}show{% endif %}" id="collapsePurchases__" aria-labelledby="headingOne" data-bs-parent="#sidenavAccordion">
                                     <nav class="sb-sidenav-menu-nested nav ">
-{#                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_orders') }}">Les bon d'achat</a>#}
-{#                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_receipt') }}">Les bon de réception</a>#}
-{#                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_invoices') }}">Les factures d'achat</a>#}
+                                        <a class="nav-link" href="{{ url_for('admin_bp.purchases_orders') }}">Commandes fournisseurs</a>
+                                        <a class="nav-link" href="{{ url_for('admin_bp.purchase_receipts') }}">Les bon de réception</a>
+                                        <a class="nav-link" href="{{ url_for('admin_bp.purchase_invoices') }}">Les factures d'achat</a>
                                         <a class="nav-link" href="{{ url_for('admin_bp.expenses') }}">Dépenses</a>
                                         <a class="nav-link" href="{{ url_for('admin_bp.expense_categories') }}">Catégories de dépenses</a>
                                         <a class="nav-link" href="{{ url_for('admin_bp.suppliers') }}">Les fournisseurs</a>
@@ -168,7 +168,7 @@
                 <div id="layoutSidenav_content">
                     <main>
                         <div class="container-fluid px-4">
-                            <h1 class="mt-4">{% block actual_title %}{% endblock actual_title %}</h1>
+                            <h1 class="mt-5" style="text-transform: uppercase;">{% block actual_title %}{% endblock actual_title %}</h1>
 
                             {% block main_tag %}
                             {% endblock main_tag %}
