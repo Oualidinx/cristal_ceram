@@ -22,10 +22,10 @@
         </div>
 
         <div class="row mt-5">
-            <div class="card ">
-                <div class="card-body">
+            <!-- <div class="card "> -->
+                <!-- <div class="card-body"> -->
                     <form method="post">
-                    {{ form.hidden_tag() }}
+                        {{ form.hidden_tag() }}
                         <div class="row g-1 mb-4">
                             <div class="col-sm">
                                 <div class="form-floating">
@@ -131,13 +131,14 @@
                                 </div>
                             </div>
                         </div>
-                <div class="col-sm">
-                    {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
-                </div>
-            </form>
-
-                </div>
-            </div>
+                        <div class="row g-1 mb-4 position-static" style="text-align: right;">
+                            <div class="form-group">
+                                {{ form.submit(class="btn btn-primary rounded rounded-pill") }}
+                            </div>
+                        </div>
+                    </form>
+                <!-- </div> -->
+            <!-- </div> -->
         </div>
     </div>
 {% endblock %}

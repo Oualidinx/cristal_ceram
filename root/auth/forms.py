@@ -39,6 +39,6 @@ class UpdateUserForm(FlaskForm):
     username = StringField('Nom d\'utilisateur', validators=[DataRequired('Champs obligatoire')])
     company_name = StringField('Raison social', validators=[DataRequired('Champs obligatoire')])
     address = StringField('Adresse', validators=[DataRequired('Champs obligatoire')])
-    contact = StringField('Contact', validators=[DataRequired('Champs obligatoire')])
+    contact = StringField('Contact (Contact du magasin)', validators=[DataRequired('Champs obligatoire')])
 
     submit = SubmitField('Valider')

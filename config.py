@@ -20,6 +20,11 @@ class Development(Config):
         'database_name': "cristal_ceram"
     }
     SQLALCHEMY_DATABASE_URI = "{driver}://{user}@{host}:{port}/{database_name}".format(**credentials)
+
+class Testing(Config):
+    SECRET_KEY = os.environ.get('APP_SECRET_KEY')
+    SQLALCHEMY_DATABASE_URI="sqlite:///cristal_ceram.db"
 config = {
-    'dev':Development
+    'dev':Development,
+    'test':Testing
 }

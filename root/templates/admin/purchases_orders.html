@@ -105,33 +105,33 @@
                                     {#delivery_date: "{{ order['delivery_date'] }}",#}
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
-                                                    <a role="button" class="btn btn-sm"
+                                                    <a target="_blank" role="button" class="btn btn-sm btn-outline-info"
                                                         href="{{ url_for('admin_bp.print_purchase_order', o_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
-                                                    <a role="button" class="btn btn-sm"
+                                                    <a role="button" class="btn btn-sm btn-outline-danger"
                                                         href="{{ url_for('admin_bp.delete_purchase_order', o_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
                                                         <i class="fa-solid fa-trash"></i></a>
-                                                    <div class="btn-group dropstart" >
-                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
-                                                            <i class="fa-solid fa-arrows-rotate"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            {% if not order['is_delivered'] and not order['is_delivered'] == True %}
-                                                                <li><a class="dropdown-item "
-                                                                    href="{{ url_for('admin_bp.order_receipt', o_id=order['id']) }}">
-                                                                        Bon de réception</a></li>
-                                                            {% endif %}
-                                                            {#<li><a class="dropdown-item" href="#">Facture d'achat</a></li>#}
-                                                            {#<li><a class="dropdown-item" href="#">Approuver</a></li>#}
-                                                        </ul>
-                                                    </div>
+                                                    {#<div class="btn-group dropstart" >#}
+                                                    {#    <button class="btn btn-sm btn-outline-secondary" data-bs-toggle="dropdown" aria-expanded="false" type="button">#}
+                                                    {#        <i class="fa-solid fa-arrows-rotate"></i>#}
+                                                    {#    </button>#}
+                                                        {#<ul class="dropdown-menu">#}
+{#                                                            {% if not order['is_delivered'] and not order['is_delivered'] == True %}#}
+{#                                                                <li><a class="dropdown-item "#}
+{#                                                                    href="{{ url_for('admin_bp.order_receipt', o_id=order['id']) }}">#}
+{#                                                                        Bon de réception</a></li>#}
+{#                                                            {% endif %}#}
+{#                                                            <li><a class="dropdown-item" href="#">Facture d'achat</a></li>#}
+{#                                                            <li><a class="dropdown-item" href="#">Approuver</a></li>#}
+                                                        {#</ul>#}
+                                                    {#</div>#}
                                                 </div>`)},
                             {% endfor %}
                         {% endif %}
                     ]
-                    ),2000
+                    ),100
                  );
                 });
             },

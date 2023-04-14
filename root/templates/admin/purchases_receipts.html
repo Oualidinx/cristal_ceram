@@ -112,6 +112,7 @@
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
                                                     <a role="button" class="btn btn-sm"
+                                                        target="_blank"
                                                         href="{{ url_for('admin_bp.print_receipt', r_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
@@ -129,7 +130,7 @@
                             {% endfor %}
                         {% endif %}
                     ]
-                    ),2000
+                    ),100
                  );
                 });
             },

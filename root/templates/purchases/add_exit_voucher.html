@@ -18,8 +18,8 @@
                     </div>
                 {% endif %}
             {% endwith %}
-            <div class="card">
-                <div class="card-body">
+{#            <div class="card">#}
+{#                <div class="card-body">#}
                     <form id="form" method="POST">
                         {{form.hidden_tag()}}
                         <div class="row g-1 justify-content-end p-3">
@@ -155,13 +155,14 @@
                             </div>
                         </div>
                     </div>
-                </div>
-            </div>
+{#                </div>#}
+{#            </div>#}
         </div>
     </div>
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css')}}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}">
 {% endblock %}
 
@@ -206,6 +207,7 @@
                 minimumInputLength: 1,
                 templateResult: formatMotif,
             });
+
             $('.select-item').select2({
                 theme: "bootstrap-5",
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
@@ -235,7 +237,29 @@
                     cache: true
                 },
                 minimumInputLength: 1,
-                templateResult: formatItem,
+                templateResult: formatItem
+            });
+
+            $('.select-item').on('change', function(){
+                    const onlyInputs = $(this).parent().parent().find('input');
+                    $.ajax({
+                        url: "{{ url_for('purchases_bp.doc_item') }}",
+                        dataType: 'json',
+                        contentType:"application/json",
+                        type:"get",
+                        data:{
+                            cmd_id:$('#motif').val(),
+                            item_id:$(this).val(),
+                            w_id:$('#warehouse').val(),
+                        },
+                        statusCode: {
+                            200: function (response){
+                                console.table(response.data);
+                                onlyInputs[0].setAttribute('value', response.data['quantity']);
+                                onlyInputs[1].setAttribute('value', response.data['av_qte']+" "+response.data['unit']);
+                            }
+                        }
+                    })
             });
 
             $('#warehouse').select2({

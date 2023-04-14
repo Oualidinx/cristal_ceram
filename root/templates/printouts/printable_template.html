@@ -75,8 +75,8 @@
             <td>
                 <img src="{{ url_for('static', filename="img/logo.jpeg") }}" alt="">
             </td>
-            <td class="title">
-                CRISTAL CERAM *** TIMGAD CERAM
+            <td class="title" style="text-transform: uppercase">
+                {{ company['name'] }}
             </td>
         </tr>
         <tr>
@@ -102,7 +102,7 @@
             <td></td>
             <td><span>TELEPHONE: </span>{{ object['beneficiary_contact'][0].value }}</td></tr>
         <tr><td>
-            {% if titre=="Facture d'achat" or titre=="Bon de réception" %}
+            {% if titre=="Facture d'achat" or titre=="Bon de réception" or titre=="Bon d'achat" %}
                 <span>Fournisseur:</span>
             {% else %}
                 <span>Client:</span>

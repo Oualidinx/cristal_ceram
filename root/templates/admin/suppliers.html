@@ -13,7 +13,7 @@
                             {% for category, message in messages %}
                                 <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                     <div class="d-flex">
-                                        <div class="toast-body text-black fw-light fs-6">
+                                        <div class="toast-body text-white fs-6">
                                             {{ message }}
                                         </div>
                                     <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
@@ -110,7 +110,7 @@
                               id: '{{ supplier["id"] }}',
                               full_name :'{{ supplier["full_name"] }}',
                               category :'{{ supplier['category'] }}',
-                              contact :'{{ supplier['contact'] }}',
+                              contact :'{% if supplier['contacts'] %}{{ supplier['contacts'][0] }}{% else %} / {% endif %}',
                               actions: gridjs.html(`
                                     <div class="dropdown dropstart">
                                         <div class="btn-group">

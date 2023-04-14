@@ -218,11 +218,12 @@ def order_receipt(o_id):
     db.session.add(p_receipt)
     db.session.commit()
     for e in order.entries:
-        e.fk_purchase_receipt_id = p_receipt.id
-        stock = Stock.query.filter_by(fk_item_id = e.fk_item_id).first()
+        _ = Entry()
+        _.fk_purchase_receipt_id = p_receipt.id
+        stock = Stock.query.filter_by(fk_item_id = _.fk_item_id).first()
         if stock:
-            stock.stock_qte += e.quantity
-            stock.last_purchase_price = e.unit_price
+            stock.stock_qte += _.quantity
+            stock.last_purchase_price = _.unit_price
             db.session.add(stock)
             db.session.commit()
         # else:
@@ -454,9 +455,11 @@ def new_purchase_receipt():
                 _q.intern_reference = "BR-" + str(last_intern_ref + 1) + "/" + str(datetime.datetime.now().date().year)
 
         sum_amounts = 0
+        db.session.add(_q)
+        db.session.commit()
         for e in entities:
             sum_amounts = e.total_price
-            e.fk_order_id = None
+            e.fk_purchase_receipt_id = _q.id
             e.fk_quotation_id, e.fk_exit_voucher_id = None, None
             e.fk_invoice_id, e.fk_delivery_note_id = None, None
             # _warehouses = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id) \
@@ -473,9 +476,9 @@ def new_purchase_receipt():
             e.in_stock = item.stock_quantity
             db.session.add(e)
             db.session.commit()
-            item.stock_quantity += e.quantity
-            db.session.add(item)
-            db.session.commit()
+            # item.stock_quantity += e.quantity
+            # db.session.add(item)
+            # db.session.commit()
             stock.last_purchase_price = e.unit_price
             db.session.add(stock)
             db.session.commit()
@@ -794,7 +797,7 @@ def print_receipt(r_id):
 @purchases_bp.get('/order/<int:o_id>/print')
 @login_required
 def print_order(o_id):
-    order = Order.query.filter_by(category='achat').filter_by(id=o_id).first()
+    order = Order.query.filter_by(category='vente').filter_by(id=o_id).first()
     if not order:
         return render_template('errors/404.html', blueprint='purchases_bp')
     company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
@@ -831,6 +834,7 @@ def add_exit_voucher():
         entities = list()
         _q = ExitVoucher()
         _q.created_by = current_user.id
+        _q.fk_warehouse_id = form.warehouse.data.id
         if DeliveryNote.query.get(form.motif.data.id):
             _q.fk_delivery_note_id = form.motif.data.id
         else:
@@ -848,23 +852,19 @@ def add_exit_voucher():
                 flash(f'La commande {document.intern_reference} a été déjà livré', 'danger')
                 return render_template("purchases/add_exit_voucher.html",
                                    form=form, nested=ExitVoucherEntryField())
+
         if enumerate(form.entities):
             for _index, entry in enumerate(form.entities):
-                if entry.delete_entry.data:
-                    del form.entities.entries[_index]
-                    return render_template("purchases/add_exit_voucher.html",
-                                           form=form, nested=ExitVoucherEntryField())
-
-
                 temp = [e.fk_item_id for e in document.entries]
                 if entry.item.data.id not in temp:
-                    flash(f'le document {document.intern_reference} ne contient pas l\'article {entry.item.data.id}','warning')
+                    flash(f'le document {document.intern_reference} ne contient pas l\'article {entry.item.data.id}',
+                          'warning')
                     return render_template("purchases/add_exit_voucher.html",
                                            form=form, nested=ExitVoucherEntryField())
                 stocks = Stock.query.filter(and_(Stock.fk_warehouse_id == form.warehouse.data.id,
                                                  Stock.fk_item_id == entry.item.data.id)).first()
                 if not stocks:
-                    flash(f"Vous n'avez aucun stock pour le produit {entry.item.data.label}","danger")
+                    flash(f"Vous n'avez aucun stock pour le produit {entry.item.data.label}", "danger")
                     return render_template("purchases/add_exit_voucher.html",
                                            form=form, nested=ExitVoucherEntryField())
                 item = Item.query.get(entry.item.data.id)
@@ -872,16 +872,25 @@ def add_exit_voucher():
                     flash(f'Le stock du produit {item.label} est insuffisant pour cette commande', 'danger')
                     return render_template("purchases/add_exit_voucher.html",
                                            form=form, nested=ExitVoucherEntryField())
-                query = Entry.query.filter_by(fk_item_id = entry.item.data.id)
-                _ = query.filter_by(fk_order_id = form.motif.data.id).first() if form.motif.data.__tablename__ == "order" \
-                                                        else query.filter_by(fk_delivery_note_id = form.motif.data.id).first()
+                query = Entry.query.filter_by(fk_item_id=entry.item.data.id)
+                _ = query.filter_by(fk_order_id=form.motif.data.id).first() if form.motif.data.__tablename__ == "order" \
+                    else query.filter_by(fk_delivery_note_id=form.motif.data.id).first()
                 if (_.quantity - _.delivered_quantity) < entry.quantity.data:
-                    flash(f'La quantité du produit {entry.item.data.label} indiqué n\'est pas valide','danger')
+                    flash(f'La quantité du produit {entry.item.data.label} indiqué n\'est pas valide', 'danger')
                     return render_template("purchases/add_exit_voucher.html",
-                                                   form=form, nested=ExitVoucherEntryField())
+                                           form=form, nested=ExitVoucherEntryField())
 
+            for _index, entry in enumerate(form.entities):
+                if entry.delete_entry.data:
+                    del form.entities.entries[_index]
+                    return render_template("purchases/add_exit_voucher.html",
+                                           form=form, nested=ExitVoucherEntryField())
+
+                query = Entry.query.filter_by(fk_item_id=entry.item.data.id)
+                _ = query.filter_by(fk_order_id=form.motif.data.id).first() if form.motif.data.__tablename__ == "order" \
+                    else query.filter_by(fk_delivery_note_id=form.motif.data.id).first()
                 _.fk_item_id = entry.item.data.id
-                _.delivered_quantity += entry.quantity.data
+                _.delivered_quantity += float(entry.quantity.data)
                 _.in_stock = entry.item.data.stock_quantity
                 _.quantity = entry.quantity.data
                 entities.append(_)
@@ -896,7 +905,8 @@ def add_exit_voucher():
         if form.exit_date.data:
             _q.created_at = form.exit_date.data
         _q.created_by = current_user.id
-        last_q = ExitVoucher.query.filter_by(fk_company_id=company).order_by(ExitVoucher.created_at.desc()).first()
+        _q.fk_company_id = company
+        last_q = ExitVoucher.query.filter_by(fk_company_id=company).order_by(ExitVoucher.id.desc()).first()
         _q.intern_reference = "BS-1/" + str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
@@ -980,7 +990,7 @@ def get_bl_bc():
         .filter_by(fk_user_id=current_user.id).first().fk_company_id
     commands = Order.query.join(Client, Client.id == Order.fk_client_id).filter(Client.is_deleted == False) \
                             .filter(Order.is_deleted == False) \
-                            .filter(Order.is_canceled == None) \
+                            .filter(Order.is_canceled == 0) \
                             .filter(Order.category=='vente').filter(Order.fk_company_id==company)
     if "search" in request.args:
         commands = commands.filter(or_(
@@ -1029,18 +1039,18 @@ def doc_items():
     items = Item.query.join(Stock, Stock.fk_item_id == Item.id) \
                         .join(Warehouse, Warehouse.id == Stock.fk_warehouse_id) \
                             .filter(Warehouse.id == w.id) \
-                            .filter(Item.fk_company_id == company.fk_company_id)
-
+                            .filter(Item.fk_company_id == company.fk_company_id) \
+                            .join(Entry, Entry.fk_item_id == Item.id) \
+                            .filter(Entry.fk_order_id == int(request.args['cmd_id']))
     if "search" in request.args:
         items = items.filter(Item.is_disabled == False).filter(or_(
                     Item.intern_reference.like(func.lower(f'%{request.args["search"]}%')),
-                    Item.label.like(func.lower(f'%{request.args["search"]}%'))
-                ))
+                    Item.label.like(func.lower(f'%{request.args["search"]}%'))))
     data = list()
     if items.all():
         for item in items.all():
             query=Entry.query.filter_by(fk_item_id = item.id) \
-                                        .filter_by(fk_order_id = request.args['cmd_id']).first()
+                                        .filter_by(fk_order_id = int(request.args['cmd_id'])).first()
             data.append({
                 'id': item.id,
                 'intern_reference':item.intern_reference,
@@ -1053,5 +1063,53 @@ def doc_items():
             })
         return jsonify(total_count=len(data),
                        items=data), 200
+    return jsonify(total_count=0,
+                   items=[]), 404
+
+
+@purchases_bp.get('/purchases/get')
+@login_required
+def doc_item():
+
+    if 'cmd_id' not in request.args:
+        abort(400)
+    if 'item_id' not in request.args:
+        abort(400)
+    if 'w_id' not in request.args:
+        abort(400)
+    w = Warehouse.query.get(request.args['w_id'])
+    if not w:
+        abort(404)
+    # company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
+    # items = Item.query.join(Stock, Stock.fk_item_id == Item.id) \
+    #     .join(Warehouse, Warehouse.id == Stock.fk_warehouse_id) \
+    #     .filter(Warehouse.id == w.id) \
+    #     .filter(Item.fk_company_id == company.fk_company_id)
+    # if "search" in request.args:
+    #     items = items.filter(Item.is_disabled == False).filter(or_(
+    #         Item.intern_reference.like(func.lower(f'%{request.args["search"]}%')),
+    #         Item.label.like(func.lower(f'%{request.args["search"]}%'))))
+    item = Item.query.get(int(request.args['item_id']))
+
+    data = list()
+    if item:
+        query = Stock.query.filter_by(fk_item_id=item.id) \
+            .filter_by(fk_warehouse_id=w.id).first()
+        entry_qts=Entry.query.filter_by(fk_order_id = int(request.args['cmd_id'])) \
+                                .filter_by(fk_item_id = int(request.args['item_id'])).first()
+        print(entry_qts.in_stock)
+
+        _dict = {
+            'id': item.id,
+            'intern_reference': item.intern_reference,
+            'label': item.label,
+            'unit': item.unit,
+            'av_qte': query.stock_qte,
+            'quantity': entry_qts.quantity,
+            'd_quantity': entry_qts.delivered_quantity,
+            'rest': entry_qts.quantity - entry_qts.delivered_quantity
+        }
+        return jsonify(total_count=len(data),
+                       data=_dict), 200
     return jsonify(total_count=0,
                    items=[]), 404

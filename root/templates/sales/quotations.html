@@ -100,7 +100,7 @@
                                     total: '{{ quote["total"] }} DZD',
                                     actions: gridjs.html (`
                                         <div class="btn-group">
-                                            <a role="button" class="btn btn-sm"
+                                            <a role="button" class="btn btn-sm" target="_blank"
                                                 href="{{ url_for('sales_bp.get_quotation', q_id=quote['id']) }}"
                                                 data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                 <i class="fa-solid fa-eye"></i></a>
@@ -116,7 +116,6 @@
                                                     <li><a class="dropdown-item " href="{{ url_for('sales_bp.quotation_order', q_id = quote['id']) }}">
                                                         Bon commande
                                                         </a></li>
-                                                    {#<li><a class="dropdown-item" href="#">Facture de vente</a></li>#}
                                                     <li>
                                                     <a class="dropdown-item"
                                                     href="{{ url_for('sales_bp.approve_quotation', q_id=quote['id']) }}">

@@ -1,9 +1,8 @@
 {% extends "layouts/admin_layout.html" %}
-{% block additional_styles %}
-    <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css') }}">
-{% endblock %}
-
+    {% block additional_styles %}
+        <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+        <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css') }}">
+    {% endblock %}
 {% block main_tag %}
     <nav>
         <div class="nav nav-tabs" id="nav-tab" role="tablist">
@@ -125,8 +124,8 @@
                 error: 'Erreur pendant le chargement des données'},
             columns: [
                 { id: 'date', name: "DATE"},
-                { id: 'reference', name: 'REFERENCE' },
-                { id: 'date_reference', name: 'DATE' },
+                { id: 'reference', name: 'RÉFÉRENCE' },
+                { id: 'date_reference', name: 'DATE DE LA RÉFÉRENCE' },
                 { id: 'beneficiary', name: "COMMANDE DE/PAR" },
                 { id: 'status', name: 'Etat' },
                 { id:'type_e', name: 'ENTREE' },
@@ -144,15 +143,17 @@
                                         reference:'{% if entry['reference'] %}{{ entry["reference"]}}{% else %} / {% endif %}',
                                         date_reference:'{% if entry['date_reference'] %}{{ entry["date_reference"]}}{% else %} / {% endif %}',
                                         type:'{{ entry["type_e"]}}',
-                                        beneficiary:'{% if entry['beneficiary'] %}{{ entry["beneficiary"]}}{% else %} / {% endif %}',
-                                        {% if not entry['beneficiary'] %}
-                                            status:gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: #0072B5;">Inventaire</span>`),
+                                        beneficiary:'{% if entry['beneficiary'] %}{{ entry["beneficiary"][1]}}{% else %} / {% endif %}',
+                                        {% if not entry['beneficiary']%}
+                                            status:gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: #0072B5;">Inventaire </span>`),
                                         {% else %}
-                                           status:  gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: #0072B5;">{{ entry['status'] }}</span>`),
+                                           status:  gridjs.html(`<span class="badge rounded rounded-pill" style="background-color: {{ entry['status'][0] }};">{{ entry['status'][1] }}</span>`),
                                         {% endif %}
-                                        in_stock:'{{ entry["in_stock"]}} {{ item['unit'] }}',
-                                        type_e:gridjs.html(`{% if entry['type'] and entry['type']==True %}<span style="text-color: #006B54; font-weight-bold;"> {{ entry['qs'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
-                                        type_s:gridjs.html(`{% if entry['type'] and entry['type'] == False %}<span style="text-color: #CD212A" > - {{ entry['qs'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
+                                        in_stock:gridjs.html(`<span class="text-color-classic-blue fw-bold">{{ entry["in_stock"]}} {{ item['unit'] }}</span>`),
+                                        type_e:gridjs.html(`{% if entry['type']==0 %}<span class="text-color-arcadia"> {{ entry['delivered_quantity'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
+                                        {#type_e:gridjs.html(`<span style="text-color: #006B54; font-weight-bold;"> {{ entry['qs'] }} {{ item['unit'] }}</span>`),#}
+                                        type_s:gridjs.html(`{% if entry['type'] == 1 %}<span class="text-color-valiant fw-bold"> - {{ entry['delivered_quantity'] }} {{ item['unit'] }}</span> {% else %} - {% endif %}`),
+                                        {#type_s:gridjs.html(`<span style="text-color: #CD212A;" > - {{ entry['qs'] }} {{ item['unit'] }}</span>`),#}
                                     },
                                 {% endfor %}
                             {% endif %}

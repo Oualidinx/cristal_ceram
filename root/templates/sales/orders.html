@@ -112,7 +112,7 @@
                                             style="background-color: {{ order['delivery_date'][0] }}">{{ order['delivery_date'][1]}}</span>`),
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
-                                                    <a role="button" class="btn btn-sm"
+                                                    <a role="button" class="btn btn-sm" target="_blank"
                                                         href="{{ url_for('sales_bp.print_order',o_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
@@ -122,13 +122,23 @@
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
                                                         <i class="fa-solid fa-trash"></i></a>
                                                     <div class="btn-group dropstart" >
-                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
+                                                        <button class="btn btn-sm" data-bs-toggle="dropdown"
+                                                                aria-expanded="false" type="button">
                                                             <i class="fa-solid fa-arrows-rotate"></i>
                                                         </button>
                                                         <ul class="dropdown-menu">
                                                             <li><a class="dropdown-item " href="#">Bon de livraison</a></li>
-                                                            <li><a class="dropdown-item" href="{{ url_for('sales_bp.order_invoice', o_id=order['id']) }}">Facture de vente</a></li>
-                                                            <li><a class="dropdown-item" href="{{ url_for('sales_bp.approve_order', o_id=order['id']) }}">Approuver</a></li>
+                                                            {% if not order['invoice'] %}
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                href="{{ url_for('sales_bp.order_invoice',
+                                                                                    o_id=order['id']) }}">
+                                                                                    Facture de vente</a></li>
+                                                            {% endif %}
+                                                            <li>
+                                                                <a class="dropdown-item"
+                                                                    href="{{ url_for('sales_bp.approve_order',
+                                                                    o_id=order['id']) }}">Approuver</a></li>
                                                         </ul>
                                                     </div>
                                                 </div>`)},

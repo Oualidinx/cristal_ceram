@@ -8,7 +8,7 @@ from root.models import UserForCompany, Quotation, Entry, Item, Order, Invoice, 
 from root.models import ExitVoucher, Stock, Company, Pay, Contact, Supplier
 from root.ventes.forms import QuotationForm, EntryField, OrderForm, ExitVoucherEntryField, ExitVoucherForm
 from root.ventes.forms import PaiementForm, ClientForm
-from sqlalchemy import or_, func, and_
+from sqlalchemy import or_, func
 from flask_weasyprint import HTML, render_pdf
 from num2words import num2words
 
@@ -16,6 +16,11 @@ from num2words import num2words
 @sales_bp.before_request
 def sales_before_request():
     session['role']="Vendeur"
+    if current_user.is_authenticated:
+        user = UserForCompany.query.filter_by(fk_user_id = current_user.id).first()
+        if not user:
+            return render_template('errors/401.html')
+        print(f'{current_user.full_name} is log in ')
 
 
 
@@ -141,6 +146,7 @@ def add_quotation():
         entities = list()
         last_q = Quotation.query.filter_by(fk_company_id=company).order_by(Quotation.id.desc()).first()
         _q = Quotation()
+        _q.created_by = current_user.id
         sum_amounts=0
         if enumerate(form.entities):
             for _index, entry in enumerate(form.entities):
@@ -188,14 +194,12 @@ def add_quotation():
         _q.fk_company_id = company
         _q.fk_client_id= form.client.data.id
         _q.total = sum_amounts
-        # _q.intern_reference = "DEV-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
         _q.intern_reference = "DEV-1/" + str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
             year = int(last_q.intern_reference.split('-')[1].split('/')[1])
             if year == datetime.datetime.now().date().year :
                 _q.intern_reference = "DEV-"+str(last_intern_ref+1)+"/"+str(datetime.datetime.now().date().year)
-                # _q.intern_reference = "DEV-"+str(last_intern_ref+1)+"/"+str(company)+"/"+str(datetime.datetime.now().date().year)
         db.session.add(_q)
         db.session.commit()
         for e in entities:
@@ -207,7 +211,6 @@ def add_quotation():
         db.session.add(_q)
         db.session.commit()
         flash('Devis crée avec succès','success')
-        # return redirect(url_for('sales_bp.add_quotation'))
         return render_template("sales/new_quotation.html", form=form,
                                somme = _q.total,
                                nested=EntryField(),
@@ -305,6 +308,7 @@ def quotation_order(q_id):
         flash('Vous devez d\'abord approuver ce devis avant cette opération','warning')
         return redirect(url_for('sales_bp.quotations'))
     _ = Order.query.filter_by(is_deleted = False).filter_by(fk_quotation_id = quotation.id).first()
+
     if _:
         flash(f'Devis {quotation.intern_reference} déjà approuver et convertie en commande','warning')
         return redirect(url_for('sales_bp.quotations'))
@@ -334,11 +338,23 @@ def quotation_order(q_id):
     db.session.add(order)
     db.session.commit()
     for entry in quotation.entries:
-        # _ = Entry()
-        entry.fk_order_id = order.id
-        entry.in_stock = entry.item.data.stock_quantity
+        e = entry
         item = Item.query.get(entry.fk_item_id)
+        e.total_price = entry.total_price
+        e.unit_price = item.sale_price
+        entry.fk_quotation_id = quotation.id
+        if entry.quantity > item.stock_quantity:
+            flash(
+                f"La quantity du {Item.query.get(entry.item.data.id).label} est suppérieur à la quantity commandée",
+                "warning")
+            return redirect(url_for('sales_bp.quotations'))
+        e.quantity=entry.quantity
+        # e.delivered_quantity = entry.quantity
+        e.in_stock = item.stock_quantity
+        e.fk_order_id = order.id
         item.stock_quantity -= entry.quantity
+        db.session.add(e)
+        db.session.commit()
         db.session.add(item)
         db.session.commit()
         db.session.add(entry)
@@ -360,7 +376,8 @@ def order_invoice(o_id):
     if order.is_deleted or order.fk_company_id != company:
         return render_template('errors/404.html', blueprint="sales_bp")
 
-    if not order.is_canceled:
+    if order.is_canceled == None:
+        print(order.repr())
         flash('Vous devez d\'abord approuver ce devis avant cette opération','warning')
         return redirect(url_for('sales_bp.orders'))
 
@@ -369,13 +386,6 @@ def order_invoice(o_id):
         flash(f'Commande {order.intern_reference} déjà facturée','warning')
         return redirect(url_for('sales_bp.orders'))
 
-    # item = Item.query.get(entry.item.data.id)
-    # if item.stock_quantity < entry.quantity.data or entry.quantity.data >= item.stock_sec:
-    #     flash(f'Le stock du produit {item.label} est insuffisant pour ce devis', 'danger')
-    #     # return redirect(url_for('sales_bp.quotations'))
-    #     return render_template("sales/new_order.html",
-    #                            form=form, nested=EntryField(),
-    #                            somme=sum_amounts)
     entities = order.entries
     last_o = Invoice.query.filter_by(fk_company_id=company).order_by(Invoice.id.desc()).first()
     invoice = Invoice()
@@ -385,7 +395,7 @@ def order_invoice(o_id):
     invoice.intern_reference = "FAC-1/" + str(datetime.datetime.now().date().year)
     # invoice.intern_reference = "FAC-1/" + str(company) + "/" + str(datetime.datetime.now().date().year)
     if last_o:
-        last_intern_ref = int(last_o.intern_reference.split('-').split('/')[0])
+        last_intern_ref = int(last_o.intern_reference.split('-')[1].split('/')[0])
         year = int(last_o.intern_reference.split('/')[1])
         if year == datetime.datetime.now().date().year:
             invoice.intern_reference = "FAC-" + str(last_intern_ref + 1) + "/" + str(
@@ -533,8 +543,8 @@ def add_order():
             _q.intern_reference = "BC-1/" + str(datetime.datetime.now().date().year)
             if year == datetime.datetime.now().date().year :
                 _q.intern_reference = "BC-"+str(last_intern_ref+1)+"/"+str(datetime.datetime.now().date().year)
-        # db.session.add(_q)
-        # db.session.commit()
+        db.session.add(_q)
+        db.session.commit()
         for e in entities:
             sum_amounts += e.total_price
             e.fk_order_id = _q.id
@@ -1086,7 +1096,7 @@ def approve_order(o_id):
         if item.stock_quantity < entry.quantity:
             flash(f'Le stock du produit {item.label} est insuffisant pour cette commande','danger')
             return redirect(url_for('sales_bp.orders'))
-    order.is_canceled=True
+    order.is_canceled=False
     db.session.add(order)
     db.session.commit()
     flash(f'Commande {order.intern_reference} est approuvée','success')

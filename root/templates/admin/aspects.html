@@ -24,12 +24,13 @@
                 </div>
             {% endif %}
         {% endwith %}
-        <div class="col" style="position: relative; text-align: right">
-            <a role="button" class="btn btn-outline-success rounded rounded-pill"
-                data-bs-toggle="modal" data-bs-target="#NouveauAspect">
-                <i class="fa fa-circle-plus"></i>
-                   Ajouter
-            </a>
+        <div class="col">
+            <div class="position-static" style="text-align: right;  z-index: 2;">
+                <button class="btn btn-outline-success rounded rounded-pill"
+                    data-bs-toggle="modal" data-bs-target="#NouveauAspect">
+                    <i class="fa fa-circle-plus"></i>
+                    Ajouter
+                </button></div>
             <div id="table"></div>
             <div class="modal bg-m" id="NouveauAspect" data-bs-backdrop="static" data-bs-keyboard="false"
                                         tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -62,7 +63,7 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row g-1 mb-4 justify-content-lg-end">
+                                    <div class="row g-1 mb-4 position-static" style="text-align: right;">
                                         <div class="form-group">
                                             {{ form.submit(class="btn btn-md btn-outline-primary rounded rounded-pill ") }}
                                         </div>

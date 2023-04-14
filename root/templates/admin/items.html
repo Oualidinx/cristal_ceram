@@ -128,6 +128,9 @@
                                         <a role="button" class="btn btn-sm btn-outline-secondary" href="{{ url_for('admin_bp.edit_product',item_id=item['id']) }}"
                                             data-bs-toggle="tooltip" data-bs-placement="bottom" title="Modifier">
                                             <i class="fa fa-pen"></i></a>
+                                        <a role="button" class="btn btn-sm btn-outline-danger" href="{{ url_for('admin_bp.delete_product',p_id=item['id']) }}"
+                                            data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
+                                            <i class="fa fa-trash"></i></a>
                                   </div>
                             </div>`
                               )

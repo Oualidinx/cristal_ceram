@@ -20,7 +20,7 @@
                             <div class="text-small text-color text-upper-case fw-bold mb-2">
                                 total
                             </div>
-                            <div class="h4 text-color-classic-blue fw-bold">
+                            <div class="h3 text-color-classic-blue fw-bold">
                                 {{ '{:,.2f}'.format(item['total']) }} DZD
                             </div>
                         </div>
@@ -33,7 +33,7 @@
                 </div>
             </div>
         </div>
-
+        {{ item }}
         <div class="col-md">
             <div class="card border-left-produit">
                 <div class="card-body">
@@ -42,7 +42,7 @@
                             <div class="text-small text-color text-upper-case fw-bold mb-2">
                                 réglées
                             </div>
-                            <div class="h4 text-color-arcadia fw-bold">
+                            <div class="h3 text-color-arcadia fw-bold">
                                 {{ '{:,.2f}'.format(item['adjusted']) }} DZD
                             </div>
                         </div>
@@ -64,7 +64,7 @@
                             <div class="text-small text-color text-upper-case fw-bold mb-2">
                                 à régler
                             </div>
-                            <div class="h4 text-color-valiant fw-bold">
+                            <div class="h3 text-color-valiant fw-bold">
                                 {{ '{:,.2f}'.format(item['to_adjust']) }} DZD
                             </div>
                         </div>

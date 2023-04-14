@@ -17,29 +17,45 @@
                 </div>
             {% endif %}
         {% endwith %}
-        <div class="card">
-            <div class="card-body">
+        <div class="toast-container position-absolute top-0 end-0 p-4">
+            <div id="liveToast" class="toast align-items-center text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+                <div class="d-flex">
+                    <div class="error-toast-body toast-body fs-6"></div>
+                    <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="row mt-5">
+{#        <div class="card">#}
+{#            <div class="card-body">#}
                 <form id="form" method="POST">
                     {{form.hidden_tag()}}
-                    <div class="row g-1 justify-content-end p-3">
-                        <div class="col-md-1">
-                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
-                        </div>
-                    {% if new_command and new_command==true %}
-                        <div class="col-md-2">
-                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_purchase_receipt') }}">
-                                <i class="fa fa-plus"></i>
-                                   Nouvelle commande
-                            </a>
-                        </div>
-                    {% endif %}
-                        {% if to_print and to_print==True %}
-                            <div class="col-md-1">
-                                <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                    <div>
+                        <div class="row g-1 justify-content-end p-3">
+                            <div class="col-md-2">
+                                {% if disable_save==True %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disable=True)}}
+                                {% else %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                                {% endif %}
+                            </div>
+                        {% if new_command and new_command==true %}
+                            <div class="col-auto">
+                                <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_purchase_receipt') }}">
+                                    <i class="fa fa-plus"></i>
+                                       Nouvelle commande
                                 </a>
                             </div>
                         {% endif %}
+                            {% if to_print and to_print==True %}
+                                <div class="col-auto">
+                                    <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                    </a>
+                                </div>
+                            {% endif %}
 
+                        </div>
                     </div>
                     <div class="row g-1 mb-4">
                         <div class="col-md">
@@ -125,7 +141,7 @@
                                     {% else %}
                                         {{ entry.quantity(class="form-control form-control-sm") }}
                                     {% endif %}
-                                    <div class="input-group-text" id="unit"></div>
+                                    {{ entry.unit(class="form-control form-control-md") }}
                                 </div>
                             </div>
                             <div class="col-sm-2">
@@ -146,17 +162,17 @@
                             </div>
                             <div class="col-sm-2">
                                 <div class="input-group has-validation">
-                                    {% if entry.unit_price.errors %}
+                                    {% if entry.sale_price.errors %}
 
-                                        {{ entry.unit_price(class="form-control form-control-sm is-invalid") }}
-                                        {% for error in entry.unit_price.errors %}
+                                        {{ entry.sale_price(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.sale_price.errors %}
                                             <div class="invalid-feedback">
                                                 {{ error }}
                                             </div>
                                         {% endfor %}
 
                                     {% else %}
-                                        {{ entry.unit_price(class="form-control form-control-sm") }}
+                                        {{ entry.sale_price(class="form-control form-control-sm") }}
                                     {% endif %}
                                 </div>
                             </div>
@@ -182,29 +198,19 @@
                     {% endfor %}
                     <div class="row mb-4" >
                         <div class="col-sm">
-                            {{ form.add(class='btn btn-sm rounded-pill') }}
+                            {{ form.add(class='btn btn-sm btn-secondary rounded-pill') }}
                             {{ form.fin(class='btn btn-sm btn-success rounded-pill') }}
                         </div>
                     </div>
-                        <div class="row  justify-content-end mb-4">
-                            <div class="sum-input col-md-5 p-5">
-                                <h2 class="h2"><span class="fw-bold">Total: </span>{{ "{:,.2f}".format(somme) }} DZD</h2>
-                            </div>
-                        </div>
-                </form>
-
-                <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
-                    <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="error-toast-body toast-body"></div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                    <div class="row  justify-content-end mb-4">
+                        <div class="sum-input col-md-5 p-5">
+                            <h2 class="h2"><span class="fw-bold">Total: </span>{{ "{:,.2f}".format(somme) }} DZD</h2>
                         </div>
                     </div>
-                </div>
-            </div>
-        </div>
+                </form>
+{#            </div>#}
+{#        </div>#}
     </div>
-
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
@@ -285,9 +291,11 @@
                              * Then set the value of the unit_price according the item's price in the order
                              */
                             if (data){
-                                document.getElementById(onlyInputs[0].id).setAttribute('value',data.quantity);
-                                document.getElementById(onlyInputs[1].id).setAttribute('value',data.price);
-                                document.getElementById(onlyInputs[2].id).setAttribute('value',data.amount);
+                                onlyInputs[0].setAttribute('value',data.quantity-data.delivered_quantity);
+                                onlyInputs[1].setAttribute('value',data.unit);
+                                onlyInputs[2].setAttribute('value',data.price);
+                                onlyInputs[3].setAttribute('value',data.sale_price);
+                                onlyInputs[4].setAttribute('value',data.amount);
                                 $('.sum-input').html('<h2 class="h2"><span class="fw-bold">Total: '+data.sum+'</span> DZD</h2>');
                             }
                         },

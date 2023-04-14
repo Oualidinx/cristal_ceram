@@ -22,7 +22,7 @@
                 </div>
             {% endif %}
         {% endwith %}
-        <div class="col" style="position: relative; text-align: right">
+        <div class="col" style="position: relative;">
             <div id="table"></div>
             <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
                 <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
@@ -76,8 +76,11 @@
                                             </div>
                                         </div>
                                     </div>
-                                    <div class="row g-1 mb-4 justify-content-lg-end">
-                                        {{ form.submit(class="btn btn-md btn-primary") }}
+
+                                    <div class="row g-1 mb-4 position-static" style="text-align: right;">
+                                        <div class="form-group">
+                                            {{ form.submit(class="btn btn-md btn-primary rounded rouded-pill") }}
+                                        </div>
                                     </div>
                                 </form>
                             </div>
@@ -137,6 +140,9 @@
             })
         }
         $(document).ready(function (){
+            {% if form.errors %}
+                $('.modal').modal('show');
+            {% endif %}
             $('.flash-toasts').toast('show');
             $("#expense_category").select2({
                 theme:'bootstrap-5',
@@ -152,6 +158,9 @@
             style:{
                 table:{
                     'width':"100%"
+                },
+                td: {
+                    'max-height':"1%"
                 }
             },
             language:{
@@ -219,7 +228,7 @@
                                                             {#data-bs-target="#exampleModal"#}
                                                             ><i class="fa-regular fa-money-bill-1"></i>
                                                          </button>
-                                                        <a role="button" class="btn btn-sm"
+                                                        <a role="button" target="_blank" class="btn btn-sm"
                                                         href="{{ url_for('admin_bp.print_purchase_invoice', i_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>

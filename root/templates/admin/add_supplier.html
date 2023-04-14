@@ -1,5 +1,7 @@
 {% extends "layouts/admin_layout.html" %}
 {% block main_tag %}
+    <div class="container" style="max-width: 65%;">
+
         <div class="row">
             {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
@@ -8,7 +10,7 @@
 
                             <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                                 <div class="d-flex">
-                                    <div class="toast-body text-black fw-light fs-6">
+                                    <div class="toast-body text-white fs-6">
                                         {{ message }}
                                     </div>
                                 <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
@@ -21,73 +23,79 @@
         </div>
 
         <div class="row mt-5">
-            <div class="card">
-                <div class="card-body justify-content-center">
-                    <form method="post">
-                    {{ form.hidden_tag() }}
-                        <div class="row g-1 mb-4">
-                            <div class="col-sm-4">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.full_name.label }}</div>
-                                        {% if form.full_name.errors %}
+            <!-- <div class="card"> -->
+                <!-- <div class="card-body justify-content-center"> -->
+            <form method="post">
+            {{ form.hidden_tag() }}
+                <div class="row g-1 mb-4">
+                    <div class="form-group">
+                        <div class="input-group has-validation">
+                            <div class="input-group-text">{{ form.full_name.label }}</div>
+                                {% if form.full_name.errors %}
 
-                                            {{ form.full_name(class="form-control is-invalid") }}
-                                            {% for error in form.full_name.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
+                                    {{ form.full_name(class="form-control is-invalid") }}
+                                    {% for error in form.full_name.errors %}
+                                        <div class="invalid-feedback">
+                                            {{ error }}
+                                        </div>
+                                    {% endfor %}
 
-                                        {% else %}
-                                            {{ form.full_name(class="form-control") }}
-                                        {% endif %}
-                                </div>
-                            </div>
-
-                            <div class="col-md-4">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.category.label }}</div>
-                                    {% if form.category.errors %}
-                                        {{ form.category(class="form-select is-invalid") }}
-                                        {% for error in form.category.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.category(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-sm-3">
-                                <div class="input-group has-validation">
-                                    <div class="input-group-text">{{ form.contacts.label }}</div>
-                                    {% if form.contacts.errors %}
-                                        {{ form.contacts(class="form-control is-invalid") }}
-                                        {% for error in form.contacts.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.contacts(class="form-control") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-sm">
-                                {{ form.submit(class="btn btn-primary", style="border-radius: 20px;") }}
-                            </div>
+                                {% else %}
+                                    {{ form.full_name(class="form-control") }}
+                                {% endif %}
                         </div>
-
-                    </form>
-
+                    </div>
                 </div>
-            </div>
+                <div class="row mb-4">
+                    <div class="form-group">
+                        <div class="input-group has-validation">
+                            <div class="input-group-text">{{ form.category.label }}</div>
+                            {% if form.category.errors %}
+                                {{ form.category(class="form-select is-invalid") }}
+                                {% for error in form.category.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.category(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row mb-4">
+                    <div class="form-group">
+                        <div class="input-group has-validation">
+                            <div class="input-group-text">{{ form.contacts.label }}</div>
+                            {% if form.contacts.errors %}
+                                {{ form.contacts(class="form-control is-invalid") }}
+                                {% for error in form.contacts.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.contacts(class="form-control") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <div class="row g-1 mb-4 position-static" style="text-align: right;">
+                    <div class="form-group">
+                        {{ form.submit(class="btn btn-outline-primary rouded rounded-pill") }}
+                    </div>
+                </div>
+
+            </form>
+
+                <!-- </div> -->
+            <!-- </div> -->
         </div>
     </div>
 {% endblock %}
 
 {% block additional_styles %}
+<link rel="stylesheet" href='{{url_for("static", filename="css/colors.css")}}'>
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css') }}">
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2-bootstrap-5.min.css')}}" />
 {% endblock %}
@@ -107,5 +115,5 @@
 {% endblock %}
 
 {% block actual_title %}
-    <h5 class="h5">Ajouter un fournisseur</h5>
+    <div class="text-color-classic-blue text-upper-case">Ajouter un fournisseur</div>
 {% endblock %}

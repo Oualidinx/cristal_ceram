@@ -3,7 +3,7 @@
     <div class="row">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
-                <div class="toast-container position-absolute bottom-0 end-0 p-3">
+                <div class="toast-container position-absolute top-0 end-0 p-3">
                     {% for category, message in messages %}
                         <div class="toast align-items-center text-white bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
                             <div class="d-flex">
@@ -19,29 +19,35 @@
         {% endwith %}
     </div>
     <div class="row mt-5">
-        <div class="card">
-            <div class="card-body">
+{#        <div class="card">#}
+{#            <div class="card-body">#}
                 <form id="form" method="POST">
                     {{form.hidden_tag()}}
-                    <div class="row g-1 justify-content-end p-3">
-                        <div class="col-md-1">
-                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
-                        </div>
-                    {% if new_command and new_command==true %}
-                        <div class="col-md-2">
-                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_order') }}">
-                                <i class="fa fa-plus"></i>
-                                   Nouvelle commande
-                            </a>
-                        </div>
-                    {% endif %}
-                        {% if to_print and to_print==True %}
-                            <div class="col-md-1">
-                                <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
-                                </a>
-                            </div>
-                        {% endif %}
+                    <div>
+                        <div class="row mb-4 justify-content-end">
+                            <div class="col-md-2" style="text-align: right;">
+                                {% if disable_save %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disabled=True)}}
+                                {% else %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                                {% endif %}
 
+                            </div>
+                            {% if new_command and new_command==true %}
+                                <div class="col-auto " style="text-align: right;">
+                                    <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_order') }}">
+                                        <i class="fa fa-plus"></i>
+                                           Nouvelle commande
+                                    </a>
+                                </div>
+                            {% endif %}
+                            {% if to_print and to_print==True %}
+                                <div class="col-auto" style="text-align: right;">
+                                    <a role="button" target="_blank" href="{{ url_for('admin_bp.print_purchase_order', o_id = order_id) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                    </a>
+                                </div>
+                            {% endif %}
+                        </div>
                     </div>
                     <div class="row g-1 mb-4">
                         <div class="col-md">
@@ -124,7 +130,7 @@
                                     {% else %}
                                         {{ entry.quantity(class="form-control form-control-sm") }}
                                     {% endif %}
-                                    <div class="input-group-text" id="unit"></div>
+                                    {{ entry.unit(class="form-control form-control-sm") }}
                                 </div>
                             </div>
                             <div class="col-sm-2">
@@ -175,8 +181,8 @@
                         </div>
                     </div>
                 </form>
-            </div>
-        </div>
+{#            </div>#}
+{#        </div>#}
     </div>
 {% endblock %}
 {% block additional_styles %}
@@ -193,7 +199,7 @@
     <script>
         $(document).ready(function() {
             $('.select-item').change(function(){
-               const onlyInputs = $(this).parent().parent().find('input');
+                const onlyInputs = $(this).parent().parent().find('input');
                 $.ajax({
                     url:"{{ url_for('admin_bp.get_unit') }}",
                     type:'POST',
@@ -203,8 +209,8 @@
                     contentType:'application/json',
                     statusCode:{
                         200:function (data){
-                            onlyInputs[0].setAttribute('value',data.unit);
-                            onlyInputs[1].setAttribute('value',data.price);
+                            onlyInputs[1].setAttribute('value',data.unit);
+                            onlyInputs[2].setAttribute('value',data.price);
                         }
                     }
                 })

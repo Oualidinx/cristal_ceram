@@ -1,6 +1,7 @@
 {% extends "layouts/admin_layout.html" %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='dist/theme/mermaid.css') }}">
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/colors.css') }}">
 {% endblock %}
 {% block additional_scripts %}
     <script src="{{ url_for('static', filename='dist/gridjs.umd.js') }}"></script>
@@ -45,6 +46,7 @@
                 { id: 'name', name: 'Nom du magasin' },
                 { id: 'address', name: "Adresse" },
                 { id: 'contact', name: 'Contact(Téléphone)' },
+                { id: 'seller', name: 'Vendeur' },
                 { id:'actions', name:'Actions'}
             ],
             data: ()=>{
@@ -58,6 +60,11 @@
                               name :'{{ store["name"] }}',
                               address :'{{ store['address'] }}',
                               contact :'{{ store['contact'] }}',
+                              seller :
+                                  gridjs.html(`{% if store['seller'] %}<span class="text-color-classic-blue fw-bold">{{ store['seller'] }}</span>
+                                        {% else %}<span class="text-color-valiant fw-bold">Pas affecté</span>
+
+                                        {% endif %}`),
                               actions: gridjs.html(`<div class="dropdown dropstart">
                                   <div class="btn-group">
                                     {#<a role="button" class="tax_info btn btn-sm btn-outline-info" data-bs-placement="bottom"#}
@@ -75,7 +82,7 @@
                         },
                     {% endfor %}
                 {% endif %}
-            ]),2000
+            ]),100
                     )
                 })
             },

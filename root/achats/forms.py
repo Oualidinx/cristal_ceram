@@ -5,6 +5,7 @@ from datetime import datetime
 from wtforms.validators import ValidationError, Optional, DataRequired
 from root.models import Client, UserForCompany, Item, Supplier, Order, ExpenseCategory, Warehouse, DeliveryNote
 from flask_login import current_user
+from sqlalchemy.sql import and_
 
 
 class EntryField(Form):
@@ -67,14 +68,12 @@ class ExitVoucherEntryField(Form):
         if float(quantity.data) < 0:
             raise ValidationError('Valeur invalide')
 
-from sqlalchemy.sql import and_
-
 class ExitVoucherForm(FlaskForm):
     motif = QuerySelectField('Motif ',
                  allow_blank=True,
                  blank_text="Sélectionner le motif ...",
                  query_factory=lambda :Order.query.filter(and_(Order.is_deleted==False,Order.category=='vente')) \
-                     .filter(Order.is_canceled == None) \
+                     .filter(Order.is_canceled == 0) \
                      .filter( Order.fk_company_id == UserForCompany.query.filter_by(role="magasiner") \
                             .filter_by(fk_user_id=current_user.id) \
                                 .first().fk_company_id).all()+

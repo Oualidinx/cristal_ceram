@@ -5,11 +5,10 @@ from wtforms.fields import StringField, SubmitField, RadioField, PasswordField, 
 from wtforms.fields import FloatField, FieldList, FormField
 from wtforms.validators import DataRequired, ValidationError, EqualTo, Optional
 from root.models import UserForCompany, Company, User, Item, Warehouse, Store, Format, Aspect, ExpenseCategory
-from root.models import Supplier, Client, Order
+from root.models import Supplier, Client, Order, Contact
 from flask_login import current_user
 from wtforms_sqlalchemy.fields import QuerySelectField, QuerySelectMultipleField
-from sqlalchemy.sql import and_
-from sqlalchemy import func
+import sqlalchemy as sa
 from root import name_regex, phone_number_regex
 
 class NewItemForm(FlaskForm):
@@ -20,9 +19,9 @@ class NewItemForm(FlaskForm):
     format = QuerySelectField('Format ',blank_text="Séléctionner le format...",allow_blank =True, query_factory=lambda : Format.query.filter_by(
                                 fk_company_id=UserForCompany.query.filter_by(role='manager').filter_by(fk_user_id=current_user.id)\
                                                                                             .first().fk_company_id).all(),
-                              validators=[DataRequired('Champs obligatoire')],
+                              validators=[Optional()],
                               render_kw={'data-placeholder': 'Séléctionner le format...'})
-    aspect = QuerySelectField('Aspect ', validators=[DataRequired('Champs obligatoire')],
+    aspect = QuerySelectField('Aspect ', validators=[Optional()],
                               render_kw={'data-placeholder':'Séléctionner l\'aspect du produit...'},
                               allow_blank=True,blank_text="Séléctionner l'aspect...",
                               query_factory=lambda: Aspect.query.filter_by(
@@ -42,8 +41,8 @@ class NewItemForm(FlaskForm):
     unit = StringField('Unité', render_kw={'placeholder':'Unité de stock de produit'},
                        validators=[Optional()])
     sale_price = StringField('Prix de vente',validators=[Optional()])
-    piece_per_unit=StringField('Pièce/poids par unité: ',
-                               render_kw={'placeholder':'Pièce ou poids par unité'})
+    piece_per_unit=FloatField('Pièce par unité: ',
+                               render_kw={'placeholder':'Pièce ou poids par unité'}, default='1')
     expired_at = DateField('Date d\'expiration:', validators=[Optional()],
                                render_kw={'placeholder':'La date d\'expiration'})
     stock_sec = FloatField('Stock de sécurité',validators=[DataRequired('Champs obligatoire')], render_kw={'placeholder':'Le stock de sécurité...'})
@@ -54,7 +53,7 @@ class NewItemForm(FlaskForm):
     def validate_label(self, label):
         c_id=UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first().fk_company_id
         item = Item.query.filter_by(fk_company_id = c_id) \
-            .filter(func.lower(label.data) == func.lower(Item.label)).first()
+            .filter(sa.func.lower(label.data) == sa.func.lower(Item.label)).first()
         if item:
             raise ValidationError('Désignation déjà existe')
 
@@ -62,13 +61,13 @@ class NewItemForm(FlaskForm):
         c_id = UserForCompany.query.filter_by(role="manager").filter_by(
             fk_user_id=current_user.id).first().fk_company_id
         item = Item.query.filter_by(fk_company_id=c_id) \
-            .filter(func.lower(str(intern_reference.data)) == func.lower(Item.intern_reference)).first()
+            .filter(sa.func.lower(str(intern_reference.data)) == sa.func.lower(Item.intern_reference)).first()
         if item:
             raise ValidationError('Référence interne ne peut être répéter')
 
     def validate_expired_at(self, expired_at):
         if expired_at.data :
-            if expired_at.data <= datetime.datetime.utcnow().date():
+            if expired_at.data <= datetime.utcnow().date():
                 raise ValidationError('Date d\'expiration non valide')
 
 class EditItemForm(NewItemForm):
@@ -111,7 +110,7 @@ class TaxesForm(FlaskForm):
 
     def validate_label(self, label):
         companies = Company.query.join(UserForCompany, UserForCompany.fk_company_id == Company.id) \
-            .filter(and_(UserForCompany.role == "manager", UserForCompany.fk_user_id == current_user.id)).all()
+            .filter(sa.and_(UserForCompany.role == "manager", UserForCompany.fk_user_id == current_user.id)).all()
         if companies:
             for company in companies:
                 if str.lower(label.data) in [str.lower(x.label) for x in company.taxes]:
@@ -170,19 +169,20 @@ class EmployeeForm(FlaskForm):
                              render_kw={'placeholder':'Mot de passe'})
     confirm_password = PasswordField('Confirmer le mot de passe: ', validators=[DataRequired('Champs obligatoire'), EqualTo('password','mot de passe erroné')],
                                      render_kw={'placeholder':'Confirmer le mot de passe: '})
-    role = SelectField('Rôle: ', choices=[(0,''),(1, 'Vendeur'), (2, 'Magasiner')], validate_choice=False, coerce=int)
+    role = SelectField('Rôle: ', choices=[(0,'Sélectionner le rôle...'),(1, 'Vendeur'), (2, 'Magasiner')], validate_choice=False, coerce=int)
     location = SelectField('Lieu: ', validate_choice=False, coerce=int,choices=[(0,'Aucune location')])
     submit = SubmitField('Ajouter')
+
     def validate_full_name(self, full_name):
         if name_regex.search(full_name.data) is None:
             raise ValidationError('Nom invalide')
 
-        user = User.query.filter(func.lower(User.full_name)==func.lower(full_name.data)).first()
+        user = User.query.filter(sa.func.lower(User.full_name)==sa.func.lower(full_name.data)).filter(User.is_disabled ==False).first()
         if user and not user.is_disabled:
             raise ValidationError('Employer déjà existe')
 
     def validate_username(self, username):
-        user = User.query.filter(func.lower(User.username)==func.lower(username.data)).first()
+        user = User.query.filter(sa.func.lower(User.username)==sa.func.lower(username.data)).filter(User.is_disabled ==False).first()
         if user and not user.is_disabled:
             raise ValidationError('Employer déjà existe')
 
@@ -249,17 +249,17 @@ class PaiementForm(FlaskForm):
     submit = SubmitField('Payer')
 
 
-class ExpenseForm(FlaskForm):
-    expense_category = QuerySelectField('Dépenses',
-                        validators=[DataRequired('Champs obligatoire')],
-                        query_factory=lambda : ExpenseCategory.query.filter_by(fk_company_id=UserForCompany \
-                                                   .query.filter_by(role="magasiner") \
-                                                    .filter_by(fk_user_id=current_user.id) \
-                                                       .first().fk_company_id).all(),
-                        render_kw={'data-placeholder':'La catégorie de dépense pour le réglement de cette facture'}
-                        )
-    amount = StringField('Montant', validators=[DataRequired('Champs obligatoire')])
-    submit = SubmitField('Payer')
+# class ExpenseForm(FlaskForm):
+#     expense_category = QuerySelectField('Dépenses',
+#                         validators=[DataRequired('Champs obligatoire')],
+#                         query_factory=lambda : ExpenseCategory.query.filter_by(fk_company_id=UserForCompany \
+#                                                    .query.filter_by(role="magasiner") \
+#                                                     .filter_by(fk_user_id=current_user.id) \
+#                                                        .first().fk_company_id).all(),
+#                         render_kw={'data-placeholder':'La catégorie de dépense pour le réglement de cette facture'}
+#                         )
+#     amount = StringField('Montant', validators=[DataRequired('Champs obligatoire')])
+#     submit = SubmitField('Payer')
 
 
 class AspectForm(FlaskForm):
@@ -296,6 +296,21 @@ class ClientForm(FlaskForm):
     contacts=StringField('Contact(Téléphone)', validators=[DataRequired('Champs obligatoire')],
                          render_kw={'placeholder':'Contact(Téléphone)'})
     submit = SubmitField('Ajouter')
+    def validate_full_name(self, full_name):
+        client = Client.query.filter(sa.func.lower(Client.full_name) == sa.func.lower(full_name.data)).first()
+        if client and not client.is_deleted:
+            raise ValidationError('Client déjà existe')
+
+    def validate_contacts(self, contacts):
+        client = Contact.query.filter_by(value = contacts.data).first()
+        if client:
+            raise ValidationError('Contact existe déjà')
+        
+class EditClientForm(ClientForm):
+    def validate_full_name(self, full_name):
+        pass
+    def validate_contacts(self, contacts):
+        pass
 
 
 class SupplierForm(FlaskForm):
@@ -309,6 +324,23 @@ class SupplierForm(FlaskForm):
     contacts=StringField('Contact(Téléphone)', validators=[DataRequired('Champs obligatoire')],
                          render_kw={'placeholder':'Contact(Téléphone)'})
     submit = SubmitField('Ajouter')
+
+    def validate_full_name(self, full_name):
+        supplier = Supplier.query.filter(sa.func.lower(Supplier.full_name) == sa.func.lower(full_name.data)).first()
+        if supplier and not supplier.is_deleted:
+            raise ValidationError('Fournisseur déjà existe')
+
+    def validate_contacts(self, contacts):
+        supplier = Contact.query.filter_by(value=contacts.data).first()
+        if supplier:
+            raise ValidationError('Contact existe déjà')
+        
+class EditSupplierForm(SupplierForm):
+    def validate_contacts(self, contacts):
+        pass
+
+    def validate_full_name(self, full_name):
+        pass
 
 
 class InventoryForm(FlaskForm):
@@ -392,14 +424,15 @@ class PurchaseReceiptForm(FlaskForm):
                                         .filter_by(fk_company_id = UserForCompany.query\
                                             .filter_by(role="manager").first().fk_company_id).all(),
                             validators=[Optional()])
-    command_reference = QuerySelectField('Code commande:',allow_blank=True,
-                                 query_factory=lambda : Order.query.filter_by(category="achat") \
+    command_reference = QuerySelectField('Code commande:',query_factory=lambda : Order.query.filter_by(category="achat") \
                                          .filter(Order.is_deleted == False) \
                                          .filter(Order.is_canceled == None) \
                                          .filter(Order.is_delivered==None) \
                                          .filter_by(fk_company_id =UserForCompany.query \
                                                    .filter_by(role="manager").first().fk_company_id)\
                                                     .all(),
+                                         allow_blank=True,
+                                         blank_text="Sélectionner une référence...",
                                 validators=[DataRequired('Champs obligatoire')])
     order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
     entities = FieldList(FormField(PurchaseField), min_entries=1)
@@ -422,6 +455,24 @@ class PurchaseOrderForm(FlaskForm):
     fin = SubmitField('Terminer')
     submit = SubmitField('Sauvegarder')
 
+class InvoiceEntryField(EntryField):
+    item = QuerySelectField('Désignation ', query_factory=lambda: Item.query \
+                            .filter_by(is_disabled=False) \
+                            .filter_by(fk_company_id=UserForCompany.query.filter_by(role="manager") \
+                                       .filter_by(fk_user_id=current_user.id).first().fk_company_id).all(),
+                            allow_blank=True, blank_text="Sélectionner le produit...",
+                            render_kw={'data-placeholder': 'Article ...', 'readonly': True},
+                            )
+
+    unit_price = DecimalField('Prix unitaire', render_kw={'readonly': True})
+    # purchase_price = DecimalField('Prix unitaire', validators=[DataRequired('Champs obligatoire')])
+    unit = StringField('', render_kw={'readonly': True}, default="")
+    quantity = DecimalField('Quantité', default=1, render_kw={'readonly': True})
+    amount = DecimalField('Montant', default=0, render_kw={'readonly': True})
+    # delete_entry = SubmitField('-', render_kw={'class':'btn btn-sm btn-outline-danger fa-solid fa-trash-can'})
+    delete_entry = SubmitField('Supprimer')
+
+
 
 class InvoiceForm(FlaskForm):
     recipient = QuerySelectField('Bénéficiaire ',allow_blank=True,
@@ -435,5 +486,5 @@ class InvoiceForm(FlaskForm):
 
     reference_supplier_invoice = StringField('Référence ',validators=[Optional()])
     order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
-    entities = FieldList(FormField(EntryField))
+    entities = FieldList(FormField(InvoiceEntryField))
     submit = SubmitField('Sauvegarder')

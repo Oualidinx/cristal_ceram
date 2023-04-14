@@ -25,7 +25,7 @@ def send_reset_email(user):
 def login():
     form = LoginForm()
     if form.validate_on_submit():
-        user = User.query.filter_by(username=form.username.data).first() #filter_by(is_deleted=0).
+        user = User.query.filter_by(username=form.username.data).filter_by(is_disabled=False).first() #filter_by(is_deleted=0).
         if user and not user.is_disabled:
             if check_password_hash(user.password_hash, form.password.data):
                 login_user(user, remember=False)

@@ -33,7 +33,7 @@
                     </div>
                 </div>
             </div>
-            {#<div class="modal fade bg-m" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+            <div class="modal fade bg-m" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
@@ -62,19 +62,19 @@
                                                 {% endif %}
                                             </div>
 
-                                            <div class="input-group has-validation p-3">
-                                                <div class="input-group-text"> {{ form.expense_category.label }}</div>
-                                                {% if form.expense_category.errors %}
-                                                    {{ form.expense_category(class="form-select is-invalid") }}
-                                                    {% for error in form.expense_category.errors %}
-                                                        <div class="invalid-feedback">
-                                                            {{ error }}
-                                                        </div>
-                                                    {% endfor %}
-                                                {% else %}
-                                                    {{ form.expense_category(class="form-select") }}
-                                                {% endif %}
-                                            </div>
+{#                                            <div class="input-group has-validation p-3">#}
+{#                                                <div class="input-group-text"> {{ form.expense_category.label }}</div>#}
+{#                                                {% if form.expense_category.errors %}#}
+{#                                                    {{ form.expense_category(class="form-select is-invalid") }}#}
+{#                                                    {% for error in form.expense_category.errors %}#}
+{#                                                        <div class="invalid-feedback">#}
+{#                                                            {{ error }}#}
+{#                                                        </div>#}
+{#                                                    {% endfor %}#}
+{#                                                {% else %}#}
+{#                                                    {{ form.expense_category(class="form-select") }}#}
+{#                                                {% endif %}#}
+{#                                            </div>#}
                                         </div>
                                     </div>
                                     <div class="row g-1 mb-4 justify-content-lg-end">
@@ -85,7 +85,7 @@
                         </div>
                     </div>
                 </div>
-            </div>#}
+            </div>
         </div>
     </div>
 {% endblock %}
@@ -143,7 +143,9 @@
                 placeholder: $(this).data('placeholder'),
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
             });
-
+            {% if form.errors %}
+                $('.modal').modal('show');
+            {% endif %}
         });
         new gridjs.Grid({
             autoWidth:true,
@@ -210,13 +212,13 @@
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
                                                     <div class="btn-group dropstart" >
-                                                        <button class="dropdown-item btn btn-lg"
+                                                        <button class="btn btn-sm btn-outline-success"
                                                             id="btn"
                                                             onclick="get(this)"
                                                             data-code="{{ order['intern_reference'] }}"
                                                             ><i class="fa-regular fa-money-bill-1"></i>
                                                          </button>
-                                                        <a role="button" class="btn btn-sm"
+                                                        <a role="button" class="btn btn-sm btn-outline-info" target="_blank"
                                                         href="{{ url_for('admin_bp.print_invoice', i_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
@@ -225,7 +227,7 @@
                             {% endfor %}
                         {% endif %}
                     ]
-                    ),1000
+                    ),100
                  );
                 });
             },

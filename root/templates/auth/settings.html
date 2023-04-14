@@ -67,63 +67,62 @@
                                     {{ edit.username.label }}
                                 </div>
                             </div>
-                            <div class="form-group mb-3">
-                                 <div class="form-floating">
-                                    {% if edit.company_name.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ edit.company_name(class="form-control is-invalid") }}
-                                            {% for error in edit.company_name.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        {{ edit.company_name(class="form-control") }}
-                                    {% endif %}
-                                    {{ edit.company_name.label }}
+                                <div class="form-group mb-3">
+                                     <div class="form-floating">
+                                        {% if edit.company_name.errors %}
+                                            <div class="input-group has-validation">
+                                                {{ edit.company_name(class="form-control is-invalid") }}
+                                                {% for error in edit.company_name.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ edit.company_name(class="form-control") }}
+                                        {% endif %}
+                                        {{ edit.company_name.label }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="form-group mb-3">
-                                 <div class="form-floating">
-                                    {% if edit.address.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ edit.address(class="form-control is-invalid") }}
-                                            {% for error in edit.address.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        {{ edit.address(class="form-control") }}
-                                    {% endif %}
-                                    {{ edit.address.label }}
+                                <div class="form-group mb-3">
+                                     <div class="form-floating">
+                                        {% if edit.address.errors %}
+                                            <div class="input-group has-validation">
+                                                {{ edit.address(class="form-control is-invalid") }}
+                                                {% for error in edit.address.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ edit.address(class="form-control") }}
+                                        {% endif %}
+                                        {{ edit.address.label }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="form-group mb-3">
-                                 <div class="form-floating">
-                                    {% if edit.contact.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ edit.contact(class="form-control is-invalid") }}
-                                            {% for error in edit.contact.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        {{ edit.contact(class="form-control") }}
-                                    {% endif %}
-                                    {{ edit.contact.label }}
+                                <div class="form-group mb-3">
+                                     <div class="form-floating">
+                                        {% if edit.contact.errors %}
+                                            <div class="input-group has-validation">
+                                                {{ edit.contact(class="form-control is-invalid") }}
+                                                {% for error in edit.contact.errors %}
+                                                    <div class="invalid-feedback">
+                                                        {{ error }}
+                                                    </div>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            {{ edit.contact(class="form-control") }}
+                                        {% endif %}
+                                        {{ edit.contact.label }}
+                                    </div>
                                 </div>
-                            </div>
-                            <div class="row  justify-content-lg-end">
-                                <div class="form-group">
-                                    {{ edit.submit(class='btn btn-outline-primary rounded rounded-pill')}}
+                                <div class="row g-1 mb-4 position-static"  style="text-align: right;">
+                                    <div class="form-group">
+                                        {{ edit.submit(class='btn btn-outline-primary rounded rounded-pill')}}
+                                    </div>
                                 </div>
-                            </div>
-
                             </form>
                         </div>
                     </div>
