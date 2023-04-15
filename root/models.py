@@ -257,7 +257,7 @@ class DeliveryNote(db.Model):
     __tablename__="delivery_note"
     id = db.Column(db.Integer, primary_key=True)
     intern_reference = db.Column(db.String(1500))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     is_canceled = db.Column(db.Boolean)
     is_validated= db.Column(db.Boolean)
     fk_order_id = db.Column(db.Integer, db.ForeignKey('order.id'))
@@ -276,7 +276,7 @@ class DeliveryNote(db.Model):
             'beneficiary':Client.query.get(order.fk_client_id).full_name,
             'beneficiary_contact': Contact.query.filter_by(fk_client_id=order.fk_client_id).all() if Contact.query.filter_by(fk_client_id=order.fk_client_id).all() else [],
             'delivery_date':("#f8a300",self.delivery_date.date()) if self.is_delivered is None else ('#007256', self.delivery_date.date()),
-            # (datetime.utcnow().date() - self.delivery_date.date()).days > 0 and
+            # (datetime.now().date() - self.delivery_date.date()).days > 0 and
             'created_at': datetime.strftime(self.created_at.date(), "%d/%m/%Y"),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(order.total),
@@ -295,7 +295,7 @@ class ExitVoucher(db.Model):
     fk_delivery_note_id  = db.Column(db.Integer, db.ForeignKey('delivery_note.id'))
     fk_order_id  = db.Column(db.Integer, db.ForeignKey('order.id'))
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default = datetime.utcnow())
+    created_at = db.Column(db.DateTime, default = datetime.now())
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_warehouse_id=db.Column(db.Integer, db.ForeignKey('warehouse.id'))
     entries = db.relationship('Entry', backref="exit_voucher_entries", lazy="subquery")
@@ -333,7 +333,7 @@ class Entry(db.Model):
     tva = db.Column(db.Integer, db.ForeignKey('tva.id'))
     unit_price = db.Column(db.Float, default=0)
     total_price = db.Column(db.Float, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     fk_quotation_id = db.Column(db.Integer, db.ForeignKey('quotation.id'))
     fk_purchase_receipt_id = db.Column(db.Integer, db.ForeignKey('purchase_receipt.id'))
     fk_invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'))
@@ -397,7 +397,7 @@ class Entry(db.Model):
 class Invoice(db.Model):
     __tablename__="invoice"
     id = db.Column(db.Integer, primary_key=True)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     inv_type = db.Column(db.String(20))
     total = db.Column(db.Float, default=0)
     intern_reference = db.Column(db.String(1500))
@@ -519,7 +519,7 @@ class Item(db.Model):
     unit = db.Column(db.String(20))
     piece_per_unit = db.Column(db.Float, default = 0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     expired_at = db.Column(db.DateTime, nullable = True)
     is_disabled = db.Column(db.Boolean, default=False)
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
@@ -565,11 +565,11 @@ class Item(db.Model):
             'intern_reference' : self.intern_reference,
             'label' : self.label,
             'used_for': self.use_for,
-            'expired_at' : (self.expired_at.date(),'#007256',f'Restent {(self.expired_at -datetime.utcnow()).days} jour(s)')
-                                if self.expired_at and self.expired_at > datetime.utcnow()
+            'expired_at' : (self.expired_at.date(),'#007256',f'Restent {(self.expired_at -datetime.now()).days} jour(s)')
+                                if self.expired_at and self.expired_at > datetime.now()
                                 else (self.expired_at,'#e85e31',f'Produit expiré depuis '
-                                                                f'{(datetime.utcnow()-self.expired_at).days} jour(s)')
-                                    if self.expired_at and self.expired_at < datetime.utcnow() else ('Date indéfinie','none',''),
+                                                                f'{(datetime.now()-self.expired_at).days} jour(s)')
+                                    if self.expired_at and self.expired_at < datetime.now() else ('Date indéfinie','none',''),
             'stock_sec':self.stock_sec,
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
@@ -592,9 +592,9 @@ class Pay(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     label = db.Column(db.String(1500))
     amount = db.Column(db.Float, default=0)
-    payment_date = db.Column(db.DateTime, default=datetime.utcnow())
+    payment_date = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    expiry_date = db.Column(db.DateTime, default=datetime.utcnow())
+    expiry_date = db.Column(db.DateTime, default=datetime.now())
     is_cheque = db.Column(db.Boolean, default=0)
     is_in_cash = db.Column(db.Boolean, default=0)
     is_by_bank_transfer = db.Column(db.Boolean, default=0)
@@ -615,7 +615,7 @@ class Quotation(db.Model):
     intern_reference = db.Column(db.String(1500))
     total = db.Column(db.Float, default = 0)
     fk_client_id = db.Column(db.Integer, db.ForeignKey('client.id'))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     is_deleted = db.Column(db.Boolean, default = False)
@@ -679,7 +679,7 @@ class Stock(db.Model):
     stock_qte = db.Column(db.Float, default=0)
     # stock_max = db.Column(db.Float, default=0)
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
-    last_purchase = db.Column(db.DateTime, default=datetime.utcnow())
+    last_purchase = db.Column(db.DateTime, default=datetime.now())
     last_purchase_price = db.Column(db.Float, default=0)
 
     def __repr__(self):
@@ -706,10 +706,10 @@ class Stock(db.Model):
 class Subscription(db.Model):
     __tablename__="subscription"
     id = db.Column(db.Integer, primary_key=True)
-    start_date = db.Column(db.DateTime, default=datetime.utcnow())
-    end_date = db.Column(db.DateTime, default=datetime.utcnow())
+    start_date = db.Column(db.DateTime, default=datetime.now())
+    end_date = db.Column(db.DateTime, default=datetime.now())
     expire_in = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     users_number = db.Column(db.Integer, default=0)
     sms_number = db.Column(db.Integer, default=0)
     per_mounth = db.Column(db.Boolean, default=False)
@@ -750,7 +750,7 @@ class User(UserMixin, db.Model):
     username = db.Column(db.String(256))
     password_hash = db.Column(db.String(256))
     email = db.Column(db.String(10))
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_verified = db.Column(db.Boolean, default=False)
     is_disabled = db.Column(db.Boolean, default=False)
@@ -789,7 +789,7 @@ class UserForCompany(db.Model):
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
     fk_warehouse_id = db.Column(db.Integer, db.ForeignKey('warehouse.id'), nullable=True)
     role = db.Column(db.String(10))
-    start_from = db.Column(db.DateTime, default = datetime.utcnow())
+    start_from = db.Column(db.DateTime, default = datetime.now())
     end_at = db.Column(db.DateTime)
 
     def __repr__(self):
@@ -869,8 +869,8 @@ class Order(db.Model):
     intern_reference = db.Column(db.String(1500))
     category = db.Column(db.String(50))
     total = db.Column(db.Float, default=0)
-    delivery_date = db.Column(db.DateTime, default=datetime.utcnow())
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    delivery_date = db.Column(db.DateTime, default=datetime.now())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     is_deleted = db.Column(db.Boolean, default = False)
     is_delivered = db.Column(db.Boolean)
     is_canceled = db.Column(db.Boolean)
@@ -935,7 +935,7 @@ class Expense(db.Model):
     description = db.Column(db.String(1500))
     amount = db.Column(db.Float, default = 0)
     is_deleted = db.Column(db.Boolean, default = False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     fk_invoice_id = db.Column(db.Integer, db.ForeignKey('invoice.id'))
     fk_company_id = db.Column(db.Integer, db.ForeignKey('company.id'))
@@ -981,7 +981,7 @@ class PurchaseReceipt(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     intern_reference = db.Column(db.String(1500))
     total = db.Column(db.Float, default = 0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow())
+    created_at = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
     is_deleted = db.Column(db.Boolean, default=False)
     fk_supplier_id = db.Column(db.Integer, db.ForeignKey('supplier.id'))

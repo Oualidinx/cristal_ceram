@@ -1097,7 +1097,6 @@ def doc_item():
             .filter_by(fk_warehouse_id=w.id).first()
         entry_qts=Entry.query.filter_by(fk_order_id = int(request.args['cmd_id'])) \
                                 .filter_by(fk_item_id = int(request.args['item_id'])).first()
-        print(entry_qts.in_stock)
 
         _dict = {
             'id': item.id,

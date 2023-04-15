@@ -2711,3 +2711,9 @@ def expense_info():
         date=datetime.strftime(expense.created_at, "%d-%m-%Y"),
         hours=datetime.strftime(expense.created_at, "%H:%M")
     )
+
+
+@admin_bp.get('/sales/<int:o_id>/delivery')
+@login_required
+def order_delivery(o_id):
+    return redirect(url_for('admin_bp.orders'))
