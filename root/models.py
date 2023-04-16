@@ -252,7 +252,7 @@ class Contact(db.Model):
             'value':self.value
         }
         return _dict
-
+from flask_login import current_user
 class DeliveryNote(db.Model):
     __tablename__="delivery_note"
     id = db.Column(db.Integer, primary_key=True)
@@ -265,17 +265,28 @@ class DeliveryNote(db.Model):
     entries = db.relationship('Entry', backref="delivery_note_entries", lazy="subquery")
 
     def repr(self, columns=None):
-        company = Company.query.get(self.fk_company_id)
-        order =Order.query.filter_by(fk_company_id=company).filter_by(id=self.fk_order_id).first()
+        order =Order.query.filter_by(fk_company_id=UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id=current_user.id).first().fk_company_id).filter_by(id=self.fk_order_id).first()
         if not order:
             abort(404)
+
+        company = Company.query.get(order.fk_company_id)
+        
+        entries = list()
+        for entry in self.entries:
+            _dict = entry.repr()
+            indexe = 1
+            _dict.update({
+                'indexe':indexe
+            })
+            entries.append(_dict)
+            indexe += 1
         _dict={
             'id':self.id,
             'company_address': company.addresses[0] if company.addresses else "/",
             'intern_reference':self.intern_reference,
             'beneficiary':Client.query.get(order.fk_client_id).full_name,
             'beneficiary_contact': Contact.query.filter_by(fk_client_id=order.fk_client_id).all() if Contact.query.filter_by(fk_client_id=order.fk_client_id).all() else [],
-            'delivery_date':("#f8a300",self.delivery_date.date()) if self.is_delivered is None else ('#007256', self.delivery_date.date()),
+            'delivery_date':("#f8a300",self.created_at.date()) if self.is_validated is None else ('#007256', self.created_at.date()),
             # (datetime.now().date() - self.delivery_date.date()).days > 0 and
             'created_at': datetime.strftime(self.created_at.date(), "%d/%m/%Y"),
             'created_by':User.query.get(self.created_by).full_name,
@@ -283,7 +294,7 @@ class DeliveryNote(db.Model):
             'order': (self.fk_order_id, Order.query.get(self.fk_order_id).intern_reference) if self.fk_order_id else '#',
             'is_validated' : ('pas reçus',"#d33723") if self.is_validated and self.is_validated == False else ('reçu','#007256') if self.is_validated and self.is_validated == True else None ,
             'is_canceled': ('Annulée',"#d33723") if self.is_canceled and self.is_canceled == False else ('Acceptée','#007256') if self.is_canceled and self.is_canceled == True else None,
-            'entries': [entry.repr() for entry in self.entries]
+            'entries': entries
         }
         return {key:_dict[key] for key in columns} if columns else _dict
 
@@ -367,8 +378,8 @@ class Entry(db.Model):
 
 
         client_query = Client.query
-        beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id)).fk_client_id,
-                        client_query.get(Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id)).fk_client_id).full_name)  \
+        beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id,
+                        client_query.get(Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id).full_name)  \
                         if self.fk_exit_voucher_id and self.fk_delivery_note_id \
                             else (Order.query.get(self.fk_order_id).fk_client_id, 
                                   client_query.get(Order.query.get(self.fk_order_id).fk_client_id).full_name) \
@@ -456,6 +467,7 @@ class Invoice(db.Model):
                     'indexe': indexe
                 })
             entries.append(d)
+            indexe += 1
         _dict={
             'id':self.id,
             'company_address': company.addresses[0] if company.addresses else "/",
@@ -1005,6 +1017,7 @@ class PurchaseReceipt(db.Model):
                 'indexe': indexe
             })
             entries.append(d)
+            indexe += 1
         _dict={
             'id':self.id,
             'intern_reference':self.intern_reference,

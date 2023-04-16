@@ -2,7 +2,7 @@ import datetime
 
 from flask import url_for, redirect, render_template, session, flash, request, jsonify
 from root import database as db
-from flask_login import login_required, current_user
+from flask_login import login_required, current_user, logout_user
 from root.ventes import sales_bp
 from root.models import UserForCompany, Quotation, Entry, Item, Order, Invoice, Client, DeliveryNote
 from root.models import ExitVoucher, Stock, Company, Pay, Contact, Supplier
@@ -17,7 +17,7 @@ from num2words import num2words
 def sales_before_request():
     session['role']="Vendeur"
     if current_user.is_authenticated:
-        user = UserForCompany.query.filter_by(fk_user_id = current_user.id).first()
+        user = UserForCompany.query.filter_by(role='vendeur').filter_by(fk_user_id = current_user.id).first()
         if not user:
             return render_template('errors/401.html')
         print(f'{current_user.full_name} is log in ')
@@ -421,12 +421,6 @@ def order_invoice(o_id):
     return redirect(url_for('sales_bp.orders'))
 
 
-# @sales_bp.get('/sales/delivery/<int:bl_id>/get')
-# @login_required
-# def get_delivery_note(bl_id):
-#     return render_template("sales/delivery_note.html")
-
-
 @sales_bp.get('/sales/delivery/<int:bl_id>/approve')
 @login_required
 def approve_delivery(bl_id):
@@ -434,8 +428,6 @@ def approve_delivery(bl_id):
     d_note = DeliveryNote.query.get(bl_id)
     if not d_note:
         return render_template('errors/404.html', blueprint="sales_bp")
-
-    # company = UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if d_note.created_by != current_user.id:
         return render_template('errors/404.html', blueprint="sales_bp")
     query = Order.query.get(d_note.fk_order_id)
@@ -564,6 +556,7 @@ def add_order():
                                 somme = _q.total,
                                nested=EntryField(),
                                to_approve=True,
+                               doc = _q.id,
                                to_print=True)
     return render_template("sales/new_order.html", form = form, nested=EntryField(), somme = 0)
 
@@ -704,22 +697,27 @@ def print_delivery_note(bl_id):
         return render_template('errors/401.html')
     delivery_note = DeliveryNote.query.join(Order, Order.id==DeliveryNote.fk_order_id) \
                                         .filter(Order.fk_company_id==company.fk_company_id) \
-                                            .filter(DeliveryNote.is_canceled==False).filter(DeliveryNote.id==bl_id).first()
+                                            .filter(DeliveryNote.is_canceled == None) \
+                                                .filter(DeliveryNote.id==bl_id).first()
+    print(delivery_note)
+    # delivery_note = DeliveryNote.query.get(bl_id)
     if not delivery_note:
         return render_template('errors/404.html', blueprint='sales_bp')
-
-    if delivery_note.fk_company_id != company.fk_company_id:
+    _order = Order.query.get(delivery_note.fk_order_id)
+    if _order.fk_company_id != company.fk_company_id:
+        logout_user()
         return render_template('errors/401.html')
     company = Company.query.get(company.fk_company_id)
-    total_letters = num2words(delivery_note.total, lang='fr') + " dinars algérien"
-    virgule = delivery_note.total - float(int(delivery_note.total))
+    total_letters = num2words(_order.total, lang='fr') + " dinars algérien"
+    virgule = _order.total - float(int(_order.total))
     if virgule > 0:
         total_letters += f' et {int(round(virgule, 2))} centimes'
     html = render_template('printouts/printable_template.html',
                            company=company.repr(),
                            object=delivery_note.repr(),
-                           titre="Facture d'achat",
-                           total_letters=str.upper(total_letters))
+                           titre="Bon de livraison",
+                           total_letters=str.upper(total_letters)
+                           )
     response = HTML(string=html)
     return render_pdf(response,
                       download_filename=f'{delivery_note.intern_reference}.pdf',
@@ -901,7 +899,6 @@ def deliveries():
     return render_template('sales/deliveries.html')
 
 
-
 @sales_bp.get('/order/<int:o_id>/print')
 @login_required
 def print_order(o_id):
@@ -959,14 +956,14 @@ def clients():
     _clients = Client.query.filter_by(is_deleted = False).filter_by(fk_company_id=user_for_company.fk_company_id).all()
     liste = list()
     if _clients:
-        index = 1
+        _index = 1
         for client in _clients:
             _dict = client.repr()
             _dict.update({
-                'indexe':index
+                'indexe':_index
             })
             liste.append(_dict)
-            index+=1
+            _index+=1
     return render_template('sales/clients.html', liste=liste)
 
 
@@ -1101,3 +1098,51 @@ def approve_order(o_id):
     db.session.commit()
     flash(f'Commande {order.intern_reference} est approuvée','success')
     return redirect(url_for('sales_bp.orders'))
+
+
+@sales_bp.get('/sales/<int:o_id>/delivery')
+@login_required
+def order_delivery(o_id):
+    cmd=Order.query.get(o_id)
+    if not cmd:
+        return render_template('errors/404.html', blueprint="sales_bp")
+
+    if cmd.is_deleted:
+        return render_template('errors/404.html', blueprint="sales_bp")
+
+    company = UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id = current_user.id).first().fk_company_id
+    if company != cmd.fk_company_id:
+        return render_template('errors/404.html', blueprint="sales_bp")
+
+    if cmd.is_canceled != None and cmd.is_canceled == True:
+        flash('commande annulé impossible de générer le bon de livraison','warning')
+        return redirect(url_for('sales_bp.orders'))
+    if cmd.is_delivered and cmd.is_delivered==True:
+        flash('Bon de commande déjà généré','warning')
+        return redirect(url_for('sales_bp.orders'))
+
+    dl = DeliveryNote()
+    last_d = DeliveryNote.query.join(Order, Order.id == DeliveryNote.fk_order_id) \
+                                    .filter(Order.fk_company_id == company) \
+                                        .order_by(DeliveryNote.id.desc()).first()
+
+    dl.intern_reference = "BL-1/"+str(datetime.datetime.now().year)
+    if last_d:
+        last_reference = int(last_d.intern_reference.split('-')[1].split('/')[0])
+        year = int(last_d.intern_reference.split('-')[1].split('/')[1])
+        if year == datetime.datetime.now().year:
+            dl.intern_reference = "BL-"+str(last_reference+1)+"/"+ str(datetime.datetime.now().year)
+    dl.created_by = current_user.id
+    dl.fk_order_id = cmd.id
+    db.session.add(dl)
+    db.session.commit()
+    for entry in cmd.entries:
+        entry.fk_delivery_note_id = dl.id
+        db.session.add(entry)
+        db.session.commit()
+    cmd.is_delivered = True
+    cmd.is_canceled = False
+    db.session.add(cmd)
+    db.session.commit()
+    flash(f'Document {dl.intern_reference} sauvegardé','success')
+    return redirect(url_for('sales_bp.print_delivery_note', bl_id=dl.id))

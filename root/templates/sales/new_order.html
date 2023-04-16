@@ -29,13 +29,13 @@
                     {% if to_approve and to_approve==True%}
                         <div class="col-md-1">
                             <a role="button"
-                               href="#"
+                               href="{{ url_for('sales_bp.approve_order', o_id=doc) }}"
                                class="btn btn-sm btn-success rounded-pill">Approuver</a>
                         </div>
                     {% endif %}
                     {% if to_print and to_print==True %}
                         <div class="col-md-1">
-                            <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                            <a role="button" href="{{ url_for('sales_bp.print_order', o_id = doc) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
                             </a>
                         </div>
                     {% endif %}

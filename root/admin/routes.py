@@ -16,6 +16,10 @@ from datetime import timedelta as td, datetime as dt
 @admin_bp.before_request
 def admin_before_request():
     session['role'] = "Manager"
+    if current_user.is_authenticated:
+        user = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
+        if not user:
+            return render_template('errors/401.html')
 
 @admin_bp.get('/')
 @login_required
@@ -37,9 +41,9 @@ def index():
     revenue, _expenses = dict(), dict()
     query_pay = Pay.query.filter(Pay.fk_company_id == company.fk_company_id)
     query_expense = Expense.query.filter(Expense.fk_company_id == company.fk_company_id)
-    revenue['today']=sum([pay.amount for pay in query_pay.filter(func.date(Pay.payment_date) == func.date(dt.utcnow().date())).all()])
+    revenue['today']=sum([pay.amount for pay in query_pay.filter(func.date(Pay.payment_date) == func.date(dt.now().date())).all()])
     
-    _expenses['today']=sum([exp.amount for exp in query_expense.filter(func.date(Expense.created_at) == func.date(dt.utcnow().date())).all()])
+    _expenses['today']=sum([exp.amount for exp in query_expense.filter(func.date(Expense.created_at) == func.date(dt.now().date())).all()])
     day = dt.now().date()
     weekday = calendar.weekday(day.year, day.month, day.day)
     l = list()
@@ -159,7 +163,7 @@ def index():
                     _expenses['year'] += sum([_pay.amount for _pay in pay])
     return render_template("admin/index.html",
                            info = _dict,
-                           date = dt.utcnow().date(),
+                           date = dt.now().date(),
                            products = [item.repr(['id','intern_reference','label','stock_qte','delivered_quantity',
                                         'stock_value']) for item in _products.all()[:10]],
                            revenue = revenue,
@@ -533,7 +537,7 @@ def edit_user(user_id):
                     counter = 0
                     for temp in [wh for wh in user_for_company.all()]:
                     # for ID in [wh.id for wh in form.warehouses.data]:
-                        temp.start_from = dt.utcnow()
+                        temp.start_from = dt.now()
                         temp.fk_warehouse_id = ids[counter]
                         db.session.add(temp)
                         db.session.commit()
@@ -559,7 +563,7 @@ def edit_user(user_id):
 
             if this_user_role=='vendeur':
                 u_f_c = user_for_company.first()
-                u_f_c.start_from = dt.utcnow()
+                u_f_c.start_from = dt.now()
                 db.session.add(u_f_c)
                 db.session.commit()
             else:
@@ -2713,7 +2717,7 @@ def expense_info():
     )
 
 
-@admin_bp.get('/sales/<int:o_id>/delivery')
-@login_required
-def order_delivery(o_id):
-    return redirect(url_for('admin_bp.orders'))
+# @admin_bp.get('/sales/<int:o_id>/delivery')
+# @login_required
+# def order_delivery(o_id):
+#     return redirect(url_for('admin_bp.orders'))

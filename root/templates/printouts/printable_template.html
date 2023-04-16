@@ -47,7 +47,7 @@
         .title{
             text-decoration: underline;
             font-weight: bolder;
-            font-size: 21px;
+            font-size: 215%;
             font-family: LibreBaskerville-Bold, 'Times New Roman', Times, serif ;
             text-align: justify;
         }
@@ -74,7 +74,7 @@
             <td>
                 <img src="{{ url_for('static', filename="img/logo.jpeg") }}" alt="">
             </td>
-            <td class="title" style="text-transform: uppercase">
+            <td class="title">
                 {{ company['name'] }}
             </td>
         </tr>
@@ -136,7 +136,7 @@
     </table>
     <br>
     <span>Arrêté le présent {{ titre }} à la somme de: </span>
-
+   
     <p>{{ total_letters }}</p>
 
     <div style="width:90%; position: relative; padding-top: 10%; text-align: right;">

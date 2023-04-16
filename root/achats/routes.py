@@ -15,6 +15,10 @@ from sqlalchemy.sql import and_
 @purchases_bp.before_request
 def purchases_before_request():
     session['role'] = "Magasiner"
+    if current_user.is_authenticated:
+        user = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id = current_user.id).first()
+        if not user:
+            return render_template('errors/401.html')
 
 
 @purchases_bp.get('/')
@@ -497,6 +501,7 @@ def new_purchase_receipt():
         return render_template("purchases/new_receipt.html", form=form,
                                somme=_q.total,
                                new_command=True,
+                               doc = _q.id,
                                nested=PurchaseField(),
                                to_print=True)
 
@@ -623,7 +628,7 @@ def get_recipients():
 def get_commands():
     company = UserForCompany.query.filter_by(role="magasiner") \
                                     .filter_by(fk_user_id=current_user.id).first().fk_company_id
-    commands = Order.query.filter(Order.is_deleted == False).filter_by(fk_company_id = company)
+    commands = Order.query.filter(Order.is_delivered == False).filter(Order.is_deleted == False).filter_by(fk_company_id = company)
     if 'type' in request.args:
         commands = commands.filter_by(category=request.args.get('type'))
     if "search" in request.args:
