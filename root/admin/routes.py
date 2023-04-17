@@ -968,7 +968,7 @@ def edit_product(item_id):
     form = EditItemForm()
     if request.method=="GET":
         form = EditItemForm(
-            format=Format.query.get(item.fk_format_id) if item.fk_aspect_id else None,
+            format=Format.query.get(item.fk_format_id) if item.fk_format_id else None,
             aspect=Aspect.query.get(item.fk_aspect_id) if item.fk_aspect_id else None,
             used_for = item.use_for if item.use_for else None,
             label = item.label,
