@@ -481,16 +481,17 @@ def edit_user(user_id):
     this_user_role = user_for_company.first().role
     company = Company.query.get(user_for_company.first().fk_company_id)
     manager_company = UserForCompany.query.filter_by(role="manager").filter_by(fk_user_id = current_user.id).first()
-    print(manager_company)
     if company.id != manager_company.fk_company_id:
         return render_template('errors/401.html')
 
     form = UpdateUserForm()
     if request.method=="GET":
-        query = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id)
+        query = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id) \
+                                .filter(Warehouse.fk_company_id ==manager_company.fk_company_id)
+        print(query.filter(UserForCompany.role=="magasiner").filter(UserForCompany.fk_user_id==user.id).all())
         form = UpdateUserForm(
             role=1 if this_user_role == "vendeur" else 2 if this_user_role == "magasiner" else 0,
-            warehouses=query.filter_by(role="manager").filter_by(fk_user_id=user.id).all(),
+            warehouses=query.filter(UserForCompany.role=="magasiner").filter(UserForCompany.fk_user_id==user.id).all(),
             username = user.username,
             full_name = user.full_name,
             stores=Store.query.get(user.fk_store_id) if user.fk_store_id else []
@@ -528,7 +529,7 @@ def edit_user(user_id):
                     for ID in [wh.id for wh in form.warehouses.data]:
                         if ID not in [wh.fk_warehouse_id for wh in user_for_company.all()]:
                             u_f_c = UserForCompany(fk_user_id = user.id, fk_company_id = company.id,
-                                                   fk_warehouse_id=ID, role="manager")
+                                                   fk_warehouse_id=ID, role="magasiner")
                             db.session.add(u_f_c)
                             db.session.commit()
                 else:
@@ -537,7 +538,7 @@ def edit_user(user_id):
                     counter = 0
                     for temp in [wh for wh in user_for_company.all()]:
                     # for ID in [wh.id for wh in form.warehouses.data]:
-                        temp.start_from = dt.now()
+                        temp.start_from = dt.utcnow()
                         temp.fk_warehouse_id = ids[counter]
                         db.session.add(temp)
                         db.session.commit()
@@ -563,7 +564,7 @@ def edit_user(user_id):
 
             if this_user_role=='vendeur':
                 u_f_c = user_for_company.first()
-                u_f_c.start_from = dt.now()
+                u_f_c.start_from = dt.utcnow()
                 db.session.add(u_f_c)
                 db.session.commit()
             else:

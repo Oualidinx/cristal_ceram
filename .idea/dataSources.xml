@@ -8,5 +8,12 @@
       <jdbc-url>jdbc:mysql://localhost:3306/cristal_ceram</jdbc-url>
       <working-dir>$ProjectFileDir$</working-dir>
     </data-source>
+    <data-source source="LOCAL" name="cristal_ceram.db" uuid="fe023529-cf55-4a4c-a2dd-8b2a17970ca7">
+      <driver-ref>sqlite.xerial</driver-ref>
+      <synchronize>true</synchronize>
+      <jdbc-driver>org.sqlite.JDBC</jdbc-driver>
+      <jdbc-url>jdbc:sqlite:$PROJECT_DIR$/instance/cristal_ceram.db</jdbc-url>
+      <working-dir>$ProjectFileDir$</working-dir>
+    </data-source>
   </component>
 </project>
