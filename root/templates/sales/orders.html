@@ -127,7 +127,8 @@
                                                             <i class="fa-solid fa-arrows-rotate"></i>
                                                         </button>
                                                         <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item" target="_blank" href="{{ url_for('sales_bp.order_delivery', o_id=order['id']) }}">Bon de livraison</a></li>
+                                                            <li><a class="dropdown-item" target="_blank" 
+                                                                href="{{ url_for('sales_bp.order_delivery', o_id=order['id']) }}">Bon de livraison</a></li>
                                                             {% if not order['invoice'] %}
                                                             <li>
                                                                 <a class="dropdown-item"

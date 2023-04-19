@@ -38,6 +38,7 @@ class PurchaseField(EntryField):
     unit_price = DecimalField('Prix unitaire', render_kw={'readonly': True})
 
 
+
 class PurchaseOrderForm(FlaskForm):
     fournisseur = QuerySelectField('Fournisseur ', query_factory=lambda: Supplier.query \
                                    .filter_by(is_deleted=False) \
@@ -122,10 +123,10 @@ class PurchaseReceiptForm(FlaskForm):
                                             .filter_by(role="magasiner").first().fk_company_id).all(),
                                  validators=[Optional()])
     command_reference = QuerySelectField('Code commande:', allow_blank=True,
-                                         query_factory=lambda: Order.query.filter_by(category="achat") \
+                                         query_factory=lambda: Order.query.filter_by(category="vente") \
                                          .filter(Order.is_deleted == False) \
-                                         .filter(Order.is_canceled == None) \
-                                         .filter(Order.is_delivered == None) \
+                                         .filter(Order.is_canceled == False) \
+                                         .filter(Order.is_delivered == True) \
                                          .filter_by(fk_company_id=UserForCompany.query \
                                                     .filter_by(role="magasiner").first().fk_company_id) \
                                          .all(),

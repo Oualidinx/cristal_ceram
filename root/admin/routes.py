@@ -9,7 +9,7 @@ from flask_login import login_required
 from root.admin.forms import *
 from root.auth.forms import ResetPasswordForm
 from root.models import Supplier, Tax, PurchaseReceipt, InvoiceTax, OrderTax, Warehouse, Store
-from root.models import Format, Aspect, Stock, Client, Contact, Quotation, Expense, Pay
+from root.models import Format, Aspect, Stock, Client, Contact, Quotation, Expense, Pay, DeliveryNote
 from werkzeug.security import generate_password_hash
 from sqlalchemy import func
 from datetime import timedelta as td, datetime as dt
@@ -1955,10 +1955,23 @@ def print_invoice(i_id):
                       automatic_download=False)
 
 
-@admin_bp.get('/sales/delivery')
-@login_required
-def delivery_notes():
-    return render_template('sales/deliveries.html')
+# @admin_bp.get('/sales/delivery')
+# @login_required
+# def delivery_notes():
+#     session['endpoint'] = 'sales'
+#     user_for_company = UserForCompany.query.filter(UserForCompany.fk_user_id == current_user.id) \
+#         .filter(UserForCompany.role == "vendeur").first()
+#     _deliveries = DeliveryNote.query.filter_by(fk_company_id=user_for_company.fk_company_id) \
+#         .order_by(Order.created_at.desc()).all()
+#     liste = list()
+#     if _deliveries:
+#         indexe = 1
+#         for delivery in _deliveries:
+#             _dict = delivery.repr()
+#             _dict.update({'index': indexe})
+#             liste.append(_dict)
+#             indexe += 1
+#     return render_template("sales/deliveries.html", liste=liste)
 
 
 @admin_bp.get('/inventory')

@@ -292,8 +292,8 @@ class DeliveryNote(db.Model):
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(order.total),
             'order': (self.fk_order_id, Order.query.get(self.fk_order_id).intern_reference) if self.fk_order_id else '#',
-            'is_validated' : ('pas reçus',"#d33723") if self.is_validated and self.is_validated == False else ('reçu','#007256') if self.is_validated and self.is_validated == True else None ,
-            'is_canceled': ('Annulée',"#d33723") if self.is_canceled and self.is_canceled == False else ('Acceptée','#007256') if self.is_canceled and self.is_canceled == True else None,
+            'is_validated' : ('Annulé',"#CD212A") if self.is_validated and self.is_validated == False else ('reçu','#00A170') if self.is_validated and self.is_validated == True else ('Crée', '#34568B') ,
+            # 'is_canceled': ('Annulée',"#d33723") if self.is_canceled and self.is_canceled == False else ('Acceptée','#007256') if self.is_canceled and self.is_canceled == True else None,
             'entries': entries
         }
         return {key:_dict[key] for key in columns} if columns else _dict
@@ -366,10 +366,13 @@ class Entry(db.Model):
         doc_reference = (PurchaseReceipt.query.get(self.fk_purchase_receipt_id).created_at.date(), 
                          PurchaseReceipt.query.get(self.fk_purchase_receipt_id).intern_reference) if self.fk_purchase_receipt_id else doc_reference
         supplier_query = Supplier.query
+        client_query = Client.query
         beneficiary = None
         if  self.fk_purchase_receipt_id and PurchaseReceipt.query.get(self.fk_purchase_receipt_id):
-            beneficiary = (PurchaseReceipt.query.get(self.fk_purchase_receipt_id).fk_supplier_id,
-                           supplier_query.get(PurchaseReceipt.query.get(self.fk_purchase_receipt_id).fk_supplier_id).full_name)
+            _p = PurchaseReceipt.query.get(self.fk_purchase_receipt_id)
+            order = Order.query.get(_p.fk_order_id)
+            if order.category=="vente":
+                beneficiary = (order.fk_client_id, client_query.get(order.fk_client_id).full_name)
         if self.fk_order_id and Order.query.get(self.fk_order_id) and Order.query.get(self.fk_order_id).category == "achat":
             beneficiary = (Order.query.get(self.fk_order_id).fk_supplier_id,
                            supplier_query.get(

@@ -8,3 +8,4 @@ root/ventes/__pycache__
 root/trush.py
 root/templates/index.html
 /migrations
+/instance

@@ -23,13 +23,17 @@
                     {{form.hidden_tag()}}
                     <div class="row g-1 justify-content-end p-3">
                         <div class="col-md-1">
-                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                            {% if disable_save==True %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disable=True)}}
+                            {% else %}
+                                {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                            {% endif %}
                         </div>
                     {% if new_command and new_command==true %}
                         <div class="col-md-2">
-                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_purchase_receipt') }}">
+                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_returns') }}">
                                 <i class="fa fa-plus"></i>
-                                   Nouvelle commande
+                                   Nouvelle Réceptions
                             </a>
                         </div>
                     {% endif %}
@@ -39,7 +43,6 @@
                                 </a>
                             </div>
                         {% endif %}
-
                     </div>
                     <div class="row g-1 mb-4">
                         <div class="col-md">
@@ -122,7 +125,7 @@
                                     {% else %}
                                         {{ entry.quantity(class="form-control form-control-sm") }}
                                     {% endif %}
-                                    <div class="input-group-text" id="unit"></div>
+                                    {{ entry.unit(class="form-control form-control-sm") }}
                                 </div>
                             </div>
                             <div class="col-sm-2">
@@ -267,8 +270,9 @@
                              */
                             if (data){
                                 document.getElementById(onlyInputs[0].id).setAttribute('value',data.quantity);
-                                document.getElementById(onlyInputs[1].id).setAttribute('value',data.price);
-                                document.getElementById(onlyInputs[2].id).setAttribute('value',data.amount);
+                                document.getElementById(onlyInputs[1].id).setAttribute('value',data.unit);
+                                document.getElementById(onlyInputs[2].id).setAttribute('value',data.price);
+                                document.getElementById(onlyInputs[3].id).setAttribute('value',data.amount);
                                 $('.sum-input').html('<h2 class="h2"><span class="fw-bold">Total: '+data.sum+'</span> DZD</h2>');
                             }
                         },

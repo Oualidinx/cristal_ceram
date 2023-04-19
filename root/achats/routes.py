@@ -307,7 +307,7 @@ def purchases_receipts():
             _dict.update({'index': indexe})
             indexe += 1
             liste.append(_dict)
-    return render_template("purchases/purchases_receipts.html", liste=liste)
+    return render_template("purchases/returns.html", liste=liste)
 
 
 @purchases_bp.get('/orders/<int:o_id>/get')
@@ -351,16 +351,16 @@ def delete_order(o_id):
     return redirect(url_for('purchases_bp.purchases_orders'))
 
 
-@purchases_bp.get('/receipts/add')
-@purchases_bp.post('/receipts/add')
+@purchases_bp.get('/returns/add')
+@purchases_bp.post('/returns/add')
 @login_required
-def new_purchase_receipt():
+def new_returns():
     session['endpoint'] = 'orders'
     company = UserForCompany.query.filter_by(role="magasiner") \
         .filter_by(fk_user_id=current_user.id).first().fk_company_id
-    _suppliers = Supplier.query.filter_by(fk_company_id=company)
-    if not _suppliers:
-        flash("Veuillez d'abord ajouter des fournisseurs", 'warning')
+    _clients = Client.query.filter_by(fk_company_id=company).filter_by(is_deleted = False)
+    if not _clients.all():
+        flash("Veuillez d'abord ajouter des clients", 'warning')
     form = PurchaseReceiptForm()
 
     if form.validate_on_submit():
@@ -369,6 +369,16 @@ def new_purchase_receipt():
         _q.created_by = current_user.id
         sum_amounts = 0
         document = Order.query.get(form.command_reference.data.id)
+        if document.is_delivered == False or document.is_delivered == None:
+            flash(f'La commande {document.intern_reference} n\'a pas été encore livré','warnings')
+            return render_template("purchases/new_returns.html",
+                                   form=form, nested=PurchaseField())
+
+        if document.is_canceled == True or document.is_deleted==True:
+            flash(f'La commande {document.intern_reference} a été supprimé','warnings')
+            return render_template("purchases/new_returns.html",
+                                   form=form, nested=PurchaseField())
+
         if enumerate(form.entities):
             sum_amounts = 0
             for _index, entry in enumerate(form.entities):
@@ -378,26 +388,8 @@ def new_purchase_receipt():
                 if entry.delete_entry.data:
                     sum_amounts -= entry.amount.data
                     del form.entities.entries[_index]
-                    return render_template("purchases/new_receipt.html",
+                    return render_template("purchases/new_returns.html",
                                            form=form, nested=PurchaseField())
-
-                _ = Entry.query.filter_by(fk_order_id=form.command_reference.data.id).first()
-                if _:
-                    if (_.quantity - _.delivered_quantity) > entry.quantity.data:
-                        flash(
-                            f"La quantity du {Item.query.get(entry.fk_item_id).label} est suppérieur à la quantity commandée",
-                            "warning")
-                        return render_template("purchases/new_receipt.html",
-                                               form=form, nested=PurchaseField(),
-                                               somme=sum_amounts)
-                # _ = Entry()
-                _.fk_item_id = entry.item.data.id
-                # _.in_stock = entry.item.data.stock_quantity
-                _.unit_price = entry.unit_price.data
-                _.delivered_quantity += entry.quantity.data
-                _.quantity = entry.quantity.data
-                _.total_price = entry.amount.data
-                entities.append(_)
 
         if form.add.data:
             if enumerate(form.entities):
@@ -417,7 +409,7 @@ def new_purchase_receipt():
                     'quantity': 1,
                     'amount': 0
                 })
-                return render_template('purchases/new_receipt.html',
+                return render_template('purchases/new_returns.html',
                                        form=form,
                                        somme=sum_amounts,
                                        nested=PurchaseField())
@@ -430,7 +422,7 @@ def new_purchase_receipt():
                     'quantity': 1,
                     'amount': 0
                 })
-                return render_template('purchases/new_receipt.html',
+                return render_template('purchases/new_returns.html',
                                        form=form,
                                        somme=sum_amounts,
                                        nested=PurchaseField())
@@ -441,26 +433,57 @@ def new_purchase_receipt():
                     if entry.quantity.data:
                         entry.amount.data = entry.unit_price.data * entry.quantity.data
                     sum_amounts += entry.amount.data
-            return render_template('purchases/new_receipt.html',
+            return render_template('purchases/new_returns.html',
                                    form=form,
                                    somme=sum_amounts,
                                    nested=PurchaseField())
+
+
+        if enumerate(form.entities):
+            for _index, entry in enumerate(form.entities):
+                stock = Stock.query.filter_by(fk_item_id=entry.item.data.id).first()
+                if not stock:
+                    flash(f"Article {Item.query.get(entry.item.data.id).label} n'a pas de stock", 'warning')
+                    return render_template("purchases/new_returns.html",
+                                           form=form, nested=PurchaseField(),
+                                           somme=sum_amounts)
+                c_entry = Entry.query.filter_by(fk_order_id=document.id) \
+                    .filter_by(fk_item_id=entry.item.data.id).first()
+                if c_entry:
+                    if c_entry.quantity < float(entry.quantity.data):
+                        flash(
+                            f"La quantity du {Item.query.get(entry.item.data.id).label} retourné est suppérieur à la quantity commandée",
+                            "warning")
+                        return render_template("purchases/new_returns.html",
+                                               form=form, nested=PurchaseField(),
+                                               somme=sum_amounts)
+                    # else:
+                    c_entry.delivered_quantity -= float(entry.quantity.data)
+
+                    c_entry.fk_item_id = entry.item.data.id
+                    c_entry.in_stock += float(entry.quantity.data)
+
+                    c_entry.delivered_quantity -= float(entry.quantity.data)
+                    c_entry.quantity = entry.quantity.data
+                    c_entry.total_price = entry.amount.data
+                    c_entry.total_price = float(entry.delivered_quantity.data)*c_entry.unit_price
+                    entities.append(c_entry)
+                    stock.stock_qte += float(entry.quantity.data)
+                    db.session.add(stock)
+                    db.session.commit()
+                    item = Item.query.get(entry.item.data.id)
+                    item.stock_quantity += float(entry.quantity.data)
+                    db.session.add(item)
+                    db.session.commit()
+
         if form.order_date.data:
             _q.created_at = form.order_date.data
-        _q.created_by = current_user.id
         _q.fk_company_id = company
 
-        if form.command_reference.data.fk_supplier_id:
-            _q.fk_supplier_id = form.command_reference.data.fk_supplier_id
-            _q.fk_client_id = None
-        else:
-            _q.fk_client_id = form.command_reference.data.fk_client_id
-            _q.fk_supplier_id = None
-
         _q.total = sum_amounts
-        last_q = Order.query.filter_by(category="achat").filter_by(fk_company_id=company).order_by(
-            Order.created_at.desc()).first()
-        _q.intern_reference = "BR-1/" + "/" + str(datetime.datetime.now().date().year)
+        last_q = PurchaseReceipt.query.filter_by(fk_company_id=company).order_by(
+            PurchaseReceipt.id.desc()).first()
+        _q.intern_reference = "BR-1/" +  str(datetime.datetime.now().date().year)
         if last_q:
             last_intern_ref = int(last_q.intern_reference.split('-')[1].split('/')[0])
             year = int(last_q.intern_reference.split('-')[1].split('/')[1])
@@ -471,50 +494,28 @@ def new_purchase_receipt():
         db.session.add(_q)
         db.session.commit()
         for e in entities:
-            sum_amounts = e.total_price
+            sum_amounts += e.total_price
             e.fk_purchase_receipt_id = _q.id
+            e.fk_order_id = document.id
+
             e.fk_quotation_id, e.fk_exit_voucher_id = None, None
             e.fk_invoice_id, e.fk_delivery_note_id = None, None
-            # _warehouses = Warehouse.query.join(UserForCompany, UserForCompany.fk_warehouse_id == Warehouse.id) \
-            #                             .filter_by(fk_user_id = current_user.id)
-            stock = Stock.query.filter_by(fk_item_id=e.fk_item_id).first()
-            if not stock:
-                db.session.rollback()
-                flash(f"Article {Item.query.get(e.fk_item_id).label} n'a pas de stock", 'warning')
-                return render_template("purchases/new_receipt.html",
-                                       form=form, nested=PurchaseField(),
-                                       somme=sum_amounts)
-            stock.stock_qte += e.quantity
-            item = Item.query.get(e.fk_item_id).first()
-            e.in_stock = item.stock_quantity
             db.session.add(e)
             db.session.commit()
-            # item.stock_quantity += e.quantity
-            # db.session.add(item)
-            # db.session.commit()
-            stock.last_purchase_price = e.unit_price
-            db.session.add(stock)
-            db.session.commit()
-        to_valid = True
-        for _e in document.entries:
-            if _e.quantity != _e.delivered_quantity:
-                to_valid = False
-        if to_valid:
-            document.is_delivered = True
-            db.session.add(document)
-            db.session.commit()
         _q.total = sum_amounts
+        _q.fk_order_id = document.id
         db.session.add(_q)
         db.session.commit()
         flash(f'Bon {_q.intern_reference} crée avec succès', 'success')
-        return render_template("purchases/new_receipt.html", form=form,
+        return render_template("purchases/new_returns.html", form=form,
                                somme=_q.total,
                                new_command=True,
                                doc=_q.id,
+                               disable_save=True,
                                nested=PurchaseField(),
                                to_print=True)
 
-    return render_template("purchases/new_receipt.html", form=form, nested=PurchaseField(), somme=0)
+    return render_template("purchases/new_returns.html", form=form, nested=PurchaseField(), somme=0)
 
 
 @purchases_bp.get('/receipt/<int:r_id>/get')
@@ -728,6 +729,7 @@ def get_purchase_price():
             return jsonify(
                 price=entry.unit_price,
                 quantity=entry.quantity,
+                unit=Item.query.get(entry.fk_item_id).unit,
                 amount=entry.unit_price * entry.quantity,
                 sum=float(data['sum']) + float(entry.quantity * entry.unit_price)
             ), 200
@@ -885,7 +887,7 @@ def add_exit_voucher():
                     return render_template("purchases/add_exit_voucher.html",
                                            form=form, nested=ExitVoucherEntryField())
                 item = Item.query.get(entry.item.data.id)
-                if stocks.stock_qte < entry.quantity.data or item.stock_sec < entry.quantity.data:
+                if stocks.stock_qte < entry.quantity.data or item.stock_sec < float(entry.quantity.data):
                     flash(f'Le stock du produit {item.label} est insuffisant pour cette commande', 'danger')
                     return render_template("purchases/add_exit_voucher.html",
                                            form=form, nested=ExitVoucherEntryField())
@@ -954,11 +956,13 @@ def add_exit_voucher():
                 to_valid = False
         if to_valid:
             if form.motif.data.__tablename__ == "order":
-                if document.is_delivered and document.is_delivered == True:
+                if document.is_delivered:
+                    document.is_canceled = False
                     document.is_delivered = True
             if form.motif.data.__tablename__ == "delivery_note":
                 document.is_validated = True
                 order = Order.query.get(document.fk_order_id)
+                order.is_canceled = False
                 order.is_delivered = True
                 db.session.add(order)
                 db.session.commit()

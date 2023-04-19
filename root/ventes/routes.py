@@ -895,8 +895,24 @@ def exit_vouchers():#Bon de livraison
 @sales_bp.get('/deliveries')
 @login_required
 def deliveries():
-
-    return render_template('sales/deliveries.html')
+    session['endpoint'] = 'sales'
+    user_for_company = UserForCompany.query.filter(UserForCompany.fk_user_id == current_user.id) \
+        .filter(UserForCompany.role == "vendeur").first()
+    # _deliveries = DeliveryNote.query.filter_by(fk_company_id=user_for_company.fk_company_id) \
+    #     .order_by(Order.created_at.desc()).all()
+    _deliveries = DeliveryNote.query.join(Order, Order.id == DeliveryNote.fk_order_id) \
+        .filter(Order.fk_company_id == user_for_company.fk_company_id).order_by(Order.created_at.desc()) \
+        .filter(DeliveryNote.created_by == current_user.id) \
+        .all()
+    liste = list()
+    if _deliveries:
+        indexe = 1
+        for delivery in _deliveries:
+            _dict = delivery.repr()
+            _dict.update({'index': indexe})
+            liste.append(_dict)
+            indexe += 1
+    return render_template("sales/deliveries.html", liste=liste)
 
 
 @sales_bp.get('/order/<int:o_id>/print')
@@ -1140,7 +1156,7 @@ def order_delivery(o_id):
         entry.fk_delivery_note_id = dl.id
         db.session.add(entry)
         db.session.commit()
-    cmd.is_delivered = True
+    # cmd.is_delivered = True
     cmd.is_canceled = False
     db.session.add(cmd)
     db.session.commit()

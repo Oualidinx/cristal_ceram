@@ -1,9 +1,11 @@
 {% extends "layouts/sales_layout.html" %}
 {% block additional_styles %}
     <link href="{{ url_for('static', filename='dist/theme/mermaid.min.css') }}" rel="stylesheet" />
+    <link href="{{ url_for('static', filename='css/colors.css') }}" rel="stylesheet" />
+
 {% endblock %}
 {% block main_tag %}
-    <div class="container">
+    <div class="container-fluid">
         {% with messages = get_flashed_messages(with_categories=true) %}
                 {% if messages %}
                     <div class="toast-container position-absolute bottom-0 end-0 p-3">
@@ -72,10 +74,10 @@
             columns: [
                     { id: 'index',              name: '' },
                     { id: 'intern_reference',   name: 'Code' },
-                    { id: 'client',             name: 'Client' },
-                    { id: 'client_contact',     name: 'Contact' },
+                    { id: 'beneficiary',             name: 'Client' },
+                    { id: 'beneficiary_contact',     name: 'Contact' },
                     { id: 'created_at',         name: 'Date' },
-                    { id: 'quotation',          name: 'Document de base' },
+                    { id: 'order',              name: 'Document de base' },
                     { id: 'total',              name: 'Montant' },
                     { id: 'status',             name: 'État' },
                     { id: 'delivery_date',      name: 'Date de livraison' },
@@ -91,40 +93,29 @@
                                 {
                                     index: '{{ order["index"] }}',
                                     intern_reference: '{{ order["intern_reference"] }}',
-                                    client: '{{ order['client'] }}',
-                                    client_contact: '{{ order['client_contacts'][0] }}',
+                                    beneficiary: '{{ order['beneficiary'] }}',
+                                    beneficiary_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
-                                    quotation: '{{ order["quotation"] }}',
+                                    order: gridjs.html (`
+                                                <div class="btn-group">
+                                                    <a role="button" class="btn btn-sm text-color-classic-blue fw-bold" target="_blank"
+                                                        href="{{ url_for('sales_bp.print_order', o_id=order['order'][0]) }}"
+                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
+                                                        {{ order['order'][1] }}</a>
+                                                </div>`),
                                     total: '{{ order["total"] }}',
-                                    {% if not order['is_delivered'] and not order['is_canceled'] %}
-                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">Non traité</span>`),
-                                    {% else %}
-                                        status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][0]}}">
-                                                {{ order['is_delivered'][1]}}</span>
-                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][0]}}">
-                                                {{ order['is_canceled'][1]}}</span>`),
-                                    {% endif %}
-                                    delivery_date: "{{ order['delivery_date'] }}",
+                                    status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_validated'][1]}}">
+                                                {{ order['is_validated'][0]}}</span>`),
+                                                {#<span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}}">#}
+{#                                                {{ order['is_canceled'][0]}}</span>`),#}
+                                    delivery_date: gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['delivery_date'][0]}}">
+                                                {{ order['delivery_date'][1]}}</span>`),
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
-                                                    <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('sales_bp.get_order', q_id=order['id']) }}"
+                                                    <a role="button" class="btn btn-sm" target="_blank"
+                                                        href="{{ url_for('sales_bp.print_delivery_note', bl_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
-                                                    <a role="button" class="btn btn-sm"
-                                                        href="{{ url_for('sales_bp.delete_order', q_id=order['id']) }}"
-                                                        data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">
-                                                        <i class="fa-solid fa-trash"></i></a>
-                                                    <div class="btn-group dropstart" >
-                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
-                                                            <i class="fa-solid fa-arrows-rotate"></i>
-                                                        </button>
-                                                        <ul class="dropdown-menu">
-                                                            <li><a class="dropdown-item " href="#">Bon de livraison</a></li>
-                                                            <li><a class="dropdown-item" href="#">Facture de vente action</a></li>
-                                                            <li><a class="dropdown-item" href="#">Approuver</a></li>
-                                                        </ul>
-                                                    </div>
                                                 </div>`)},
                             {% endfor %}
                         {% endif %}
