@@ -1,164 +1,160 @@
 {% extends "layouts/purchases_layout.html" %}
 {% block main_tag %}
-    <div class="container">
-        <div class="row mt-5">
-            {% with messages = get_flashed_messages(with_categories=true) %}
-                {% if messages %}
-                    <div class="toast-container position-absolute top-0 end-0 p-3">
-                        {% for category, message in messages %}
-                            <div class="flash-toasts toast align-items-center bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
-                                <div class="d-flex">
-                                    <div class="toast-body text-white fw-light fs-6">
-                                        {{ message }}
-                                    </div>
-                                <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
-                              </div>
-                            </div>
-                        {% endfor %}
+<div class="container">
+    <div class="row mt-5">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="toast-container position-absolute top-0 end-0 p-3">
+                    {% for category, message in messages %}
+                        <div class="flash-toasts toast align-items-center bg-{{ category }} border-0" role="alert" aria-live="assertive" aria-atomic="true">
+                            <div class="d-flex">
+                                <div class="toast-body text-white fw-light fs-6">
+                                    {{ message }}
+                                </div>
+                            <button type="button" class="btn-close me-2 m-auto" data-bs-dismiss="toast" aria-label="Close"></button>
+                          </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+            <form id="form" method="POST">
+                {{form.hidden_tag()}}
+                <div class="btn-toolbar justify-content-end p-3" role="toolbar">
+                    <div class="btn-group p-2">
+                        {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                    </div>
+                {% if new_command and new_command==true %}
+                    <div class="btn-group p-2">
+                        <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('sales_bp.add_exit_voucher') }}">
+                            <i class="fa fa-plus"></i>
+                               Nouvelle sortie
+                        </a>
                     </div>
                 {% endif %}
-            {% endwith %}
-{#            <div class="card">#}
-{#                <div class="card-body">#}
-                    <form id="form" method="POST">
-                        {{form.hidden_tag()}}
-                        <div class="row g-1 justify-content-end p-3">
-                            <div class="col-md-1">
-                                {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
-                            </div>
-                        {% if new_command and new_command==true %}
-                            <div class="col-md-2">
-                                <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('sales_bp.add_exit_voucher') }}">
-                                    <i class="fa fa-plus"></i>
-                                       Nouvelle sortie
-                                </a>
-                            </div>
-                        {% endif %}
-    {#                    {% if to_print and to_print==True %}#}
-    {#                        <div class="col-md-1">#}
-    {#                            <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer#}
-    {#                            </a>#}
-    {#                        </div>#}
-    {#                    {% endif %}#}
-                        </div>
-                        <div class="row g-1 mb-4">
-                            <div class="col-md">
-                                <div class="input-group has-validation p-3">
-                                    <div class="input-group-text"> {{ form.motif.label }}</div>
-                                    {% if form.motif.errors %}
-                                        {{ form.motif(class="form-select is-invalid") }}
-                                        {% for error in form.motif.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-
-                                    {% else %}
-                                        {{ form.motif(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                            <div class="col-md">
-                                <div class="input-group has-validation p-3">
-                                    <div class="input-group-text"> {{ form.exit_date.label }}</div>
-                                    {% if form.exit_date.errors %}
-                                        {{ form.exit_date(class="form-select is-invalid") }}
-                                        {% for error in form.exit_date.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.exit_date(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                                <div class="input-group has-validation p-3">
-                                    <div class="input-group-text"> {{ form.warehouse.label }}</div>
-                                    {% if form.warehouse.errors %}
-                                        {{ form.warehouse(class="form-select is-invalid") }}
-                                        {% for error in form.warehouse.errors %}
-                                            <div class="invalid-feedback">
-                                                {{ error }}
-                                            </div>
-                                        {% endfor %}
-                                    {% else %}
-                                        {{ form.warehouse(class="form-select") }}
-                                    {% endif %}
-                                </div>
-                            </div>
-                        </div>
-                        {#      Table Heading      #}
-
-                    <div class="container">
-                        <div class="row text-center justify-content-center">
-                            <div class="col-md-6">
-                                {{ nested.item.label }}
-                            </div>
-                            <div class="col-md-4">
-                                {{ nested.quantity.label }}
-                            </div>
-                            <div class="col-md-2">
-                                Actions
-                            </div>
-                        </div>
-                        {#      Table Rows      #}
-                        {% for entry in form.entities %}
-                            <div class="row g-4 mb-sm-4 text-center justify-content-center">
-                                <div class="col-sm-6">
-                                    {% if entry.item.errors %}
-                                        <div class="input-group has-validation">
-                                            {{ entry.item(class="select-item form-select-sm is-invalid") }}
-                                            {% for error in entry.item.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-                                        </div>
-                                    {% else %}
-                                        {{ entry.item(class="select-item form-select-sm") }}
-                                    {% endif %}
-                                </div>
-                                <div class="col-sm-4">
-                                    <div class="input-group input-group-sm has-validation">
-                                        {% if entry.quantity.errors %}
-                                            {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
-                                            {% for error in entry.quantity.errors %}
-                                                <div class="invalid-feedback">
-                                                    {{ error }}
-                                                </div>
-                                            {% endfor %}
-
-                                        {% else %}
-                                            {{ entry.quantity(class="form-control form-control-sm") }}
-                                        {% endif %}
-                                        {{ entry.available_stock(class="form-control form-control-sm") }}
+{#                    {% if to_print and to_print==True %}#}
+{#                        <div class="col-md-1">#}
+{#                            <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer#}
+{#                            </a>#}
+{#                        </div>#}
+{#                    {% endif %}#}
+                </div>
+                <div class="row g-1 mb-4">
+                    <div class="col-md">
+                        <div class="input-group has-validation p-3">
+                            <div class="input-group-text"> {{ form.motif.label }}</div>
+                            {% if form.motif.errors %}
+                                {{ form.motif(class="form-select is-invalid") }}
+                                {% for error in form.motif.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
                                     </div>
-                                </div>
-                                <div class="col-sm-2">
-                                    {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
-                                </div>
-                            </div>
-                        {% endfor %}
-                        <div class="row mb-4" >
-                            <div class="col-sm">
-                                {{ form.add(class='btn btn-sm btn-secondary rounded-pill') }}
-                            </div>
-                        </div>
-                    </div>
-                    </form>
+                                {% endfor %}
 
-                    <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
-                        <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
-                            <div class="d-flex">
-                                <div class="error-toast-body toast-body"></div>
-                                <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
-                            </div>
+                            {% else %}
+                                {{ form.motif(class="form-select") }}
+                            {% endif %}
                         </div>
                     </div>
-{#                </div>#}
-{#            </div>#}
-        </div>
+                    <div class="col-md">
+                        <div class="input-group has-validation p-3">
+                            <div class="input-group-text"> {{ form.exit_date.label }}</div>
+                            {% if form.exit_date.errors %}
+                                {{ form.exit_date(class="form-control is-invalid") }}
+                                {% for error in form.exit_date.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.exit_date(class="form-control") }}
+                            {% endif %}
+                        </div>
+                        <div class="input-group has-validation p-3">
+                            <div class="input-group-text"> {{ form.warehouse.label }}</div>
+                            {% if form.warehouse.errors %}
+                                {{ form.warehouse(class="form-select is-invalid") }}
+                                {% for error in form.warehouse.errors %}
+                                    <div class="invalid-feedback">
+                                        {{ error }}
+                                    </div>
+                                {% endfor %}
+                            {% else %}
+                                {{ form.warehouse(class="form-select") }}
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                    {#      Table Heading      #}
+
+                <div class="container">
+                    <div class="row text-center justify-content-center">
+                        <div class="col-md-6">
+                            {{ nested.item.label }}
+                        </div>
+                        <div class="col-md-4">
+                            {{ nested.quantity.label }}
+                        </div>
+                        <div class="col-md-2">
+                            Actions
+                        </div>
+                    </div>
+                    {#      Table Rows      #}
+                    {% for entry in form.entities %}
+                        <div class="row g-4 mb-sm-4 text-center justify-content-center">
+                            <div class="col-sm-6">
+                                {% if entry.item.errors %}
+                                    <div class="input-group has-validation">
+                                        {{ entry.item(class="select-item form-select-sm is-invalid") }}
+                                        {% for error in entry.item.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+                                    </div>
+                                {% else %}
+                                    {{ entry.item(class="select-item form-select-sm") }}
+                                {% endif %}
+                            </div>
+                            <div class="col-sm-4">
+                                <div class="input-group input-group-sm has-validation">
+                                    {% if entry.quantity.errors %}
+                                        {{ entry.quantity(class="form-control form-control-sm is-invalid") }}
+                                        {% for error in entry.quantity.errors %}
+                                            <div class="invalid-feedback">
+                                                {{ error }}
+                                            </div>
+                                        {% endfor %}
+
+                                    {% else %}
+                                        {{ entry.quantity(class="form-control form-control-sm") }}
+                                    {% endif %}
+                                    {{ entry.available_stock(class="form-control form-control-sm") }}
+                                </div>
+                            </div>
+                            <div class="col-sm-2">
+                                {{ entry.delete_entry(class='btn btn-sm btn-outline-danger') }}
+                            </div>
+                        </div>
+                    {% endfor %}
+                    <div class="row mb-4" >
+                        <div class="col-sm">
+                            {{ form.add(class='btn btn-sm btn-secondary rounded-pill') }}
+                        </div>
+                    </div>
+                </div>
+            </form>
+
+            <div class="toast-container position-absolute top-0 start-50 translate-middle-x p-3">
+                <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="error-toast-body toast-body"></div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
+                    </div>
+                </div>
+            </div>
     </div>
+</div>
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">

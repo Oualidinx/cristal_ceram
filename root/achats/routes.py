@@ -366,6 +366,7 @@ def new_returns():
     if form.validate_on_submit():
         entities = list()
         _q = PurchaseReceipt()
+        _q.type="retour"
         _q.created_by = current_user.id
         sum_amounts = 0
         document = Order.query.get(form.command_reference.data.id)
@@ -457,24 +458,37 @@ def new_returns():
                         return render_template("purchases/new_returns.html",
                                                form=form, nested=PurchaseField(),
                                                somme=sum_amounts)
+                old_returns=Entry.query.filter(db.and_(Entry.fk_order_id==document.fk_order_id,
+                                                    Entry.fk_purchase_receipt_id!=None)) \
+                                        .filter(Entry.fk_item_id==entry.item.data.id)
+                if old_returns.all():
+                    returned_quantity = old_returns.add_columns(db.func.sum(Entry.delivered_quantity)).all()[0][1]
+                    if (returned_quantity+float(entry.quantity.data)) > c_entry.quantity:
+                        flash(f'La quantite de {entry.item.data.label} déjà retourné est supérieur à la quantité déjà commandée','danger')
+                        return render_template("purchases/new_returns.html",
+                                               form=form, nested=PurchaseField(),
+                                               somme=sum_amounts)
                     # else:
-                    c_entry.delivered_quantity -= float(entry.quantity.data)
+                _=Entry()
+                # _.delivered_quantity -= float(entry.quantity.data)
 
-                    c_entry.fk_item_id = entry.item.data.id
-                    c_entry.in_stock += float(entry.quantity.data)
-
-                    c_entry.delivered_quantity -= float(entry.quantity.data)
-                    c_entry.quantity = entry.quantity.data
-                    c_entry.total_price = entry.amount.data
-                    c_entry.total_price = float(entry.delivered_quantity.data)*c_entry.unit_price
-                    entities.append(c_entry)
-                    stock.stock_qte += float(entry.quantity.data)
-                    db.session.add(stock)
-                    db.session.commit()
-                    item = Item.query.get(entry.item.data.id)
-                    item.stock_quantity += float(entry.quantity.data)
-                    db.session.add(item)
-                    db.session.commit()
+                _.fk_item_id = entry.item.data.id
+                _.in_stock = entry.item.data.stock_quantity
+                _.quantity = c_entry.quantity
+                _.delivered_quantity = float(entry.quantity.data)
+                _.unit_price = c_entry.unit_price
+                # _.delivered_quantity = c_entry.quantity - float(entry.quantity.data)
+                # _.quantity = entry.quantity.data
+                # _.total_price = entry.amount.data
+                _.total_price = _.delivered_quantity*c_entry.unit_price
+                entities.append(_)
+                stock.stock_qte += float(entry.quantity.data)
+                db.session.add(stock)
+                db.session.commit()
+                # item = Item.query.get(entry.item.data.id)
+                # item.stock_quantity += float(entry.quantity.data)
+                # db.session.add(item)
+                # db.session.commit()
 
         if form.order_date.data:
             _q.created_at = form.order_date.data
@@ -497,7 +511,6 @@ def new_returns():
             sum_amounts += e.total_price
             e.fk_purchase_receipt_id = _q.id
             e.fk_order_id = document.id
-
             e.fk_quotation_id, e.fk_exit_voucher_id = None, None
             e.fk_invoice_id, e.fk_delivery_note_id = None, None
             db.session.add(e)
@@ -728,7 +741,11 @@ def get_purchase_price():
         if entry.fk_item_id == int(data['product']):
             return jsonify(
                 price=entry.unit_price,
-                quantity=entry.quantity,
+                # quantity=entry.quantity,
+                quantity=entry.quantity-Entry.query.filter(db.and_(Entry.fk_order_id==order.id,
+                                                            Entry.fk_purchase_receipt_id!=None))\
+                                            .filter(Entry.fk_item_id==entry.fk_item_id) \
+                                            .add_columns(db.func.sum(Entry.delivered_quantity)).all()[0][1],
                 unit=Item.query.get(entry.fk_item_id).unit,
                 amount=entry.unit_price * entry.quantity,
                 sum=float(data['sum']) + float(entry.quantity * entry.unit_price)
@@ -805,12 +822,12 @@ def print_receipt(r_id):
     html = render_template('printouts/printable_template.html',
                            company=company.repr(),
                            object=receipt.repr_(),
-                           titre="Bon de réception",
+                           titre="Bon de retour",
                            total_letters=str.upper(total_letters))
 
     response = HTML(string=html)
     return render_pdf(response,
-                      download_filename=f'bon de réception_{receipt.intern_reference}.pdf',
+                      download_filename=f'bon de retour_{receipt.intern_reference}.pdf',
                       automatic_download=False)
 
 
@@ -946,19 +963,19 @@ def add_exit_voucher():
             stock.stock_qte -= e.quantity
             db.session.add(stock)
             db.session.commit()
-            item.stock_quantity -= e.quantity
-            db.session.add(item)
-            db.session.commit()
+            # item.stock_quantity -= e.quantity
+            # db.session.add(item)
+            # db.session.commit()
 
         to_valid = True
         for _e in document.entries:
             if _e.quantity != _e.delivered_quantity:
                 to_valid = False
+        print(f'to_valid = {to_valid}')
         if to_valid:
             if form.motif.data.__tablename__ == "order":
-                if document.is_delivered:
-                    document.is_canceled = False
-                    document.is_delivered = True
+                document.is_canceled = False
+                document.is_delivered = True
             if form.motif.data.__tablename__ == "delivery_note":
                 document.is_validated = True
                 order = Order.query.get(document.fk_order_id)
@@ -1061,6 +1078,7 @@ def doc_items():
     if not w:
         abort(404)
     company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
+
     items = Item.query.join(Stock, Stock.fk_item_id == Item.id) \
         .join(Warehouse, Warehouse.id == Stock.fk_warehouse_id) \
         .filter(Warehouse.id == w.id) \

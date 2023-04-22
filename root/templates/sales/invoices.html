@@ -22,9 +22,6 @@
                 {% endif %}
             {% endwith %}
             <div class="col" style="position: relative; text-align: right">
-{#                <a role="button" class="btn btn-outline-primary rounded-pill" href="#">#}
-{#                       Ajouter#}
-{#                </a>#}
                 <div id="table"></div>
                 <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
                 <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
@@ -75,6 +72,7 @@
             </div>
         </div>
     </div>
+    {{ liste }}
 {% endblock %}
 
 {% block actual_title %}
@@ -180,17 +178,11 @@
                                     order: gridjs.html(`<a class="link" href="{{ url_for('sales_bp.print_order', o_id=invoice['order_id']) }}">{{ invoice["order"] }}</a>`),
                                     client: '{{ invoice['client'] }}',
                                     created_at: '{{ invoice["created_at"] }}',
-                                    {% if not invoice['is_paid'] %}
-                                        status: gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">Non Payé</span>`),
-                                    {% else %}
-                                        status:gridjs.html(`
-                                        {#status:gridjs.html(`{% if invoice['is_delivered'] %}<span class="badge rounded-pill" style="background-color: {{ invoice['is_delivered'][1]}}">#}
-                                        {#    {{ invoice['is_delivered'][0]}}</span>{% endif %}#}
-                                        {#        {% if invoice['is_canceled'] %}<span class="badge rounded-pill" style="background-color: {{ invoice['is_canceled'][1]}}">#}
-                                        {#    {{ invoice['is_canceled'][0]}}</span>{% endif %}#}
-                                         <span class="badge rounded-pill" style="background-color: {{ invoice['is_paid'][1]}}">
-                                            {{ invoice['is_paid'][0]}}</span>`),
-                                    {% endif %}
+                                    status:gridjs.html(`
+                                         <span class="badge rounded-pill"
+                                                            style="background-color: {{ invoice['is_paid'][1] }};">
+                                                            {{ invoice['is_paid'][0]}}
+                                                        </span>`),
                                     total: '{{ invoice["total"] }}',
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
@@ -206,23 +198,6 @@
                                                             {#data-bs-target="#exampleModal"#}
                                                             ><i class="fa-regular fa-money-bill-1"></i>
                                                          </button>
-                                                    {#<a role="button" class="btn btn-sm"#}
-                                                    {#    href="{{ url_for('admin_bp.delete_quotation', q_id=invoice['id']) }}"#}
-                                                    {#    data-bs-toggle="tooltip" data-bs-placement="bottom" title="Supprimer">#}
-                                                    {#    <i class="fa-solid fa-trash"></i></a>#}
-                                                    {#<a role="button" class="btn btn-sm"#}
-                                                    {#    href="{{ url_for('sales_bp.delete_quotation', q_id=invoice['id']) }}">#}
-                                                    {#    <i class="fa-solid fa-arrows-rotate"></i></a>#}
-                                                    {#<div class="btn-group dropstart" >#}
-                                                    {#    <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">#}
-                                                    {#        <i class="fa-solid fa-arrows-rotate"></i>#}
-                                                    {#    </button>#}
-                                                        {#<ul class="dropdown-menu">#}
-                                                            {#<li><a class="dropdown-item" href="{{ url_for('admin_bp.quotation_order', q_id=invoice['id']) }}">Bon commande</a></li>#}
-                                                            {#<li><a class="dropdown-item" href="{{ url_for('admin_bp.quotation_invoice', q_id=invoice['id']) }}">Facture de vente action</a></li>#}
-                                                            {#<li><a class="dropdown-item" href="{{ url_for('admin_bp.approve_quotation', q_id=invoice['id']) }}">Approuver</a></li>#}
-                                                        {#</ul>#}
-                                                    {#</div>#}
                                                 </div>`)},
                             {% endfor %}
                         {% endif %}

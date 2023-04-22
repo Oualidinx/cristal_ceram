@@ -25,11 +25,12 @@
             {% endwith %}
             <div class="col" style="position: relative; text-align: right">
                 <a role="button" class="btn btn-outline-success rounded-pill"
-                   href="{{ url_for('purchases_bp.new_purchase_receipt') }}">
+                   href="{{ url_for('purchases_bp.new_returns') }}">
                     <i class="fa fa-plus"></i>
                        Ajouter
                 </a>
                 <div id="table"></div>
+
             </div>
         </div>
     </div>
@@ -76,11 +77,11 @@
                     { id: 'index',              name: '' },
                     { id: 'intern_reference',   name: 'Code' },
                     { id: 'order',   name: 'Réf. Commande' },
-                    { id: 'supplier',             name: 'Fournisseur' },
-                    { id: 'supplier_contact',     name: 'Contact' },
+                    { id: 'beneficiary',             name: 'Client' },
+                    { id: 'beneficiary_contact',     name: 'Contact' },
                     { id: 'created_at',         name: 'Date' },
-                    { id: 'total',              name: 'Montant' },
-                    { id: 'status',             name: 'État' },
+                    {#{ id: 'total',              name: 'Montant' },#}
+                    {#{ id: 'status',             name: 'État' },#}
                     { id: "actions",            name:'Actions'}
             ],
             data: () => {
@@ -94,22 +95,22 @@
                                     index: '{{ order["index"] }}',
                                     intern_reference: '{{ order["intern_reference"] }}',
                                     order: gridjs.html(`<a class="link-info" href="{{ url_for('purchases_bp.print_order', o_id= order['order_id']) }}">{{ order['order'] }}</a>`),
-                                    supplier: '{{ order['beneficiary'] }}',
-                                    supplier_contact: '{{ order['beneficiary_contact'][0] }}',
+                                    beneficiary: '{{ order['beneficiary'] }}',
+                                    beneficiary_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
-                                     {% if not order['is_delivered'] and not order['is_canceled'] %}
-                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">à facturer</span>`),
-                                    {% else %}
-                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}}">
-                                                                {{ order['is_delivered'][0]}}</span>
-                                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}}">
-                                                                {{ order['is_canceled'][0]}}</span>`),
-                                    {% endif %}
-                                    {% if order['invoice']%}
-                                         status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #007256;">
-                                                                facturée</span>`),
-                                    {% endif %}
+{#                                     {% if not order['is_delivered'] and not order['is_canceled'] %}#}
+{#                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #f8a300;">à facturer</span>`),#}
+{#                                    {% else %}#}
+{#                                                status:gridjs.html(`<span class="badge rounded-pill" style="background-color: {{ order['is_delivered'][1]}}">#}
+{#                                                                {{ order['is_delivered'][0]}}</span>#}
+{#                                                                <span class="badge rounded-pill" style="background-color: {{ order['is_canceled'][1]}}">#}
+{#                                                                {{ order['is_canceled'][0]}}</span>`),#}
+{#                                    {% endif %}#}
+{#                                    {% if order['invoice']%}#}
+{#                                         status:gridjs.html(`<span class="badge rounded-pill" style="background-color: #007256;">#}
+{#                                                                facturée</span>`),#}
+{#                                    {% endif %}#}
                                     {#delivery_date: "{{ order['delivery_date'] }}",#}
                                     actions: gridjs.html (`
                                                 <div class="btn-group">
@@ -117,16 +118,16 @@
                                                         href="{{ url_for('purchases_bp.print_receipt', r_id=order['id']) }}"
                                                         data-bs-toggle="tooltip" data-bs-placement="bottom" title="Détails">
                                                         <i class="fa-solid fa-eye"></i></a>
-                                                    <div class="btn-group dropstart" >
-                                                        <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">
-                                                            <i class="fa-solid fa-arrows-rotate"></i>
-                                                        </button>
-                                                        {% if not order['invoice'] %}
-                                                            <ul class="dropdown-menu">
-                                                                <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>
-                                                            </ul>
-                                                        {% endif %}
-                                                    </div>
+                                                    {#<div class="btn-group dropstart" >#}
+                                                    {#    <button class="btn btn-sm" data-bs-toggle="dropdown" aria-expanded="false" type="button">#}
+                                                    {#        <i class="fa-solid fa-arrows-rotate"></i>#}
+                                                    {#    </button>#}
+{#                                                        {% if not order['invoice'] %}#}
+{#                                                            <ul class="dropdown-menu">#}
+{#                                                                <li><a class="dropdown-item" href="{{ url_for('purchases_bp.receipt_invoice', r_id=order['id']) }}">Facture d'achat </a></li>#}
+{#                                                            </ul>#}
+{#                                                        {% endif %}#}
+{#                                                    </div>#}
                                                 </div>`)},
                             {% endfor %}
                         {% endif %}

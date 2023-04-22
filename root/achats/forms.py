@@ -99,7 +99,7 @@ class ExitVoucherForm(FlaskForm):
                                  .filter(UserForCompany.fk_user_id == current_user.id).all(),
                                  validators=[DataRequired('Champs obligatoire')]
                                  )
-    exit_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
+    exit_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()], render_kw={'readonly':True})
     entities = FieldList(FormField(ExitVoucherEntryField), min_entries=1)
 
     add = SubmitField('Ajouter produit')
@@ -131,7 +131,7 @@ class PurchaseReceiptForm(FlaskForm):
                                                     .filter_by(role="magasiner").first().fk_company_id) \
                                          .all(),
                                          validators=[DataRequired('Champs obligatoire')])
-    order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()])
+    order_date = DateField('Date: ', default=datetime.utcnow().date(), validators=[Optional()], render_kw={'readonly':True})
     entities = FieldList(FormField(PurchaseField), min_entries=1)
     add = SubmitField('Ajouter produit')
     fin = SubmitField('Terminer')

@@ -31,9 +31,9 @@
 {#            <div class="card-body">#}
                 <form id="form" method="POST">
                     {{form.hidden_tag()}}
-                    <div>
-                        <div class="row g-1 justify-content-end p-3">
-                            <div class="col-md-2">
+
+                        <div class="btn-toolbar justify-content-end p-3" role="toolbar">
+                            <div class="btn-group">
                                 {% if disable_save==True %}
                                     {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disable=True)}}
                                 {% else %}
@@ -41,21 +41,20 @@
                                 {% endif %}
                             </div>
                         {% if new_command and new_command==true %}
-                            <div class="col-auto">
+                            <div class="btn-group">
                                 <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_purchase_receipt') }}">
                                     <i class="fa fa-plus"></i>
                                        Nouvelle commande
                                 </a>
                             </div>
                         {% endif %}
-                            {% if to_print and to_print==True %}
-                                <div class="col-auto">
-                                    <a role="button" href="#" class="btn btn-sm btn-secondary rounded-pill">Imprimer
-                                    </a>
-                                </div>
-                            {% endif %}
+                        {% if to_print and to_print==True %}
+                            <div class="btn-group">
+                                <a role="button" href="{{ url_for('admin_bp.print_receipt', r_id=doc) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                </a>
+                            </div>
+                        {% endif %}
 
-                        </div>
                     </div>
                     <div class="row g-1 mb-4">
                         <div class="col-md">

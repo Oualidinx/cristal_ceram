@@ -24,7 +24,11 @@
                 {{form.hidden_tag()}}
                 <div class="row g-1 justify-content-end p-3">
                     <div class="col-md-1">
-                        {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                        {% if disable_save == True %}
+                            {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disabled=true)}}
+                        {% else %}
+                            {{ form.submit(class="btn btn-sm btn-primary rouded-pill") }}
+                        {% endif %}
                     </div>
                     {% if to_approve and to_approve==True%}
                         <div class="col-md-1">
@@ -62,14 +66,14 @@
                         <div class="input-group has-validation">
                             <div class="input-group-text"> {{ form.quotation_date.label }}</div>
                             {% if form.quotation_date.errors %}
-                                {{ form.quotation_date(class="form-select is-invalid") }}
+                                {{ form.quotation_date(class="form-control is-invalid") }}
                                 {% for error in form.quotation_date.errors %}
                                     <div class="invalid-feedback">
                                         {{ error }}
                                     </div>
                                 {% endfor %}
                             {% else %}
-                                {{ form.quotation_date(class="form-select") }}
+                                {{ form.quotation_date(class="form-control") }}
                             {% endif %}
                         </div>
                     </div>

@@ -19,7 +19,7 @@
             <h1 class="h1">
                 Tabeau de bord
             </h1>
-            <div class="text-color-sales fw-bold" style="color: .5em;">
+            <div class="text-color-sales fw-bold">
                 {{ date }}
             </div>
         </div>
@@ -253,7 +253,8 @@
                                                 <td>{{ product['label'] }}</td>
                                                 <td class="text-uppercase fw-bold text-color text-color-arcadia">{{ product['stock_qte'] }}</td>
                                                 <td class="text-uppercase fw-bold text-color-valiant">{{ '{:,.2f}'.format(product['stock_value'])  }} DZD</td>
-                                                <td class="text-uppercase fw-bold text-color text-color-classic-blue">{{ product['delivered_quantity'] }}</td>
+                                                <td class="text-uppercase fw-bold text-color text-color-classic-blue">{{ product['delivered_quantity'] }}
+                                                    {{ product['unit'] }}</td>
                                             </tr>
                                         {% endfor %}
                                     {% else %}

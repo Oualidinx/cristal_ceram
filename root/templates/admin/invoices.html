@@ -37,7 +37,6 @@
                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
-                            <h5 class="modal-title" id="exampleModalLabel">Modal title</h5>
                             <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                         </div>
                         <div class="modal-body">
@@ -179,10 +178,11 @@
             columns: [
                     { id: 'index',              name: '' },
                     { id: 'intern_reference',   name: 'Code' },
-                    { id: 'supplier',             name: 'Fournisseur' },
-                    { id: 'supplier_contact',     name: 'Contact' },
+                    { id: 'supplier',           name: 'Fournisseur' },
+                    { id: 'supplier_contact',   name: 'Contact' },
                     { id: 'created_at',         name: 'Date' },
                     { id: 'total',              name: 'Montant' },
+                    { id: 'rest_expenses',      name: 'Rest à payé' },
                     { id: 'status',             name: 'État' },
                     { id: "actions",            name:'Actions'}
             ],
@@ -200,6 +200,7 @@
                                     supplier_contact: '{{ order['beneficiary_contact'][0] }}',
                                     created_at: '{{ order["created_at"] }}',
                                     total: '{{ order["total"] }}',
+                                    rest_expenses: '{{ '{:,.2f}'.format(order["rest_pays"]) }} DZD',
                                     status: gridjs.html(`<span class="badge rounded-pill"
                                                             style="background-color: {{ order['is_paid'][1] }};">
                                                             {{ order['is_paid'][0]}}

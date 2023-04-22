@@ -50,25 +50,22 @@ class Company(db.Model):
                                            viewonly = True,
                                         primaryjoin="foreign(Invoice.fk_company_id) == Company.id",
                                         secondaryjoin='and_('
-                                                      '   and_('
                                                       '     and_(foreign(Order.fk_company_id) == foreign(Invoice.fk_company_id),'
-                                                      '     foreign(Invoice.fk_order_id) == Order.id),'
-                                                      '   Order.category=="achat"), Invoice.rest_expenses == 0)')
+                                                      '     foreign(Invoice.fk_order_id) == Order.id), (Invoice.total - Invoice.done_expenses) == 0)')
     """
     MONTANT NON RÉGLÉES
     """
     @aggregated('not_ad_purchase_invoices', sa.Column(sa.Float, default=0))
     def rest_to_adjust(self):
-        return db.func.sum(Invoice.rest_expenses)
+        return db.func.sum(Invoice.total)-db.func.sum(Invoice.done_expenses)
 
     not_ad_purchase_invoices = db.relationship('Invoice', secondary="order",
                                                viewonly=True,
                                                 primaryjoin="foreign(Invoice.fk_company_id) == Company.id",
                                                 secondaryjoin='and_('
-                                                         '   and_('
-                                                         '     and_(foreign(Order.fk_company_id) == foreign(Invoice.fk_company_id),'
-                                                         '     foreign(Invoice.fk_order_id) == Order.id),'
-                                                         '   Order.category=="achat"), Invoice.rest_expenses > 0)    ')
+                                                                'and_(foreign(Order.fk_company_id) == foreign(Invoice.fk_company_id),'
+                                                                    'foreign(Invoice.fk_order_id) == Order.id),'
+                                                                        '(Invoice.total - Invoice.done_expenses) > 0)')
     def __repr__(self):
         return f'<Company: {self.id}, {self.name}>'
 
@@ -195,19 +192,20 @@ class Client(db.Model):
     """
     @aggregated('paid_invoices', db.Column(db.Float, default = 0))
     def adjusted(self):
-        return db.func.sum(Invoice.total) - db.func.sum(Invoice.rest_pays)
+        return db.func.sum(Invoice.done_pays)
+        # return db.func.sum(Invoice.total) - db.func.sum(Invoice.rest_pays)
     paid_invoices = db.relationship('Invoice',
-                                    primaryjoin='and_(Invoice.fk_client_id== Client.id, Invoice.rest_pays == 0)',
+                                    primaryjoin='and_(Invoice.fk_client_id== Client.id, (Invoice.total-Invoice.done_pays) == 0)',
                                         viewonly=True)
     """
     MONTANT NON RÉGLÉES
     """
     @aggregated('not_paid_invoices', db.Column(db.Float, default = 0))
     def to_adjust(self):
-        return db.func.sum(Invoice.rest_pays)
+        return db.func.sum(Invoice.total)-db.func.sum(Invoice.done_pays)
 
     not_paid_invoices = db.relationship('Invoice',
-                                        primaryjoin='and_(Invoice.fk_client_id== Client.id, Invoice.rest_pays > 0)',
+                                        primaryjoin='and_(Invoice.fk_client_id== Client.id, (Invoice.total-Invoice.done_pays) > 0)',
                                         viewonly=True)
 
     invoices = db.relationship('Invoice', backref="client_invoices", lazy="subquery")
@@ -380,7 +378,6 @@ class Entry(db.Model):
 
 
 
-        client_query = Client.query
         beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id,
                         client_query.get(Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id).full_name)  \
                         if self.fk_exit_voucher_id and self.fk_delivery_note_id \
@@ -432,14 +429,13 @@ class Invoice(db.Model):
     entries = db.relationship('Entry', backref="invoice_entries", lazy="subquery")
 
     @aggregated('payments', db.Column(db.Float, default = 0))
-    def rest_pays(self):
-        return self.total - db.func.sum(Pay.amount)
+    def done_pays(self):
+        return db.func.sum(Pay.amount)
     payments = db.relationship("Pay", backref="invoice_payments", lazy="subquery")
 
     @aggregated('expenses', db.Column(db.Float, default=0))
-    def rest_expenses(self):
-
-        return self.total-db.func.sum(Expense.amount)
+    def done_expenses(self):
+        return db.func.sum(Expense.amount)
 
     expenses = db.relationship("Expense", backref="invoice_expenses", lazy="subquery")
 
@@ -480,13 +476,15 @@ class Invoice(db.Model):
             'client_contacts': Contact.query.filter_by(fk_client_id=Order.query.get(self.fk_order_id).fk_client_id).all()
                                 if self.fk_client_id
                                 else [],
-            'beneficiary':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else
-                            Client.query.get(self.fk_client_id).full_name if self.fk_client_id else '',
+            'beneficiary':('fournisseur: ', Supplier.query.get(self.fk_supplier_id).full_name) if self.fk_supplier_id else
+                            ('client: ', Client.query.get(self.fk_client_id).full_name) if self.fk_client_id else '',
             'beneficiary_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else
                                     Contact.query.filter_by(fk_client_id=self.fk_client_id).all() if self.fk_client_id else [],
             'created_at': datetime.strftime(self.created_at.date(), "%d/%m/%Y"),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),
+            'rest_expenses':self.total-self.done_expenses if self.done_expenses else self.total,
+            'rest_pays':self.total-self.done_pays if self.done_pays else self.total,
             'order_id':self.fk_order_id,
             'order': Order.query.get(self.fk_order_id).intern_reference if self.fk_order_id else '/',
             'is_delivered' : ('Non livrée',"#d33723") if self.is_delivered is not None and self.is_delivered == False
@@ -495,6 +493,7 @@ class Invoice(db.Model):
             'is_canceled': ('Annulée',"#d33723") if self.is_canceled is not None and self.is_canceled == True
                                         else ('Acceptée','#007256') if self.is_canceled is not None and self.is_canceled == False
                                         else None,
+            'type':self.inv_type,
             'is_paid':('Payé','#007256') if (self.total - payment_amounts) == 0 else ('Partiel. Payée','#ffab00') if Expense.query.filter_by(fk_invoice_id=self.id).first() else ('Non payé','#e62200'),
             'entries': entries
         }
@@ -558,8 +557,29 @@ class Item(db.Model):
     entries = db.relationship('Entry', backref="item_entries", lazy="subquery")
     stock_values = db.relationship('Entry',
                                   primaryjoin='and_(Entry.fk_item_id == Item.id, '
-                                              'or_(Entry.fk_order_id == None, Entry.fk_purchase_receipt_id is not None))',
+                                              'or_(Entry.fk_order_id == None, Entry.fk_purchase_receipt_id != None))',
                                                 viewonly=True)
+
+    @aggregated('sales', db.Column(db.Float, default = 0))
+    def sold_stock(self):
+        return db.func.sum(Entry.delivered_quantity)
+    sales = db.relationship('Entry', primaryjoin="and_(Entry.fk_item_id == Item.id, Entry.fk_exit_voucher_id != None)", viewonly=True)
+
+    # @aggregated('returns', db.Column(db.Float,default=0))
+    # def returned(self):
+    #     return db.func.sum(Entry.delivered_quantity)
+    # returns = db.relationship('Entry', secondary="purchase_receipt", viewonly=True,
+    #                           primaryjoin="and_(Entry.fk_item_id == Item.id, Entry.fk_purchase_receipt_id!=None)",
+    #                           secondaryjoin="and_(Entry.fk_purchase_receipt_id == PurchaseReceipt.id , PurchaseReceipt.type=='retour')"
+    #                           )
+    @aggregated('purchases', db.Column(db.Float, default=0))
+    def purchased_stock(self):
+        return db.func.sum(Entry.delivered_quantity)
+
+    purchases = db.relationship('Entry',
+                            primaryjoin="and_(Entry.fk_item_id == Item.id, Entry.fk_purchase_receipt_id != None)",
+                            viewonly=True)
+
     def __repr__(self):
         _str=self.label+', '
         if self.fk_format_id:
@@ -589,7 +609,7 @@ class Item(db.Model):
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
             'stock_qte':self.stock_quantity if self.stock_quantity else 0,
-            'delivered_quantity':self.delivered_quantity, #+' '+self.unit
+            # 'delivered_quantity':self.sold_stock-self.returned if self.returned and self.sold_stock else 0, #+' '+self.unit
             'stock_value':self.stock_value
         }
         return {key: _dict[key] for key in columns} if columns else _dict
@@ -995,6 +1015,7 @@ class PurchaseReceipt(db.Model):
     __tablename__="purchase_receipt"
     id = db.Column(db.Integer, primary_key=True)
     intern_reference = db.Column(db.String(1500))
+    type=db.Column(db.String(10))
     total = db.Column(db.Float, default = 0)
     created_at = db.Column(db.DateTime, default=datetime.now())
     created_by = db.Column(db.Integer, db.ForeignKey('user.id'))
@@ -1021,20 +1042,48 @@ class PurchaseReceipt(db.Model):
             })
             entries.append(d)
             indexe += 1
+
+        supplier_query = Supplier.query
+        client_query = Client.query
+        beneficiary = None
+        # if self.fk_purchase_receipt_id and PurchaseReceipt.query.get(self.fk_purchase_receipt_id):
+        # _p = PurchaseReceipt.query.get(self.id)
+        order = Order.query.get(self.fk_order_id)
+        if order.category == "vente":
+            beneficiary = (order.fk_client_id, client_query.get(order.fk_client_id))
+        if order.category == "achat":
+            beneficiary = (Order.query.get(self.fk_order_id).fk_supplier_id,
+                           supplier_query.get(
+                               Order.query.get(self.fk_order_id).fk_supplier_id))
+
+        # beneficiary = (Order.query.get(DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id,
+        #                client_query.get(Order.query.get(
+        #                    DeliveryNote.query.get(self.fk_delivery_note_id).fk_order_id).fk_client_id)) \
+        #     if self.fk_exit_voucher_id and self.fk_delivery_note_id \
+        #     else (Order.query.get(self.fk_order_id).fk_client_id,
+        #           client_query.get(Order.query.get(self.fk_order_id).fk_client_id).full_name) \
+        #     if self.fk_exit_voucher_id and self.fk_order_id \
+        #     else beneficiary
+
+
         _dict={
             'id':self.id,
             'intern_reference':self.intern_reference,
             'company_address': company.addresses[0] if company.addresses else "/",
-            'beneficiary':Supplier.query.get(self.fk_supplier_id).full_name if self.fk_supplier_id else '',
-            'beneficiary_contact': Contact.query.filter_by(fk_supplier_id=self.fk_supplier_id).all() if self.fk_supplier_id else [],
+            'beneficiary':beneficiary[1].full_name,
+            'beneficiary_contact': beneficiary[1].contacts if beneficiary[1].contacts else [],
             'created_at':datetime.strftime(self.created_at.date(), '%d/%m/%Y'),
             'created_by':User.query.get(self.created_by).full_name,
             'total':'{:,.2f} DZD'.format(self.total),
             'order_id':self.fk_order_id,
-            'order': Order.query.filter_by(category="achat").filter_by(id=self.fk_order_id).first().intern_reference if self.fk_order_id else '/',
+            'order': order.intern_reference
+                        if order
+                        else '/',
             'is_canceled': ('Annulé',"#d33723") if self.is_deleted and self.is_deleted == False else ('Acceptée','#007256')
                                                     if self.is_deleted and self.is_deleted == True else None,
             'entries': entries,
-            'invoice':None if not self.invoices else [invoice.repr() for invoice in self.invoices]
+            'invoice':None if not self.invoices else [invoice.repr() for invoice in self.invoices],
+            'r_invoice':None if not self.invoices else self.invoices[0].repr(['intern_reference','is_paid']),
+            # 'r_invoice':None if not self.invoices[0] else self.invoices[0].repr(['intern_reference','is_paid']),
         }
         return {key:_dict[key] for key in columns} if columns else _dict

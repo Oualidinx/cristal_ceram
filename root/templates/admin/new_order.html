@@ -21,18 +21,16 @@
     <div class="row mt-5">
         <form id="form" method="POST">
             {{form.hidden_tag()}}
-            <div>
-                <div class="row mb-4 justify-content-end">
-                    <div class="col-md-2" style="text-align: right;">
+            <div class="btn-toolbar justify-content-end p-3" role="toolbar">
+                    <div class="btn-group p-2">
                         {% if disable_save %}
                             {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disabled=True)}}
                         {% else %}
                             {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
                         {% endif %}
-
                     </div>
                     {% if new_command and new_command==true %}
-                        <div class="col-auto " style="text-align: right;">
+                        <div class="btn-group p-2">
                             <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('admin_bp.new_order') }}">
                                 <i class="fa fa-plus"></i>
                                    Nouvelle commande
@@ -40,13 +38,12 @@
                         </div>
                     {% endif %}
                     {% if to_print and to_print==True %}
-                        <div class="col-auto" style="text-align: right;">
+                        <div class="btn-group p-2">
                             <a role="button" target="_blank" href="{{ url_for('admin_bp.print_purchase_order', o_id = order_id) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
                             </a>
                         </div>
                     {% endif %}
                 </div>
-            </div>
             <div class="row g-1 mb-4">
                 <div class="col-md">
                     <div class="input-group has-validation">
@@ -179,7 +176,6 @@
                 </div>
             </div>
         </form>
-    </div>
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">

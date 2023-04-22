@@ -470,12 +470,19 @@ def add_order():
 
     if form.validate_on_submit():
         entities = list()
-        last_q = Order.query.filter_by(fk_company_id = company).order_by(Order.created_at.desc()).first()
+        last_q = Order.query.filter_by(fk_company_id = company) \
+            .order_by(Order.id.desc()).first()
         _q = Order()
         _q.category = "vente"
         sum_amounts=0
         if enumerate(form.entities):
             for _index, entry in enumerate(form.entities):
+                stock = Stock.query.filter_by(fk_item_id = entry.item.data.id).all()
+                if not stock:
+                    flash(f'Produit {entry.item.data.label} n\'a aucun stock','warning')
+                    return render_template("sales/new_order.html",
+                                           form=form, nested=EntryField(),
+                                           somme=sum_amounts)
                 entry.unit.data = Item.query.get(entry.item.data.id).unit
                 if entry.quantity.data:
                     entry.amount.data = entry.unit_price.data * entry.quantity.data
@@ -616,7 +623,7 @@ def invoices():
         pay.pay_information=f"Paiement d'une facture d'où de code = {invoice.intern_reference} générée par {User.query.get(invoice.created_by).full_name} avec total de {invoice.total}, le {invoice.created_at.date()}"
         db.session.add(pay)
         db.session.commit()
-        flash(f'{form.data.get("code")} a été payée','success')
+        flash(f'{invoice.intern_reference} a été payée','success')
         return redirect(url_for('sales_bp.invoices'))
     return render_template("sales/invoices.html", form = form, liste = liste)
 

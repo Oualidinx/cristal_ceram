@@ -95,14 +95,18 @@
     <div class="row mt-5">
         
         <div class="col">
-            <div class="position-static" style="text-align: right;  z-index: 2;">
-                <button role="button" class="btn btn-outline-success rounded rounded-pill"  data-bs-toggle="modal" data-bs-target="#NouvelleDepense">
-                    <i class="fa fa-circle-plus"></i>
-                       Ajouter
-                </button>
-                 <div class="modal bg-m" id="NouvelleDepense" data-bs-backdrop="static" data-bs-keyboard="false"
+            <div class="btn-toolbar justify-content-end p-3">
+                <div class="btn-group">
+                    <button role="button" class="btn btn-outline-success rounded rounded-pill"  data-bs-toggle="modal" data-bs-target="#NouvelleDepense">
+                        <i class="fa fa-circle-plus"></i>
+                           Ajouter
+                    </button>
+                </div>
+            </div>
+
+             <div class="new-exp modal bg-m" id="NouvelleDepense" data-bs-backdrop="static" data-bs-keyboard="false"
                                         tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered modal-lg">
+                 <div class="modal-dialog modal-dialog-centered modal-lg">
                     <div class="modal-content">
                         <div class="modal-header">
                             <h5 class="modal-title" id="exampleModalLabel">Nouvelle dépense</h5>
@@ -147,22 +151,18 @@
                                         </div>
                                     </div>
 
-                                    <div class="row g-1 mb-3">
-                                        <div class="col-md">
-                                            <div class="input-group has-validation p-3">
-                                                <div class="input-group-text"> {{ form.expense_category.label }}</div>
-                                                {% if form.expense_category.errors %}
-                                                    {{ form.expense_category(class="form-select is-invalid") }}
-                                                    {% for error in form.expense_category.errors %}
-                                                        <div class="invalid-feedback">
-                                                            {{ error }}
-                                                        </div>
-                                                    {% endfor %}
-                                                {% else %}
-                                                    {{ form.expense_category(class="form-select") }}
-                                                {% endif %}
-                                            </div>
-                                        </div>
+                                    <div class="input-group has-validation p-3">
+                                        <div class="input-group-text"> {{ form.expense_category.label }}</div>
+                                        {% if form.expense_category.errors %}
+                                            {{ form.expense_category(class="form-select is-invalid") }}
+                                            {% for error in form.expense_category.errors %}
+                                                <div class="invalid-feedback">
+                                                    {{ error }}
+                                                </div>
+                                            {% endfor %}
+                                        {% else %}
+                                            {{ form.expense_category(class="form-select") }}
+                                        {% endif %}
                                     </div>
                                     <div class="row mb-3 g-1">
                                         <div class="col-md">
@@ -192,9 +192,10 @@
                     </div>
                 </div>
             </div>
-            </div>
             <div id="table"></div>
-            <div class="exp-modal modal bg-m" id="ExpenseInfo" data-bs-backdrop="static" data-bs-keyboard="false"
+
+        </div>
+        <div class="exp-modal modal bg-m" id="ExpenseInfo" data-bs-backdrop="static" data-bs-keyboard="false"
                                             tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
                 <div class="modal-dialog modal-dialog-centered modal-md">
                         <div class="modal-content">
@@ -202,10 +203,10 @@
                                 <h5 class="modal-title" id="exampleModalLabel">Informations sur la dépense </h5>
                                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                             </div>
-                            <div class="exp-body modal-body"></div></div></div></div>
-
-
-        </div>
+                            <div class="exp-body modal-body"></div>
+                        </div>
+                </div>
+            </div>
     </div>
 
 {% endblock %}
@@ -242,12 +243,12 @@
             $('.toast').toast('show');
             $("#expense_category").select2({
                 theme:'bootstrap-5',
-                dropdownParent: $('.modal'),
+                dropdownParent: $('.new-exp'),
                 placeholder: $(this).data('placeholder'),
                 width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',
             });
             {% if form.errors %}
-                $(".modal").modal('show');
+                $(".new-exp").modal('show');
             {% endif %}
         });
         new gridjs.Grid({

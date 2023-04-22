@@ -73,9 +73,9 @@
             columns: [
                     { id: 'index',              name: '' },
                     { id: 'intern_reference',   name: 'Code' },
-                    { id: 'order',   name: 'Réf. Commande' },
-                    { id: 'supplier',             name: 'Fournisseur' },
-                    { id: 'supplier_contact',     name: 'Contact' },
+                    { id: 'order',              name: 'Réf. Commande' },
+                    { id: 'supplier',           name: 'Fournisseur' },
+                    { id: 'supplier_contact',   name: 'Contact' },
                     { id: 'created_at',         name: 'Date' },
                     { id: 'total',              name: 'Montant' },
                     { id: 'status',             name: 'État' },
@@ -135,7 +135,7 @@
                 });
             },
             search: {
-                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4].includes(cellIndex) ? cell : null,
+                selector: (cell, rowIndex, cellIndex) => [0, 1, 2, 3, 4, 5, 6, 7, 8].includes(cellIndex) ? cell : null,
             },
             sort: true,
             pagination: true

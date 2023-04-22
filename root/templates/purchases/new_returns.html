@@ -1,5 +1,6 @@
 {% extends "layouts/purchases_layout.html" %}
 {% block main_tag %}
+<div class="container-fluid">
     <div class="row mt-5">
         {% with messages = get_flashed_messages(with_categories=true) %}
             {% if messages %}
@@ -17,33 +18,32 @@
                 </div>
             {% endif %}
         {% endwith %}
-        <div class="card">
-            <div class="card-body">
+{#            <div class="media-body">#}
                 <form id="form" method="POST">
                     {{form.hidden_tag()}}
-                    <div class="row g-1 justify-content-end p-3">
-                        <div class="col-md-1">
-                            {% if disable_save==True %}
-                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disable=True)}}
-                            {% else %}
-                                {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
-                            {% endif %}
-                        </div>
-                    {% if new_command and new_command==true %}
-                        <div class="col-md-2">
-                            <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_returns') }}">
-                                <i class="fa fa-plus"></i>
-                                   Nouvelle Réceptions
-                            </a>
-                        </div>
-                    {% endif %}
-                        {% if to_print and to_print==True %}
-                            <div class="col-md-1">
-                                <a role="button" href="{{ url_for('purchases_bp.print_receipt', r_id=doc) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
-                                </a>
+                        <div class="btn-toolbar justify-content-end p-3" role="toolbar">
+                            <div class="btn-group p-2">
+                                {% if disable_save==True %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill", disabled=true)}}
+                                {% else %}
+                                    {{ form.submit(class="btn btn-sm btn-primary rounded-pill")}}
+                                {% endif %}
                             </div>
-                        {% endif %}
-                    </div>
+                            <div class="btn-group p-2">
+                                {% if new_command and new_command==true %}
+                                    <a role="button" class="btn btn-sm btn-outline-success rounded-pill" href="{{ url_for('purchases_bp.new_returns') }}">
+                                        <i class="fa fa-plus"></i>
+                                           Nouvelle Réception
+                                    </a>
+                                {% endif %}
+                            </div>
+                            <div class="btn-group p-2">
+                                {% if to_print and to_print==True %}
+                                    <a role="button" target="_blank" href="{{ url_for('purchases_bp.print_receipt', r_id=doc) }}" class="btn btn-sm btn-secondary rounded-pill">Imprimer
+                                    </a>
+                                {% endif %}
+                            </div>
+                        </div>
                     <div class="row g-1 mb-4">
                         <div class="col-md">
                             <div class="input-group has-validation p-3">
@@ -65,14 +65,14 @@
                             <div class="input-group has-validation p-3">
                                 <div class="input-group-text"> {{ form.order_date.label }}</div>
                                 {% if form.order_date.errors %}
-                                    {{ form.order_date(class="form-select is-invalid") }}
+                                    {{ form.order_date(class="form-control is-invalid") }}
                                     {% for error in form.order_date.errors %}
                                         <div class="invalid-feedback">
                                             {{ error }}
                                         </div>
                                     {% endfor %}
                                 {% else %}
-                                    {{ form.order_date(class="form-select") }}
+                                    {{ form.order_date(class="form-control") }}
                                 {% endif %}
                             </div>
                         </div>
@@ -177,18 +177,16 @@
                         </div>
                 </form>
 
-                <div class="toast-container position-absolute p-3 top-0 start-50 translate-middle">
-                    <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
-                        <div class="d-flex">
-                            <div class="error-toast-body toast-body"></div>
-                            <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
-                        </div>
+            <div class="toast-container position-absolute top-0 start-50 translate-middle-x p-3">
+                <div id="liveToast" class="toast text-white bg-danger" role="alert" aria-live="assertive" aria-atomic="true">
+                    <div class="d-flex">
+                        <div class="error-toast-body toast-body"></div>
+                        <button type="button" class="btn-close btn-close-white me-2 m-auto" data-bs-dismiss="toast" aria-label=" "></button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-
+</div>
 {% endblock %}
 {% block additional_styles %}
     <link rel="stylesheet" href="{{ url_for('static', filename='css/select2.min.css')}}">
