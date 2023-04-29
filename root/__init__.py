@@ -5,6 +5,7 @@ from flask_babel import Babel, _
 from config import config
 from datetime import timedelta
 from flask_mail import Mail
+from flask_socketio import SocketIO
 import re
 email_regex = re.compile('^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$')
 name_regex = re.compile('^[a-z A-Z]+$')
@@ -16,12 +17,13 @@ database = SQLAlchemy()
 login_manager = LoginManager()
 babel = Babel()
 mail = Mail()
+socketio=SocketIO()
 
 def create_app(config_name):
     app.config.from_object(config[config_name])
     app.permanent_session_lifetime = timedelta(hours = 24)
     database.init_app(app)
-
+    socketio.init_app(app)
     login_manager.login_view="auth_bp.login"
 
     login_manager.login_message= _('Vous devez vous connecter afin d\'utiliser ce service')
@@ -40,5 +42,9 @@ def create_app(config_name):
 
     from root.ventes import sales_bp
     app.register_blueprint(sales_bp)
+
+    from root.socket_notifications import socket_notification_bp
+    app.register_blueprint(socket_notification_bp)
+
     return app
 

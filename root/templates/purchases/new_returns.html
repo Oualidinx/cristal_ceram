@@ -121,7 +121,6 @@
                                                 {{ error }}
                                             </div>
                                         {% endfor %}
-
                                     {% else %}
                                         {{ entry.quantity(class="form-control form-control-sm") }}
                                     {% endif %}
@@ -288,23 +287,3 @@
         });
     </script>
 {% endblock %}
-{#$('.select-item').select2({#}
-{#    theme: "bootstrap-5",#}
-{#    width: $( this ).data( 'width' ) ? $( this ).data( 'width' ) : $( this ).hasClass( 'w-100' ) ? '100%' : 'style',#}
-{#    selectionCssClass: 'select2--small',#}
-{#    dropdownCssClass: 'select2--small',#}
-{#    ajax:{#}
-{#        url: "{{ url_for('purchases_bp.get_command_items') }}",#}
-{#        dataType: 'json',#}
-{#        data:function (){#}
-{#            return {#}
-{#                q: $('#command_reference').val()#}
-{#            }#}
-{#        },#}
-{#        processResults: function(data){#}
-{#            return {#}
-{#                results: data.items#}
-{#            }#}
-{#        }#}
-{#    }#}
-{#});#}

@@ -253,7 +253,7 @@
                                                 <td>{{ product['label'] }}</td>
                                                 <td class="text-uppercase fw-bold text-color text-color-arcadia">{{ product['stock_qte'] }}</td>
                                                 <td class="text-uppercase fw-bold text-color-valiant">{{ '{:,.2f}'.format(product['stock_value'])  }} DZD</td>
-                                                <td class="text-uppercase fw-bold text-color text-color-classic-blue">{{ product['delivered_quantity'] }}
+                                                <td class="text-uppercase fw-bold text-color text-color-classic-blue">{{product['sold_stock'] - product['delivered_quantity'] }}
                                                     {{ product['unit'] }}</td>
                                             </tr>
                                         {% endfor %}
@@ -312,12 +312,24 @@
     </footer>
 {% endblock %}
 {% block additional_scripts %}
-    <script !src="">
+    <script>
         $(document).ready(function(){
             $('.toast').toast('show');
-          
             $('#example').DataTable();
-
+            {#$(document).ready(function(){#}
+            {#    var socket = io();#}
+            {#    socket.on('my response', function(msg) {#}
+            {#        $('#log').append('<p>Received: ' + msg.data + '</p>');#}
+            {#    });#}
+            {#    $('form#emit').submit(function(event) {#}
+            {#        socket.emit('my event', {data: $('#emit_data').val()});#}
+            {#        return false;#}
+            {#    });#}
+            {#    $('form#broadcast').submit(function(event) {#}
+            {#        socket.emit('my broadcast event', {data: $('#broadcast_data').val()});#}
+            {#        return false;#}
+            {#    });#}
+            {#});#}
         });
     </script>
 {% endblock %}
