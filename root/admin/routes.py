@@ -150,13 +150,13 @@ def index():
                     _expenses['year'] += sum([_pay.amount for _pay in pay])
     liste = list()
     for product in _products:
-        _dict = product.repr(['id', 'intern_reference', 'label', 'stock_qte', 'unit','stock_value'])
+        __dict = product.repr(['id', 'intern_reference', 'label', 'stock_qte', 'unit','stock_value','sold_stock'])
         _returns = Entry.query.join(PurchaseReceipt, Entry.fk_purchase_receipt_id == PurchaseReceipt.id) \
                                     .filter(Entry.fk_item_id == product.id).filter(PurchaseReceipt.type=="retour")
-        _dict.update({
+        __dict.update({
             'delivered_quantity':sum([_return.delivered_quantity for _return in _returns.all()])
         })
-        liste.append(_dict)
+        liste.append(__dict)
     return render_template("admin/index.html",
                            info=_dict,
                            date=dt.now().date(),

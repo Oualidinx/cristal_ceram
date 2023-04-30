@@ -565,13 +565,6 @@ class Item(db.Model):
         return db.func.sum(Entry.delivered_quantity)
     sales = db.relationship('Entry', primaryjoin="and_(Entry.fk_item_id == Item.id, Entry.fk_exit_voucher_id != None)", viewonly=True)
 
-    # @aggregated('returns', db.Column(db.Float,default=0))
-    # def returned(self):
-    #     return db.func.sum(Entry.delivered_quantity)
-    # returns = db.relationship('Entry', secondary="purchase_receipt", viewonly=True,
-    #                           primaryjoin="and_(Entry.fk_item_id == Item.id, Entry.fk_purchase_receipt_id!=None)",
-    #                           secondaryjoin="and_(Entry.fk_purchase_receipt_id == PurchaseReceipt.id , PurchaseReceipt.type=='retour')"
-    #                           )
     @aggregated('purchases', db.Column(db.Float, default=0))
     def purchased_stock(self):
         return db.func.sum(Entry.delivered_quantity)
@@ -609,8 +602,8 @@ class Item(db.Model):
             'format': Format.query.get(self.fk_format_id).label if self.fk_format_id else '',
             'aspect':Aspect.query.get(self.fk_aspect_id).label if self.fk_aspect_id else '',
             'stock_qte':self.stock_quantity if self.stock_quantity else 0,
-            # 'delivered_quantity':self.sold_stock-self.returned if self.returned and self.sold_stock else 0, #+' '+self.unit
-            'stock_value':self.stock_value
+            'stock_value':self.stock_value,
+            'sold_stock':self.sold_stock if self.sold_stock else 0
         }
         return {key: _dict[key] for key in columns} if columns else _dict
 

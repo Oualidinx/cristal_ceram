@@ -39,7 +39,6 @@ def approve_delivery(bl_id):
     if not d_note:
         return render_template('errors/404.html', blueprint="sales_bp")
 
-    # company = UserForCompany.query.filter_by(role="vendeur").filter_by(fk_user_id=current_user.id).first().fk_company_id
     if d_note.created_by != current_user.id:
         return render_template('errors/404.html', blueprint="sales_bp")
     query = Order.query.get(d_note.fk_order_id)
@@ -179,7 +178,6 @@ def new_order():
         db.session.add(_q)
         db.session.commit()
         flash(f'Commande {_q.intern_reference} crée avec succès', 'success')
-        # return redirect(url_for('purchases_bp.new_order'))
         return render_template("purchases/new_order.html", form=form,
                                somme=_q.total,
                                new_command=True,
@@ -237,9 +235,6 @@ def order_receipt(o_id):
             stock.last_purchase_price = _.unit_price
             db.session.add(stock)
             db.session.commit()
-        # else:
-        # flash(f'Veuillez rajouter des stock pour le produit {Item.query.get(e.fk_item_id)}','warning')
-        # return redirect(url_for('purchases_bp.purchases_receipts'))
         db.session.add(e)
         db.session.commit()
     flash(f'Entrée {p_receipt.intern_reference} sauvegardée', 'success')
@@ -468,27 +463,16 @@ def new_returns():
                         return render_template("purchases/new_returns.html",
                                                form=form, nested=PurchaseField(),
                                                somme=sum_amounts)
-                    # else:
                 _=Entry()
-                # _.delivered_quantity -= float(entry.quantity.data)
-
                 _.fk_item_id = entry.item.data.id
                 _.in_stock = entry.item.data.stock_quantity
                 _.quantity = c_entry.quantity
                 _.delivered_quantity = float(entry.quantity.data)
-                _.unit_price = c_entry.unit_price
-                # _.delivered_quantity = c_entry.quantity - float(entry.quantity.data)
-                # _.quantity = entry.quantity.data
-                # _.total_price = entry.amount.data
                 _.total_price = _.delivered_quantity*c_entry.unit_price
                 entities.append(_)
                 stock.stock_qte += float(entry.quantity.data)
                 db.session.add(stock)
                 db.session.commit()
-                # item = Item.query.get(entry.item.data.id)
-                # item.stock_quantity += float(entry.quantity.data)
-                # db.session.add(item)
-                # db.session.commit()
 
         if form.order_date.data:
             _q.created_at = form.order_date.data
@@ -963,9 +947,6 @@ def add_exit_voucher():
             stock.stock_qte -= e.quantity
             db.session.add(stock)
             db.session.commit()
-            # item.stock_quantity -= e.quantity
-            # db.session.add(item)
-            # db.session.commit()
 
         to_valid = True
         for _e in document.entries:
@@ -1122,15 +1103,6 @@ def doc_item():
     w = Warehouse.query.get(request.args['w_id'])
     if not w:
         abort(404)
-    # company = UserForCompany.query.filter_by(role="magasiner").filter_by(fk_user_id=current_user.id).first()
-    # items = Item.query.join(Stock, Stock.fk_item_id == Item.id) \
-    #     .join(Warehouse, Warehouse.id == Stock.fk_warehouse_id) \
-    #     .filter(Warehouse.id == w.id) \
-    #     .filter(Item.fk_company_id == company.fk_company_id)
-    # if "search" in request.args:
-    #     items = items.filter(Item.is_disabled == False).filter(or_(
-    #         Item.intern_reference.like(func.lower(f'%{request.args["search"]}%')),
-    #         Item.label.like(func.lower(f'%{request.args["search"]}%'))))
     item = Item.query.get(int(request.args['item_id']))
 
     data = list()
